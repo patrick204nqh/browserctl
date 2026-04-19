@@ -14,12 +14,12 @@ It is the difference between a browser **you restart** and a browser **you steer
 
 ## Brand
 
-**Icon concept:** A sailboat helm — the circular steering wheel — rendered in sky blue (`#6CABDD`). The helm is both a navigator's instrument and a control surface, which maps directly to what the tool does: it gives you precise, persistent control over where the browser goes.
+**Icon concept:** A galleon under full sail, set in a circular sky-blue badge. The ship reads as motion — persistent forward navigation — which maps directly to what the tool does: it keeps moving through the web without stopping to restart.
 
 **Color palette:**
 - Primary: `#6CABDD` — sky blue (open water, clear navigation)
-- Dark: `#1C2E4A` — deep navy (focus, precision)
-- Accent: `#FFFFFF` — clean white (minimal output, signal over noise)
+- Dark: `#0D1B3E` — deep navy (focus, precision)
+- Accent: `#FFFFFF` — clean white (sails, minimal output, signal over noise)
 
 **Voice:** Direct. Terse. The CLI output you read at a glance. No ceremony, no noise.
 
@@ -37,21 +37,22 @@ It is the difference between a browser **you restart** and a browser **you steer
 
 ## Roadmap
 
-### v0.2 — Stable Foundation _(pre-public release)_
-**Goal:** Trustworthy enough to share privately. Fix the gaps before anyone depends on the API.
+### v0.1.x — Stable Foundation ✓ _(shipped)_
+**Goal:** Trustworthy enough to share publicly. Fix the gaps before anyone depends on the API.
 
-- [ ] README.md with install, quickstart, all commands
-- [ ] Integration test suite (RSpec, real Chromium, headless)
-- [ ] GitHub Actions CI (lint + test on push/PR)
-- [ ] Thread-safe `@pages` access (Mutex on Server)
-- [ ] Fix silent `click` failure — raise when selector not found
-- [ ] Fix double `at_css` call in `fill` — capture node once
+- [x] README.md with install, quickstart, all commands
+- [x] Integration test suite (RSpec, real Chromium, headless)
+- [x] GitHub Actions CI (lint + test on push/PR)
+- [x] Thread-safe `@pages` access (Mutex on Server)
+- [x] Fix silent `click` failure — raise when selector not found
+- [x] Fix double `at_css` call in `fill` — capture node once
+- [x] Gemspec: add `changelog_uri`, `source_code_uri`, `bug_tracker_uri`
+- [x] CHANGELOG.md
+- [x] Release automation via release-please + RubyGems push
 - [ ] Structured logging with severity levels (`--log-level`)
-- [ ] Gemspec: add `changelog_uri`, `source_code_uri`, `bug_tracker_uri`
-- [ ] CHANGELOG.md
 - [ ] `.envrc` out of version control; document env var setup
 
-### v0.3 — AI-First Enhancements
+### v0.2 — AI-First Enhancements
 **Goal:** Make the AI integration story first-class.
 
 - [ ] Ref-based interaction: `browserctl click login --ref e3` (use snapshot refs directly)
@@ -62,7 +63,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [ ] `record` command — capture a session as a replayable workflow
 - [ ] Python and Node.js client SDKs (same JSON-RPC protocol)
 
-### v0.4 — Developer Experience
+### v0.3 — Developer Experience
 **Goal:** The gem that developers actually recommend to each other.
 
 - [ ] `browserctl init` — scaffold `.browserctl/` in a project
