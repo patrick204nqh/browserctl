@@ -8,6 +8,7 @@ Thank you for taking the time to contribute! This guide covers everything you ne
 - [Running Tests](#running-tests)
 - [Code Style](#code-style)
 - [Submitting Changes](#submitting-changes)
+- [Releasing](#releasing)
 - [Reporting Bugs](#reporting-bugs)
 - [Requesting Features](#requesting-features)
 
@@ -65,6 +66,64 @@ Configuration lives in `.rubocop.yml`. Please keep new code consistent with the 
 - `fix/<short-description>` — bug fixes
 - `feat/<short-description>` — new features
 - `chore/<short-description>` — maintenance, refactoring, deps
+
+---
+
+## Releasing
+
+Releases are published to [RubyGems](https://rubygems.org/gems/browserctl) by pushing a version tag. The `release` GitHub Actions workflow handles building and pushing the gem automatically.
+
+**Prerequisites:** you must be a maintainer with access to the `rubygems-release` GitHub Environment. The `RUBYGEMS_API_KEY` secret is provisioned via the infrastructure repo — no manual setup needed.
+
+### Steps
+
+1. **Update the changelog**
+
+   Move everything under `## [Unreleased]` into a new versioned section in `CHANGELOG.md`:
+
+   ```markdown
+   ## [0.2.0] - 2026-04-19
+
+   ### Added
+   - ...
+   ```
+
+2. **Bump the version**
+
+   Edit `lib/browserctl/version.rb`:
+
+   ```ruby
+   VERSION = "0.2.0"
+   ```
+
+3. **Commit and push**
+
+   ```bash
+   git add CHANGELOG.md lib/browserctl/version.rb
+   git commit -m "chore: release v0.2.0"
+   git push origin main
+   ```
+
+4. **Tag the release**
+
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+   Pushing the tag triggers the `release` workflow, which builds the gem and pushes it to RubyGems. You can monitor progress in the **Actions** tab on GitHub.
+
+5. **Verify**
+
+   Check that the new version appears at `https://rubygems.org/gems/browserctl`. The gem should be live within a minute of the workflow completing.
+
+### Version numbering
+
+This project follows [Semantic Versioning](https://semver.org):
+
+- **Patch** (`0.1.x`) — bug fixes only, no API changes
+- **Minor** (`0.x.0`) — new backwards-compatible functionality
+- **Major** (`x.0.0`) — breaking changes
 
 ---
 
