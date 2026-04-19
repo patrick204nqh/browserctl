@@ -37,7 +37,7 @@ module Browserctl
 
     def setup_server
       server = setup_socket
-      idle   = Thread.new { IdleWatcher.new(-> { @last_used }).watch(server) }
+      idle   = Thread.new { IdleWatcher.new(-> { @mutex.synchronize { @last_used } }).watch(server) }
       [server, idle]
     end
 
@@ -62,8 +62,10 @@ module Browserctl
     end
 
     def handle(socket)
-      @last_used = Time.now if (line = socket.gets)
-      socket.puts JSON.generate(process(line)) if line
+      if (line = socket.gets)
+        @mutex.synchronize { @last_used = Time.now }
+        socket.puts JSON.generate(process(line))
+      end
     rescue StandardError => e
       quietly { socket.puts JSON.generate({ error: e.message }) }
     ensure
@@ -77,6 +79,7 @@ module Browserctl
 
     def teardown(idle, server)
       idle&.kill
+      quietly { server&.close }
       quietly { @browser.quit }
       quietly { File.unlink(SOCKET_PATH) }
       quietly { File.unlink(PID_PATH) }

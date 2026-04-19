@@ -31,10 +31,10 @@ module Browserctl
     end
 
     def invoke(workflow_name, **override_params)
-      check_circular(workflow_name)
+      pushed = check_circular(workflow_name)
       run_nested(workflow_name, **override_params)
     ensure
-      @invoke_stack&.pop
+      @invoke_stack.pop if pushed
     end
 
     def assert(condition, msg = "assertion failed")
@@ -48,6 +48,7 @@ module Browserctl
       raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [name.to_s]).join(' → ')}" if @invoke_stack.include?(name.to_s)
 
       @invoke_stack << name.to_s
+      true
     end
 
     def run_nested(workflow_name, **override_params)
@@ -110,7 +111,11 @@ module Browserctl
 
     def execute_steps(ctx)
       results = []
-      @steps.each { |label, block| results << run_step(ctx, label, block) }
+      @steps.each do |label, block|
+        r = run_step(ctx, label, block)
+        results << r
+        raise WorkflowError, "step '#{label}' failed: #{r.error}" unless r.ok
+      end
       results
     end
 
@@ -118,7 +123,7 @@ module Browserctl
       ctx.instance_exec(&block)
       StepResult.new(name: label, ok: true)
     rescue WorkflowError, StandardError => e
-      raise WorkflowError, "step '#{label}' failed: #{e.message}"
+      StepResult.new(name: label, ok: false, error: e.message)
     end
 
     def resolve_params(provided)
