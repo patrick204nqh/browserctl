@@ -1,5 +1,5 @@
-Browserctl.workflow "smoke_the_internet" do
-  desc "Smoke test against the-internet.herokuapp.com: login + checkbox interaction"
+Browserctl.workflow "the_internet/login" do
+  desc "Form authentication: fill credentials, submit, assert secure area"
 
   param :username, default: "tomsmith"
   param :password, default: "SuperSecretPassword!", secret: true
@@ -15,20 +15,15 @@ Browserctl.workflow "smoke_the_internet" do
     page(:main).click("button[type=submit]")
   end
 
-  step "verify login succeeded" do
+  step "verify secure area" do
     assert page(:main).url.include?("/secure"), "expected redirect to /secure"
     flash = client.evaluate("main", "document.querySelector('.flash.success')?.innerText?.trim()")[:result]
     assert flash&.include?("You logged into a secure area!"), "expected success flash, got: #{flash.inspect}"
   end
 
-  step "navigate to checkboxes" do
-    page(:main).goto("#{base_url}/checkboxes")
-  end
-
-  step "toggle first checkbox and verify" do
-    before = client.evaluate("main", "document.querySelector('form#checkboxes input').checked")[:result]
-    page(:main).click("form#checkboxes input:first-child")
-    after = client.evaluate("main", "document.querySelector('form#checkboxes input').checked")[:result]
-    assert after == !before, "expected checkbox to toggle from #{before} to #{!before}, got #{after}"
+  step "logout and verify" do
+    page(:main).click("a[href='/logout']")
+    flash = client.evaluate("main", "document.querySelector('.flash.success')?.innerText?.trim()")[:result]
+    assert flash&.include?("You logged out"), "expected logout flash, got: #{flash.inspect}"
   end
 end
