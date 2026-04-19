@@ -2,7 +2,7 @@
 
 module Browserctl
   module Commands
-    module OptionParser
+    module FlagExtractor
       def self.extract_opt(args, flag)
         i = args.index(flag)
         return unless i
