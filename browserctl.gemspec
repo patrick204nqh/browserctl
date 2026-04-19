@@ -5,8 +5,8 @@ require_relative "lib/browserctl/version"
 Gem::Specification.new do |s|
   s.name        = "browserctl"
   s.version     = Browserctl::VERSION
-  s.summary     = "Persistent browser automation daemon + CLI for AI agents"
-  s.description = "Ferrum-backed browser daemon with a CLI and Ruby workflow DSL, designed for AI agent use."
+  s.summary     = "Persistent browser automation daemon and CLI for AI agents and developer workflows"
+  s.description = "Named browser sessions, Ruby workflow DSL, and a token-efficient DOM snapshot format. Built on Ferrum (Chrome DevTools Protocol)."
   s.authors     = ["Patrick"]
   s.email       = ["patrick204nqh@gmail.com"]
   s.homepage    = "https://github.com/patrick204nqh/browserctl"
