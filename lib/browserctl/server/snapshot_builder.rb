@@ -16,13 +16,13 @@ module Browserctl
 
     private
 
-    def element_entry(el, ref)
-      { ref: "e#{ref}", tag: el.name, text: el.text.strip.slice(0, 80),
-        selector: css_path(el), attrs: element_attrs(el) }
+    def element_entry(elem, ref)
+      { ref: "e#{ref}", tag: elem.name, text: elem.text.strip.slice(0, 80),
+        selector: css_path(elem), attrs: element_attrs(elem) }
     end
 
-    def element_attrs(el)
-      el.attributes.transform_values(&:value).slice(*ATTRS)
+    def element_attrs(elem)
+      elem.attributes.transform_values(&:value).slice(*ATTRS)
     end
 
     def css_path(node)

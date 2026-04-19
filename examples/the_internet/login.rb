@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Browserctl.workflow "the_internet/login" do
   desc "Form authentication: fill credentials, submit, assert secure area"
 
@@ -25,5 +27,10 @@ Browserctl.workflow "the_internet/login" do
     page(:main).click("a[href='/logout']")
     flash = client.evaluate("main", "document.querySelector('.flash.success')?.innerText?.trim()")[:result]
     assert flash&.include?("You logged out"), "expected logout flash, got: #{flash.inspect}"
+  end
+
+  step "capture screenshot" do
+    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
+    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_login.png")
   end
 end

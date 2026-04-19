@@ -60,9 +60,9 @@ module Browserctl
       results.each { |r| print_result(r) }
     end
 
-    def print_result(r)
-      label = r.ok ? "[ok]  " : "[fail]"
-      msg   = r.ok ? r.name : "#{r.name}: #{r.error}"
+    def print_result(result)
+      label = result.ok ? "[ok]  " : "[fail]"
+      msg   = result.ok ? result.name : "#{result.name}: #{result.error}"
       $stdout.puts "  #{label} #{msg}"
     end
 

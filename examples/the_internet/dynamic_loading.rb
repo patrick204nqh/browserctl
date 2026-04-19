@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Browserctl.workflow "the_internet/dynamic_loading" do
   desc "Dynamic loading: click Start, wait for hidden element to appear"
 
@@ -20,5 +22,10 @@ Browserctl.workflow "the_internet/dynamic_loading" do
   step "assert finish text is correct" do
     text = client.evaluate("main", "document.querySelector('#finish h4')?.innerText?.trim()")[:result]
     assert text == "Hello World!", "expected 'Hello World!', got: #{text.inspect}"
+  end
+
+  step "capture screenshot" do
+    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
+    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_dynamic_loading.png")
   end
 end

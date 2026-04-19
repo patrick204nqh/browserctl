@@ -7,8 +7,8 @@ require "browserctl/client"
 module BrowserctlHelpers
   def start_daemon(headed: false)
     @daemon_pid = fork do
-      $stdout.reopen("/dev/null")
-      $stderr.reopen("/dev/null")
+      $stdout.reopen(File::NULL)
+      $stderr.reopen(File::NULL)
       Browserctl::Server.new(headless: !headed).run
     end
 
@@ -28,8 +28,16 @@ module BrowserctlHelpers
   rescue Errno::ESRCH, Errno::ECHILD
     nil
   ensure
-    File.unlink(Browserctl::SOCKET_PATH) rescue nil
-    File.unlink(Browserctl::PID_PATH)   rescue nil
+    begin
+      File.unlink(Browserctl::SOCKET_PATH)
+    rescue StandardError
+      nil
+    end
+    begin
+      File.unlink(Browserctl::PID_PATH)
+    rescue StandardError
+      nil
+    end
     @daemon_pid = nil
   end
 end

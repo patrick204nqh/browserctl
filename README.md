@@ -210,6 +210,12 @@ browserctl run smoke_login --email me@example.com --password s3cr3t
 
 ---
 
+## Examples
+
+Ready-to-run smoke tests against [the-internet.herokuapp.com](https://the-internet.herokuapp.com) are included in `examples/the_internet/`. See [docs/smoke-testing-the-internet.md](docs/smoke-testing-the-internet.md) for annotated output and auto-generated screenshots of each scenario.
+
+---
+
 ## How it works
 
 `browserd` runs as a background process, listening on a Unix socket at `~/.browserctl/browserd.sock`. It manages a Ferrum (Chrome DevTools Protocol) browser instance with named page handles.

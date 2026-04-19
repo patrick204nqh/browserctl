@@ -29,3 +29,16 @@ Style/Documentation:
 
 Style/NumericLiterals:
   Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "examples/**/*"
+
+Naming/PredicateMethod:
+  AllowedMethods:
+    - run_workflow
+
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec
+

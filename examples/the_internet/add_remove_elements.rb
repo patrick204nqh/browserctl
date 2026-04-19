@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Browserctl.workflow "the_internet/add_remove_elements" do
   desc "Add/Remove Elements: add several elements, remove some, assert final count"
 
@@ -22,6 +24,11 @@ Browserctl.workflow "the_internet/add_remove_elements" do
   step "remove all remaining elements" do
     2.times { page(:main).click("#elements button:first-child") }
     count = client.evaluate("main", "document.querySelectorAll('#elements button').length")[:result]
-    assert count == 0, "expected 0 elements, got: #{count}"
+    assert count.zero?, "expected 0 elements, got: #{count}"
+  end
+
+  step "capture screenshot" do
+    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
+    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_add_remove_elements.png")
   end
 end

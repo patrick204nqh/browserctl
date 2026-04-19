@@ -25,7 +25,10 @@ Expected output for each (example shown for login):
   [ok]   fill and submit credentials
   [ok]   verify secure area
   [ok]   logout and verify
+  [ok]   capture screenshot
 ```
+
+Each example saves a screenshot to `docs/screenshots/` on completion. Screenshots are regenerated automatically by the [Update Screenshots](./../.github/workflows/screenshots.yml) workflow when examples change, and can also be triggered manually from the Actions tab.
 
 ---
 
@@ -44,7 +47,10 @@ Navigates to the login page, fills in the public test credentials, submits the f
   [ok]   fill and submit credentials
   [ok]   verify secure area
   [ok]   logout and verify
+  [ok]   capture screenshot
 ```
+
+![login smoke test](screenshots/the_internet_login.png)
 
 ---
 
@@ -59,7 +65,10 @@ Reads the initial checkbox states (`[false, true]`), toggles the first checkbox,
   [ok]   read initial state
   [ok]   toggle first checkbox on
   [ok]   verify both checkboxes are now checked
+  [ok]   capture screenshot
 ```
+
+![checkboxes smoke test](screenshots/the_internet_checkboxes.png)
 
 ---
 
@@ -76,7 +85,10 @@ Asserts the default dropdown has no selection, then selects Option 1 and Option 
   [ok]   assert default is unselected
   [ok]   select Option 1
   [ok]   select Option 2
+  [ok]   capture screenshot
 ```
+
+![dropdown smoke test](screenshots/the_internet_dropdown.png)
 
 ---
 
@@ -93,7 +105,10 @@ This example demonstrates the `wait_for` command — useful any time a page rend
   [ok]   assert finish text is hidden before start
   [ok]   click Start and wait for content
   [ok]   assert finish text is correct
+  [ok]   capture screenshot
 ```
+
+![dynamic loading smoke test](screenshots/the_internet_dynamic_loading.png)
 
 ---
 
@@ -108,7 +123,10 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
   [ok]   add three elements
   [ok]   remove one element
   [ok]   remove all remaining elements
+  [ok]   capture screenshot
 ```
+
+![add/remove elements smoke test](screenshots/the_internet_add_remove_elements.png)
 
 ---
 

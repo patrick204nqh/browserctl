@@ -31,10 +31,16 @@ module Browserctl
     end
 
     def invoke(workflow_name, **override_params)
-      pushed = check_circular(workflow_name)
+      @invoke_stack ||= []
+      name = workflow_name.to_s
+      if @invoke_stack.include?(name)
+        raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [name]).join(' → ')}"
+      end
+
+      @invoke_stack << name
       run_nested(workflow_name, **override_params)
     ensure
-      @invoke_stack.pop if pushed
+      @invoke_stack.pop
     end
 
     def assert(condition, msg = "assertion failed")
@@ -42,14 +48,6 @@ module Browserctl
     end
 
     private
-
-    def check_circular(name)
-      @invoke_stack ||= []
-      raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [name.to_s]).join(' → ')}" if @invoke_stack.include?(name.to_s)
-
-      @invoke_stack << name.to_s
-      true
-    end
 
     def run_nested(workflow_name, **override_params)
       Runner.new.run_workflow(workflow_name, **@params, **override_params)
@@ -136,7 +134,7 @@ module Browserctl
     end
   end
 
-  REGISTRY = {}
+  REGISTRY = {} # rubocop:disable Style/MutableConstant
 
   def self.workflow(name, &)
     defn = WorkflowDefinition.new(name.to_s)

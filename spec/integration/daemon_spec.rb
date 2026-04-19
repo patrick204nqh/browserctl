@@ -15,7 +15,11 @@ RSpec.describe "browserd daemon", :integration do
   end
 
   describe "page lifecycle" do
-    after { @client.close_page("test") rescue nil }
+    after do
+      @client.close_page("test")
+    rescue StandardError
+      nil
+    end
 
     it "opens a named page" do
       res = @client.open_page("test")
@@ -44,7 +48,11 @@ RSpec.describe "browserd daemon", :integration do
 
   describe "navigation" do
     before  { @client.open_page("nav") }
-    after   { @client.close_page("nav") rescue nil }
+    after   do
+      @client.close_page("nav")
+    rescue StandardError
+      nil
+    end
 
     it "navigates and returns current url" do
       res = @client.goto("nav", "about:blank")
@@ -61,7 +69,11 @@ RSpec.describe "browserd daemon", :integration do
 
   describe "fill and click" do
     before { @client.open_page("form") }
-    after  { @client.close_page("form") rescue nil }
+    after  do
+      @client.close_page("form")
+    rescue StandardError
+      nil
+    end
 
     it "returns error when fill selector not found" do
       @client.goto("form", "about:blank")
@@ -82,7 +94,7 @@ RSpec.describe "browserd daemon", :integration do
           <button id="go" onclick="this.dataset.clicked='1'">Go</button>
         </body></html>
       HTML
-      encoded = "data:text/html;base64,#{[html].pack("m0")}"
+      encoded = "data:text/html;base64,#{[html].pack('m0')}"
       @client.goto("form", encoded)
 
       expect(@client.fill("form", "input#name", "hello")[:ok]).to be true
@@ -95,11 +107,15 @@ RSpec.describe "browserd daemon", :integration do
 
   describe "snapshot" do
     before { @client.open_page("snap") }
-    after  { @client.close_page("snap") rescue nil }
+    after  do
+      @client.close_page("snap")
+    rescue StandardError
+      nil
+    end
 
     it "returns ai snapshot as array of element hashes" do
       html = "<html><body><a href='/'>Home</a><button>Click</button></body></html>"
-      encoded = "data:text/html;base64,#{[html].pack("m0")}"
+      encoded = "data:text/html;base64,#{[html].pack('m0')}"
       @client.goto("snap", encoded)
 
       res = @client.snapshot("snap", format: "ai")
@@ -118,7 +134,11 @@ RSpec.describe "browserd daemon", :integration do
 
   describe "evaluate" do
     before { @client.open_page("eval") }
-    after  { @client.close_page("eval") rescue nil }
+    after  do
+      @client.close_page("eval")
+    rescue StandardError
+      nil
+    end
 
     it "evaluates javascript and returns the result" do
       @client.goto("eval", "about:blank")

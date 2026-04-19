@@ -20,7 +20,7 @@ RSpec.describe Browserctl::WorkflowDefinition do
       end
 
       results = defn.call({}, client)
-      expect(order).to eq([:first, :second])
+      expect(order).to eq(%i[first second])
       expect(results.map(&:ok)).to all(be true)
     end
 

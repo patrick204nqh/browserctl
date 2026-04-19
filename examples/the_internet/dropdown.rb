@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Browserctl.workflow "the_internet/dropdown" do
   desc "Dropdown: select each option via JS, assert selected value"
 
@@ -22,5 +24,10 @@ Browserctl.workflow "the_internet/dropdown" do
     client.evaluate("main", "document.querySelector('select#dropdown').value = '2'")
     selected = client.evaluate("main", "document.querySelector('select#dropdown option:checked').text")[:result]
     assert selected == "Option 2", "expected 'Option 2', got: #{selected.inspect}"
+  end
+
+  step "capture screenshot" do
+    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
+    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_dropdown.png")
   end
 end

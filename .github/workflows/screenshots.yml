@@ -1,0 +1,52 @@
+name: Update Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "examples/the_internet/**"
+
+jobs:
+  screenshots:
+    name: Capture Smoke Test Screenshots
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install Chromium
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y chromium-browser
+
+      - name: Start daemon
+        run: |
+          bundle exec browserd &
+          sleep 2
+
+      - name: Run smoke tests
+        run: |
+          bundle exec browserctl run examples/the_internet/login.rb
+          bundle exec browserctl run examples/the_internet/checkboxes.rb
+          bundle exec browserctl run examples/the_internet/dropdown.rb
+          bundle exec browserctl run examples/the_internet/dynamic_loading.rb
+          bundle exec browserctl run examples/the_internet/add_remove_elements.rb
+
+      - name: Stop daemon
+        if: always()
+        run: bundle exec browserctl shutdown || true
+
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots/
+          git diff --staged --quiet || git commit -m "chore: update smoke test screenshots [skip ci]"
+          git push
