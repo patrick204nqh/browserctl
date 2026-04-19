@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "nokogiri"
+require "browserctl/server"
+
+headless = !ARGV.include?("--headed")
+Browserctl::Server.new(headless: headless).run

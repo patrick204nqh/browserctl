@@ -1,0 +1,10 @@
+.bundle/
+vendor/
+*.gem
+Gemfile.lock
+tmp/
+.browserctl/
+~/.browserctl/
+.env
+.envrc
+.DS_Store
