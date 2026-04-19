@@ -113,8 +113,8 @@ module Browserctl
 
     def wait_for_selector(page, selector, timeout)
       deadline = Time.now + timeout
-      sleep 0.2 until page.at_css(selector) || Time.now > deadline
-      page.at_css(selector) ? { ok: true } : { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" }
+      sleep 0.2 until (found = page.at_css(selector)) || Time.now > deadline
+      found ? { ok: true } : { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" }
     end
 
     def cmd_url(req)

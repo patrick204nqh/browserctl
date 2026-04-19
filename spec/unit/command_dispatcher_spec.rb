@@ -47,5 +47,11 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(result).to eq({ ok: true })
       expect(pages.key?("home")).to be false
     end
+
+    it "shutdown sends SIGINT to current process" do
+      expect(Process).to receive(:kill).with("INT", Process.pid)
+      result = dispatcher.dispatch({ cmd: "shutdown" })
+      expect(result).to eq({ ok: true })
+    end
   end
 end
