@@ -4,6 +4,7 @@ require "ferrum"
 require "socket"
 require "json"
 require "fileutils"
+require "timeout"
 require_relative "constants"
 require_relative "server/command_dispatcher"
 require_relative "server/idle_watcher"
@@ -93,7 +94,7 @@ module Browserctl
     def teardown(idle, server)
       idle&.kill
       quietly { server&.close }
-      quietly { @browser.quit }
+      quietly { Timeout.timeout(5) { @browser.quit } }
       quietly { File.unlink(SOCKET_PATH) }
       quietly { File.unlink(PID_PATH) }
     end

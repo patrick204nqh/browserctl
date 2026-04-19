@@ -24,7 +24,14 @@ module BrowserctlHelpers
     return unless @daemon_pid
 
     Process.kill("INT", @daemon_pid)
-    Process.wait(@daemon_pid)
+    deadline = Time.now + 5
+    loop do
+      Process.wait(@daemon_pid, Process::WNOHANG)
+      break if Time.now > deadline
+
+      sleep 0.1
+    end
+    Process.kill("KILL", @daemon_pid)
   rescue Errno::ESRCH, Errno::ECHILD
     nil
   ensure
