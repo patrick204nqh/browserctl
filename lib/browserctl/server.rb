@@ -35,12 +35,12 @@ module Browserctl
     end
 
     def init_browser(headless)
-      Ferrum::Browser.new(
-        headless: headless,
-        timeout: 30,
-        process_timeout: 30,
-        browser_options: { "no-sandbox" => nil, "disable-dev-shm-usage" => nil, "disable-gpu" => nil }
-      )
+      Ferrum::Browser.new(headless: headless, **ferrum_options)
+    end
+
+    def ferrum_options
+      { timeout: 30, process_timeout: 30,
+        browser_options: { "no-sandbox" => nil, "disable-dev-shm-usage" => nil, "disable-gpu" => nil } }
     end
 
     def init_state
