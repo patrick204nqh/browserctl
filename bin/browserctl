@@ -48,7 +48,11 @@ runner = Browserctl::Runner.new
 
 case cmd
 when "run"
-  name = args.shift or abort "usage: browserctl run <workflow_name> [--key value ...]"
+  name = args.shift or abort "usage: browserctl run <workflow_name|file.rb> [--key value ...]"
+  if File.exist?(name)
+    load File.expand_path(name)
+    name = File.basename(name, ".rb")
+  end
   params = {}
   args.each_slice(2) do |flag, val|
     key = flag.sub(/\A--/, "").to_sym
