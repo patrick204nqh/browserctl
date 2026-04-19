@@ -1,36 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="120" height="120" role="img" aria-label="browserctl logo">
-  <!-- Outer rim -->
-  <circle cx="50" cy="50" r="42" fill="none" stroke="#6CABDD" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="browserctl logo B - modern circular galleon">
+  <defs>
+    <clipPath id="b-clip">
+      <circle cx="100" cy="100" r="94"/>
+    </clipPath>
+  </defs>
 
-  <!-- 8 spokes (from hub edge r=12 to just inside rim r=40) -->
-  <!-- 0° -->
-  <line x1="62" y1="50" x2="90" y2="50" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 45° -->
-  <line x1="58.49" y1="58.49" x2="78.28" y2="78.28" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 90° -->
-  <line x1="50" y1="62" x2="50" y2="90" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 135° -->
-  <line x1="41.51" y1="58.49" x2="21.72" y2="78.28" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 180° -->
-  <line x1="38" y1="50" x2="10" y2="50" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 225° -->
-  <line x1="41.51" y1="41.51" x2="21.72" y2="21.72" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 270° -->
-  <line x1="50" y1="38" x2="50" y2="10" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
-  <!-- 315° -->
-  <line x1="58.49" y1="41.51" x2="78.28" y2="21.72" stroke="#6CABDD" stroke-width="3" stroke-linecap="round"/>
+  <!-- Badge: light blue outer band + pale sky fill -->
+  <circle cx="100" cy="100" r="97" fill="#6CABDD"/>
+  <circle cx="100" cy="100" r="94" fill="#E8F5FF"/>
 
-  <!-- Handle knobs at r=46 -->
-  <circle cx="96" cy="50"    r="4" fill="#6CABDD"/>
-  <circle cx="82.53" cy="82.53" r="4" fill="#6CABDD"/>
-  <circle cx="50"    cy="96"   r="4" fill="#6CABDD"/>
-  <circle cx="17.47" cy="82.53" r="4" fill="#6CABDD"/>
-  <circle cx="4"     cy="50"   r="4" fill="#6CABDD"/>
-  <circle cx="17.47" cy="17.47" r="4" fill="#6CABDD"/>
-  <circle cx="50"    cy="4"    r="4" fill="#6CABDD"/>
-  <circle cx="82.53" cy="17.47" r="4" fill="#6CABDD"/>
+  <g clip-path="url(#b-clip)">
+    <!-- SHIP -->
+    <!-- Bowsprit -->
+    <line x1="54" y1="136" x2="30" y2="114" stroke="#0D1B3E" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- Center hub -->
-  <circle cx="50" cy="50" r="10" fill="#6CABDD"/>
-  <circle cx="50" cy="50" r="5"  fill="#1C2E4A"/>
+    <!-- Masts -->
+    <line x1="76"  y1="72"  x2="76"  y2="146" stroke="#0D1B3E" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="100" y1="52"  x2="100" y2="146" stroke="#0D1B3E" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="126" y1="78"  x2="126" y2="144" stroke="#0D1B3E" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Jib (triangle) -->
+    <polygon points="32,114 72,74 72,138" fill="#6CABDD" fill-opacity="0.5" stroke="#0D1B3E" stroke-width="1"/>
+
+    <!-- Fore sail -->
+    <polygon points="78,75  90,85  88,124 78,124" fill="white" stroke="#0D1B3E" stroke-width="1"/>
+    <polygon points="74,75  62,85  64,124 74,124" fill="white" stroke="#0D1B3E" stroke-width="1"/>
+
+    <!-- Main sail -->
+    <polygon points="102,55 122,68 120,130 102,130" fill="white" stroke="#0D1B3E" stroke-width="1.2"/>
+    <polygon points="98,55  78,68  80,130  98,130" fill="white" stroke="#0D1B3E" stroke-width="1.2"/>
+
+    <!-- Mizzen -->
+    <polygon points="128,81 140,90 138,136 128,136" fill="white" stroke="#0D1B3E" stroke-width="1"/>
+    <polygon points="124,81 112,90 114,136 124,136" fill="white" stroke="#0D1B3E" stroke-width="1"/>
+
+    <!-- Flag -->
+    <polygon points="100,50 116,44 100,52" fill="#0D1B3E"/>
+
+    <!-- Hull -->
+    <path d="M 50,144 L 58,158 L 142,158 L 150,144 Z" fill="#0D1B3E"/>
+    <rect x="50" y="140" width="100" height="5" rx="2.5" fill="#1A3060"/>
+
+    <!-- Stern -->
+    <rect x="137" y="126" width="15" height="18" rx="3" fill="#0D1B3E"/>
+    <!-- Bow -->
+    <rect x="48" y="130" width="13" height="14" rx="3" fill="#0D1B3E"/>
+
+    <!-- Waves (deep ocean, clearly distinct from sky) -->
+    <path d="M 6,150 Q 35,140 65,150 Q 95,160 125,150 Q 155,140 194,150 L 194,185 L 6,185 Z" fill="#1565A8"/>
+    <path d="M 6,160 Q 40,150 74,160 Q 108,170 142,160 Q 168,152 194,160 L 194,185 L 6,185 Z" fill="#0D4A82"/>
+  </g>
 </svg>
