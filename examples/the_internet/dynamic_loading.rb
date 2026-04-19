@@ -22,9 +22,11 @@ Browserctl.workflow "the_internet/dynamic_loading" do
   step "assert finish text is correct" do
     text = client.evaluate("main", "document.querySelector('#finish h4')?.innerText?.trim()")[:result]
     assert text == "Hello World!", "expected 'Hello World!', got: #{text.inspect}"
-  end
-
-  step "capture screenshot" do
+    # wait for #loading to disappear before screenshotting so the rendered state is correct
+    deadline = Time.now + 5
+    sleep 0.2 until client.evaluate("main",
+                                    "document.querySelector('#loading')?.style?.display")[:result] == "none" ||
+                    Time.now > deadline
     screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
     page(:main).screenshot(path: "#{screenshots_dir}/the_internet_dynamic_loading.png")
   end

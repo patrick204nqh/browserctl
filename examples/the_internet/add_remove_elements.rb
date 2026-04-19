@@ -13,6 +13,8 @@ Browserctl.workflow "the_internet/add_remove_elements" do
     3.times { page(:main).click("button[onclick]") }
     count = client.evaluate("main", "document.querySelectorAll('#elements button').length")[:result]
     assert count == 3, "expected 3 elements, got: #{count}"
+    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
+    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_add_remove_elements.png")
   end
 
   step "remove one element" do
@@ -25,10 +27,5 @@ Browserctl.workflow "the_internet/add_remove_elements" do
     2.times { page(:main).click("#elements button:first-child") }
     count = client.evaluate("main", "document.querySelectorAll('#elements button').length")[:result]
     assert count.zero?, "expected 0 elements, got: #{count}"
-  end
-
-  step "capture screenshot" do
-    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
-    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_add_remove_elements.png")
   end
 end
