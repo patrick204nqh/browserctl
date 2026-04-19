@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" width="96" height="96" alt="browserctl logo"/>
+  <img src=".github/logo.svg" width="96" height="96" alt="browserctl logo"/>
 </p>
 
 # browserctl
@@ -158,13 +158,13 @@ Use `selector` values directly with `fill` and `click`.
 Workflows are Ruby files using the `Browserctl.workflow` DSL. Place them in any of:
 
 - `./.browserctl/workflows/`
-- `./workflows/`
+- `./examples/`
 - `~/.browserctl/workflows/`
 
 ### Example
 
 ```ruby
-# workflows/smoke_login.rb
+# examples/smoke_login.rb
 Browserctl.workflow "smoke_login" do
   desc "Log in and confirm the dashboard loads"
 

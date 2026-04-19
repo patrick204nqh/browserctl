@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 3.2"
 
-  s.files         = Dir["lib/**/*.rb", "bin/*", "workflows/**/*.rb"] +
+  s.files         = Dir["lib/**/*.rb", "bin/*", "examples/**/*.rb"] +
                     %w[README.md CHANGELOG.md LICENSE]
   s.executables   = %w[browserd browserctl]
   s.require_paths = ["lib"]
