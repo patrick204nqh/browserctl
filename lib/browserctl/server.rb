@@ -2,11 +2,9 @@ require "ferrum"
 require "socket"
 require "json"
 require "fileutils"
+require_relative "constants"
 
 module Browserctl
-  SOCKET_PATH = File.expand_path("~/.browserctl/browserd.sock")
-  PID_PATH    = File.expand_path("~/.browserctl/browserd.pid")
-  IDLE_TTL    = 30 * 60 # 30 minutes
 
   class Server
     def initialize(headless: true)

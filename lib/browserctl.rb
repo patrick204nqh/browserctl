@@ -1,4 +1,5 @@
 require_relative "browserctl/version"
+require_relative "browserctl/constants"
 require_relative "browserctl/workflow"
 require_relative "browserctl/runner"
 require_relative "browserctl/client"

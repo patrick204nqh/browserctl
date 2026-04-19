@@ -5,6 +5,7 @@ module Browserctl
   class Runner
     SEARCH_PATHS = [
       "./.browserctl/workflows",
+      "./workflows",
       File.expand_path("~/.browserctl/workflows")
     ].freeze
 

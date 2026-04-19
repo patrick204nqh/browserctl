@@ -1,5 +1,3 @@
-require_relative "../lib/browserctl/workflow"
-
 Browserctl.workflow "smoke_login" do
   desc "Log in and confirm the dashboard loads"
 

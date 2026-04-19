@@ -1,7 +1,6 @@
 .bundle/
 vendor/
 *.gem
-Gemfile.lock
 tmp/
 .browserctl/
 ~/.browserctl/

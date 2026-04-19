@@ -1,5 +1,6 @@
 require "socket"
 require "json"
+require_relative "constants"
 
 module Browserctl
   class Client
