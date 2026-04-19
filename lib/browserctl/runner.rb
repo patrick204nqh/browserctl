@@ -7,7 +7,6 @@ module Browserctl
   class Runner
     SEARCH_PATHS = [
       "./.browserctl/workflows",
-      "./workflows",
       File.expand_path("~/.browserctl/workflows")
     ].freeze
 
@@ -38,11 +37,14 @@ module Browserctl
     def load_workflow_file(name)
       return if REGISTRY.key?(name.to_s)
 
-      SEARCH_PATHS.find do |dir|
-        path = File.join(dir, "#{name}.rb")
-        next unless File.exist?(path)
+      path = workflow_path(name)
+      load path if path
+    end
 
-        load path
+    def workflow_path(name)
+      SEARCH_PATHS.find do |dir|
+        candidate = File.join(dir, "#{name}.rb")
+        candidate if File.exist?(candidate)
       end
     end
 

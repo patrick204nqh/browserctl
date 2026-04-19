@@ -29,8 +29,20 @@ module Browserctl
 
     def prepare_runtime(headless)
       FileUtils.mkdir_p(File.dirname(SOCKET_PATH))
-      @browser   = Ferrum::Browser.new(headless: headless, timeout: 30,
-                                       browser_options: { "disable-dev-shm-usage" => nil })
+      @browser = init_browser(headless)
+      init_state
+    end
+
+    def init_browser(headless)
+      Ferrum::Browser.new(
+        headless: headless,
+        timeout: 30,
+        process_timeout: 30,
+        browser_options: { "disable-dev-shm-usage" => nil, "disable-gpu" => nil }
+      )
+    end
+
+    def init_state
       @pages     = {}
       @last_used = Time.now
       @mutex     = Mutex.new

@@ -37,11 +37,17 @@ module Browserctl
     def communicate(payload)
       UNIXSocket.open(@socket_path) do |sock|
         sock.puts(payload)
-        raw = sock.gets
-        raise "browserd closed connection" unless raw
-
-        JSON.parse(raw.chomp, symbolize_names: true)
+        read_response(sock)
       end
+    end
+
+    def read_response(sock)
+      raise "browserd response timeout after 60s" unless sock.wait_readable(60)
+
+      raw = sock.gets
+      raise "browserd closed connection" unless raw
+
+      JSON.parse(raw.chomp, symbolize_names: true)
     end
   end
 end
