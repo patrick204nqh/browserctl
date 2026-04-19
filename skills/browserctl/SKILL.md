@@ -73,17 +73,59 @@ Use names that describe purpose:
 | `checkout`     | `tab2` |
 | `admin-users`  | `page` |
 
-## Workflows — reusable sequences
+## Probe before you write a workflow
 
-When a sequence of commands works reliably, save it as a workflow:
+Before writing a permanent workflow file, verify the flow works using discrete commands or a
+throwaway script. Only harden once the sequence is confirmed reliable.
+
+**Step 1 — Explore with discrete commands**
+
+```sh
+browserd --headed &
+browserctl open main --url https://app.example.com/login
+browserctl snap main                          # learn the selectors
+browserctl fill main "input[name=email]" me@example.com
+browserctl fill main "input[name=password]" secret
+browserctl click main "button[type=submit]"
+browserctl url  main                          # confirm redirect
+```
+
+**Step 2 — Run a throwaway script to test the full flow**
+
+Write a minimal `.rb` file anywhere and run it by path — no search-path setup needed:
 
 ```ruby
-# .browserctl/workflows/my_flow.rb
-require_relative "path/to/lib/browserctl/workflow"
+# /tmp/probe_login.rb
+Browserctl.workflow "probe_login" do
+  step "open" do
+    page(:main).goto("https://app.example.com/login")
+  end
+  step "login" do
+    page(:main).fill("input[name=email]", "me@example.com")
+    page(:main).fill("input[name=password]", "secret")
+    page(:main).click("button[type=submit]")
+  end
+  step "verify" do
+    page(:main).wait_for("[data-test=dashboard]", timeout: 10)
+    assert page(:main).url.include?("/dashboard")
+  end
+end
+```
 
-Browserctl.workflow "my_flow" do
-  desc "What this does"
-  param :email, required: true
+```sh
+browserctl run /tmp/probe_login.rb
+```
+
+**Step 3 — Harden into a named workflow**
+
+Once the probe passes, move it to `.browserctl/workflows/`, add params, and run by name:
+
+```ruby
+# .browserctl/workflows/smoke_login.rb
+Browserctl.workflow "smoke_login" do
+  desc "Log in and verify dashboard redirect"
+  param :email,    required: true
+  param :password, required: true, secret: true
   param :base_url, default: "https://app.example.com"
 
   step "open page" do
@@ -92,6 +134,7 @@ Browserctl.workflow "my_flow" do
 
   step "fill form" do
     page(:login).fill("input[name=email]", email)
+    page(:login).fill("input[name=password]", password)
     page(:login).click("button[type=submit]")
   end
 
@@ -102,20 +145,22 @@ Browserctl.workflow "my_flow" do
 end
 ```
 
-Run it: `browserctl run my_flow --email user@example.com`
+```sh
+browserctl run smoke_login --email me@example.com --password secret
+```
 
 List available: `browserctl workflows`
-Describe one:   `browserctl describe my_flow`
+Describe one:   `browserctl describe smoke_login`
 
 Workflows in `./.browserctl/workflows/` are project-local.
 Workflows in `~/.browserctl/workflows/` are global.
 
 ## Rules
 
-- **Prefer discrete commands** (`fill`, `click`) over eval for simple actions.
-- **Use `snap --format ai`** for any page you haven't seen before.
+- **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
+- **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
+- **Use `snap --format ai`** for any page you haven't seen before — it gives valid selectors without reading raw HTML.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
-- **Don't `eval` arbitrary JavaScript** unless a discrete command can't do it.
 - **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snap <page>`.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file.
 

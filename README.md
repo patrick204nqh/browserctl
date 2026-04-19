@@ -6,19 +6,42 @@
 
 [![CI](https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml/badge.svg)](https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/browserctl.svg)](https://badge.fury.io/rb/browserctl)
+[![Downloads](https://img.shields.io/gem/dt/browserctl)](https://rubygems.org/gems/browserctl)
 
 A persistent browser automation daemon and CLI, purpose-built for AI agents and developer workflows.
 
 Unlike tools that restart the browser on every script run, **browserctl keeps a named browser session alive** — preserving cookies, localStorage, open tabs, and page state across discrete commands.
 
 ```bash
-browserd &                                          # start the daemon (headless)
-browserctl open app --url https://example.com/login
-browserctl fill app "input[name=email]" me@example.com
-browserctl click app "button[type=submit]"
-browserctl snap app                                 # AI-friendly JSON snapshot
+browserd &                                           # start the daemon (headless)
+browserctl open login --url https://example.com/login
+browserctl fill login "input[name=email]" me@example.com
+browserctl click login "button[type=submit]"
+browserctl snap login                                # AI-friendly JSON snapshot
 browserctl shutdown
 ```
+
+![browserctl capturing a login flow](docs/screenshots/the_internet_login.png)
+<p align="center"><sub>Login flow captured with <code>browserctl shot</code></sub></p>
+
+---
+
+## Why browserctl?
+
+Most automation tools are stateless — every script spins up a fresh browser and tears it down. browserctl doesn't.
+
+| | browserctl | Playwright / Selenium |
+|---|---|---|
+| Session persists across commands | ✓ | ✗ (per-script lifecycle) |
+| Named page handles | ✓ | ✗ |
+| AI-friendly DOM snapshot | ✓ | ✗ |
+| Lightweight CLI interface | ✓ | ✗ |
+| Full browser automation API | — | ✓ |
+| Parallel multi-browser testing | — | ✓ |
+
+**Use browserctl when** you need a browser that stays alive and remembers state — for AI agents, iterative dev workflows, or lightweight smoke tests.
+
+**Use Playwright/Selenium when** you need parallel test suites, multi-browser support, or a full programmatic API.
 
 ---
 
@@ -114,7 +137,7 @@ browserctl shutdown
 
 | Command | Description |
 |---|---|
-| `run <name> [--key value ...]` | Run a named workflow |
+| `run <name\|file.rb> [--key value ...]` | Run a named workflow or workflow file |
 | `workflows` | List available workflows |
 | `describe <name>` | Show workflow params and steps |
 
@@ -158,13 +181,12 @@ Use `selector` values directly with `fill` and `click`.
 Workflows are Ruby files using the `Browserctl.workflow` DSL. Place them in any of:
 
 - `./.browserctl/workflows/`
-- `./examples/`
 - `~/.browserctl/workflows/`
 
 ### Example
 
 ```ruby
-# examples/smoke_login.rb
+# .browserctl/workflows/smoke_login.rb
 Browserctl.workflow "smoke_login" do
   desc "Log in and confirm the dashboard loads"
 
@@ -214,6 +236,8 @@ browserctl run smoke_login --email me@example.com --password s3cr3t
 
 Ready-to-run smoke tests against [the-internet.herokuapp.com](https://the-internet.herokuapp.com) are included in `examples/the_internet/`. See [docs/smoke-testing-the-internet.md](docs/smoke-testing-the-internet.md) for annotated output and auto-generated screenshots of each scenario.
 
+For a full guide on building your own workflows, see [docs/writing-workflows.md](docs/writing-workflows.md).
+
 ---
 
 ## How it works
@@ -238,6 +262,10 @@ bundle exec rubocop    # lint
 ```
 
 ---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md)
 
 ## License
 
