@@ -125,7 +125,6 @@ module Browserctl
       @param_defs.each_with_object({}) do |(name, defn), out|
         val = provided[name] || defn.default
         raise WorkflowError, "required param '#{name}' missing" if defn.required && val.nil?
-
         out[name] = val
       end
     end
