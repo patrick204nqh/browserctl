@@ -36,14 +36,9 @@ module Browserctl
     private
 
     def cmd_open_page(req)
-      @pages[req[:name]] ||= create_page(req[:url])
+      page = @pages[req[:name]] ||= @browser.create_page
+      page.go_to(req[:url]) if req[:url]
       { ok: true, name: req[:name] }
-    end
-
-    def create_page(url)
-      page = @browser.create_page
-      page.go_to(url) if url
-      page
     end
 
     def cmd_close_page(req)

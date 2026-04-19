@@ -39,6 +39,21 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(pages["home"]).to eq(page)
     end
 
+    it "open_page navigates to url when given" do
+      page = double("page")
+      allow(browser).to receive(:create_page).and_return(page)
+      expect(page).to receive(:go_to).with("http://example.com")
+      dispatcher.dispatch({ cmd: "open_page", name: "home", url: "http://example.com" })
+    end
+
+    it "open_page re-navigates an existing page when url is given" do
+      page = double("page")
+      pages["home"] = page
+      expect(page).to receive(:go_to).with("http://example.com/new")
+      result = dispatcher.dispatch({ cmd: "open_page", name: "home", url: "http://example.com/new" })
+      expect(result).to eq({ ok: true, name: "home" })
+    end
+
     it "close_page removes page and closes it" do
       page = double("page")
       allow(page).to receive(:close)
