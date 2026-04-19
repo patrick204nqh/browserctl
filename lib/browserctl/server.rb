@@ -38,7 +38,7 @@ module Browserctl
         headless: headless,
         timeout: 30,
         process_timeout: 30,
-        browser_options: { "disable-dev-shm-usage" => nil, "disable-gpu" => nil }
+        browser_options: { "no-sandbox" => nil, "disable-dev-shm-usage" => nil, "disable-gpu" => nil }
       )
     end
 
