@@ -11,13 +11,7 @@ module Browserctl
     end
 
     def call(cmd, **params)
-      UNIXSocket.open(@socket_path) do |sock|
-        sock.puts(JSON.generate({ cmd: cmd }.merge(params)))
-        raw = sock.gets
-        raise "browserd closed connection" unless raw
-
-        JSON.parse(raw.chomp, symbolize_names: true)
-      end
+      communicate(JSON.generate({ cmd: cmd }.merge(params)))
     rescue Errno::ENOENT, Errno::ECONNREFUSED
       raise "browserd is not running — start it with: browserd"
     end
@@ -37,5 +31,17 @@ module Browserctl
     def evaluate(name, expression) = call("evaluate",    name: name, expression: expression)
     def ping                       = call("ping")
     def shutdown                   = call("shutdown")
+
+    private
+
+    def communicate(payload)
+      UNIXSocket.open(@socket_path) do |sock|
+        sock.puts(payload)
+        raw = sock.gets
+        raise "browserd closed connection" unless raw
+
+        JSON.parse(raw.chomp, symbolize_names: true)
+      end
+    end
   end
 end

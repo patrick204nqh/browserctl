@@ -31,19 +31,27 @@ module Browserctl
     end
 
     def invoke(workflow_name, **override_params)
-      @invoke_stack ||= []
-      if @invoke_stack.include?(workflow_name.to_s)
-        raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [workflow_name]).join(' → ')}"
-      end
-
-      @invoke_stack << workflow_name.to_s
-      Runner.new.run_workflow(workflow_name, **@params, **override_params)
+      check_circular(workflow_name)
+      run_nested(workflow_name, **override_params)
     ensure
       @invoke_stack&.pop
     end
 
     def assert(condition, msg = "assertion failed")
       raise WorkflowError, msg unless condition
+    end
+
+    private
+
+    def check_circular(name)
+      @invoke_stack ||= []
+      raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [name.to_s]).join(' → ')}" if @invoke_stack.include?(name.to_s)
+
+      @invoke_stack << name.to_s
+    end
+
+    def run_nested(workflow_name, **override_params)
+      Runner.new.run_workflow(workflow_name, **@params, **override_params)
     end
   end
 
@@ -94,36 +102,36 @@ module Browserctl
     end
 
     def call(params, client)
-      resolved = resolve_params(params)
-      ctx      = WorkflowContext.new(resolved, client)
-      results  = []
-
-      @steps.each do |label, block|
-        ctx.instance_exec(&block)
-        results << StepResult.new(name: label, ok: true)
-      rescue WorkflowError, StandardError => e
-        results << StepResult.new(name: label, ok: false, error: e.message)
-        raise WorkflowError, "step '#{label}' failed: #{e.message}"
-      end
-
-      results
+      ctx = WorkflowContext.new(resolve_params(params), client)
+      execute_steps(ctx)
     end
 
     private
 
+    def execute_steps(ctx)
+      results = []
+      @steps.each { |label, block| results << run_step(ctx, label, block) }
+      results
+    end
+
+    def run_step(ctx, label, block)
+      ctx.instance_exec(&block)
+      StepResult.new(name: label, ok: true)
+    rescue WorkflowError, StandardError => e
+      raise WorkflowError, "step '#{label}' failed: #{e.message}"
+    end
+
     def resolve_params(provided)
-      out = {}
-      @param_defs.each do |name, defn|
+      @param_defs.each_with_object({}) do |(name, defn), out|
         val = provided[name] || defn.default
         raise WorkflowError, "required param '#{name}' missing" if defn.required && val.nil?
 
         out[name] = val
       end
-      out
     end
   end
 
-  REGISTRY = {}.freeze
+  REGISTRY = {}
 
   def self.workflow(name, &)
     defn = WorkflowDefinition.new(name.to_s)
