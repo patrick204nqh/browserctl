@@ -71,59 +71,52 @@ Configuration lives in `.rubocop.yml`. Please keep new code consistent with the 
 
 ## Releasing
 
-Releases are published to [RubyGems](https://rubygems.org/gems/browserctl) by pushing a version tag. The `release` GitHub Actions workflow handles building and pushing the gem automatically.
+Releases are automated via [release-please](https://github.com/googleapis/release-please). Every commit to `main` that follows the [Conventional Commits](https://www.conventionalcommits.org) format is picked up automatically.
 
 **Prerequisites:** you must be a maintainer with access to the `rubygems-release` GitHub Environment. The `RUBYGEMS_API_KEY` secret is provisioned via the infrastructure repo — no manual setup needed.
 
+### How it works
+
+```
+conventional commit → main
+        ↓
+release-please opens (or updates) a Release PR
+  • bumps lib/browserctl/version.rb
+  • updates CHANGELOG.md
+        ↓
+maintainer reviews and merges the Release PR
+        ↓
+release-please creates a GitHub Release + tag (e.g. v0.2.0)
+        ↓
+release workflow triggers → gem built and pushed to RubyGems
+```
+
 ### Steps
 
-1. **Update the changelog**
+1. **Write conventional commits** as you work — release-please reads these to determine the next version and generate the changelog:
 
-   Move everything under `## [Unreleased]` into a new versioned section in `CHANGELOG.md`:
+   | Prefix | Version bump | Example |
+   |--------|-------------|---------|
+   | `fix:` | patch | `fix: handle nil selector in click` |
+   | `feat:` | minor | `feat: add scroll command` |
+   | `feat!:` or `BREAKING CHANGE:` | major | `feat!: rename goto to navigate` |
+   | `chore:`, `docs:`, `refactor:` | none | skipped in changelog |
 
-   ```markdown
-   ## [0.2.0] - 2026-04-19
+2. **Merge your PR** — the `release-please` workflow runs on every push to `main` and keeps the Release PR up to date.
 
-   ### Added
-   - ...
-   ```
+3. **Review and merge the Release PR** — when you're ready to ship, merge the open "chore: release vX.Y.Z" PR. That's it.
 
-2. **Bump the version**
+   The `release` workflow then builds the gem and pushes it to RubyGems automatically. Monitor progress in the **Actions** tab.
 
-   Edit `lib/browserctl/version.rb`:
-
-   ```ruby
-   VERSION = "0.2.0"
-   ```
-
-3. **Commit and push**
-
-   ```bash
-   git add CHANGELOG.md lib/browserctl/version.rb
-   git commit -m "chore: release v0.2.0"
-   git push origin main
-   ```
-
-4. **Tag the release**
-
-   ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
-
-   Pushing the tag triggers the `release` workflow, which builds the gem and pushes it to RubyGems. You can monitor progress in the **Actions** tab on GitHub.
-
-5. **Verify**
-
-   Check that the new version appears at `https://rubygems.org/gems/browserctl`. The gem should be live within a minute of the workflow completing.
+4. **Verify** — check that the new version appears at `https://rubygems.org/gems/browserctl` within a minute of the workflow completing.
 
 ### Version numbering
 
-This project follows [Semantic Versioning](https://semver.org):
+This project follows [Semantic Versioning](https://semver.org). release-please determines the bump automatically from commit prefixes — no manual version editing needed.
 
-- **Patch** (`0.1.x`) — bug fixes only, no API changes
-- **Minor** (`0.x.0`) — new backwards-compatible functionality
-- **Major** (`x.0.0`) — breaking changes
+- **Patch** (`0.1.x`) — `fix:` commits only
+- **Minor** (`0.x.0`) — at least one `feat:` commit
+- **Major** (`x.0.0`) — any `feat!:` or `BREAKING CHANGE:` footer
 
 ---
 

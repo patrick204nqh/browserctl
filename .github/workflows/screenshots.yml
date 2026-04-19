@@ -21,11 +21,6 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
-      - name: Install Chromium
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y chromium-browser
-
       - name: Start daemon
         run: |
           bundle exec browserd &
