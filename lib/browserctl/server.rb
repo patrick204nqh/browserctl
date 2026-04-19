@@ -13,7 +13,7 @@ module Browserctl
   class Server
     def initialize(headless: true)
       prepare_runtime(headless)
-      @dispatcher = CommandDispatcher.new(@pages, @browser)
+      @dispatcher = CommandDispatcher.new(@pages, @browser, mutex: @mutex)
     end
 
     def run
@@ -88,7 +88,8 @@ module Browserctl
 
     def process(line)
       req = JSON.parse(line.chomp, symbolize_names: true)
-      @mutex.synchronize { @dispatcher.dispatch(req) }
+      @mutex.synchronize { @last_used = Time.now }
+      @dispatcher.dispatch(req)
     end
 
     def teardown(idle, server)

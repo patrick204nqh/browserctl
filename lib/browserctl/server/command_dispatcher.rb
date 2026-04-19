@@ -20,10 +20,11 @@ module Browserctl
       "shutdown" => :cmd_shutdown
     }.freeze
 
-    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new)
+    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, mutex: Mutex.new)
       @pages    = pages
       @browser  = browser
       @snapshot = snapshot_builder
+      @mutex    = mutex
     end
 
     def dispatch(req)
