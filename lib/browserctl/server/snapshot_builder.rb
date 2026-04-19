@@ -30,7 +30,12 @@ module Browserctl
     end
 
     def ancestors_until_html(node)
-      [].tap { |acc| acc.unshift(node) && (node = node.parent) while node&.name != "html" }
+      [].tap do |acc|
+        while node && node.name != "html"
+          acc.unshift(node)
+          node = node.parent
+        end
+      end
     end
 
     def path_segment(node)

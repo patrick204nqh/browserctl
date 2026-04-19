@@ -11,7 +11,10 @@ module Browserctl
     def watch(server)
       loop do
         sleep 60
-        shutdown(server) if idle?
+        if idle?
+          shutdown(server)
+          break
+        end
       end
     end
 
