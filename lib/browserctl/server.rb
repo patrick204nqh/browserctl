@@ -76,14 +76,18 @@ module Browserctl
     end
 
     def handle(socket)
-      if (line = socket.gets)
-        @mutex.synchronize { @last_used = Time.now }
-        socket.puts JSON.generate(process(line))
-      end
+      dispatch(socket, socket.gets)
     rescue StandardError => e
       quietly { socket.puts JSON.generate({ error: e.message }) }
     ensure
       quietly { socket.close }
+    end
+
+    def dispatch(socket, line)
+      return unless line
+
+      @mutex.synchronize { @last_used = Time.now }
+      socket.puts JSON.generate(process(line))
     end
 
     def process(line)
