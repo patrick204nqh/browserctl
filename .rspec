@@ -1,0 +1,2 @@
+--exclude-pattern spec/integration/**/*_spec.rb
+--format progress
