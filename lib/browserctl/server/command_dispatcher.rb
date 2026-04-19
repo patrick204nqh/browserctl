@@ -37,18 +37,21 @@ module Browserctl
     private
 
     def cmd_open_page(req)
-      page = @pages[req[:name]] ||= @browser.create_page
+      page = @mutex.synchronize { @pages[req[:name]] } || begin
+        new_page = @browser.create_page
+        @mutex.synchronize { @pages[req[:name]] ||= new_page }
+      end
       page.go_to(req[:url]) if req[:url]
       { ok: true, name: req[:name] }
     end
 
     def cmd_close_page(req)
-      @pages.delete(req[:name])&.close
+      @mutex.synchronize { @pages.delete(req[:name]) }&.close
       { ok: true }
     end
 
     def cmd_list_pages(_req)
-      { pages: @pages.keys }
+      { pages: @mutex.synchronize { @pages.keys } }
     end
 
     def cmd_goto(req)
@@ -127,7 +130,7 @@ module Browserctl
     end
 
     def with_page(name)
-      page = @pages[name]
+      page = @mutex.synchronize { @pages[name] }
       return { error: "no page named '#{name}'" } unless page
 
       yield page
