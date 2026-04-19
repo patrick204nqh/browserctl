@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "client"
 
 module Browserctl
@@ -16,6 +18,7 @@ module Browserctl
 
     def method_missing(name, *args)
       return @params[name] if @params.key?(name)
+
       super
     end
 
@@ -28,7 +31,15 @@ module Browserctl
     end
 
     def invoke(workflow_name, **override_params)
-      Runner.new.run_workflow(workflow_name, **@params.merge(override_params))
+      @invoke_stack ||= []
+      if @invoke_stack.include?(workflow_name.to_s)
+        raise WorkflowError, "circular workflow invocation: #{(@invoke_stack + [workflow_name]).join(' → ')}"
+      end
+
+      @invoke_stack << workflow_name.to_s
+      Runner.new.run_workflow(workflow_name, **@params, **override_params)
+    ensure
+      @invoke_stack&.pop
     end
 
     def assert(condition, msg = "assertion failed")
@@ -45,8 +56,8 @@ module Browserctl
     def goto(url)        = unwrap @client.goto(@name, url)
     def fill(sel, val)   = unwrap @client.fill(@name, sel, val)
     def click(sel)       = unwrap @client.click(@name, sel)
-    def snapshot(**opts) = unwrap @client.snapshot(@name, **opts)
-    def screenshot(**opts) = unwrap @client.screenshot(@name, **opts)
+    def snapshot(**) = unwrap @client.snapshot(@name, **)
+    def screenshot(**) = unwrap @client.screenshot(@name, **)
     def wait_for(sel, timeout: 10) = unwrap @client.wait_for(@name, sel, timeout: timeout)
     def url              = @client.url(@name)[:url]
     def evaluate(expr)   = @client.evaluate(@name, expr)[:result]
@@ -55,6 +66,7 @@ module Browserctl
 
     def unwrap(res)
       raise WorkflowError, res[:error] if res[:error]
+
       res
     end
   end
@@ -63,7 +75,7 @@ module Browserctl
     attr_reader :name, :description, :param_defs, :steps
 
     def initialize(name)
-      @name       = name
+      @name = name
       @description = nil
       @param_defs  = {}
       @steps       = []
@@ -87,13 +99,11 @@ module Browserctl
       results  = []
 
       @steps.each do |label, block|
-        begin
-          ctx.instance_exec(&block)
-          results << StepResult.new(name: label, ok: true)
-        rescue WorkflowError, Ferrum::Error => e
-          results << StepResult.new(name: label, ok: false, error: e.message)
-          raise WorkflowError, "step '#{label}' failed: #{e.message}"
-        end
+        ctx.instance_exec(&block)
+        results << StepResult.new(name: label, ok: true)
+      rescue WorkflowError, StandardError => e
+        results << StepResult.new(name: label, ok: false, error: e.message)
+        raise WorkflowError, "step '#{label}' failed: #{e.message}"
       end
 
       results
@@ -106,17 +116,18 @@ module Browserctl
       @param_defs.each do |name, defn|
         val = provided[name] || defn.default
         raise WorkflowError, "required param '#{name}' missing" if defn.required && val.nil?
+
         out[name] = val
       end
       out
     end
   end
 
-  REGISTRY = {}
+  REGISTRY = {}.freeze
 
-  def self.workflow(name, &block)
+  def self.workflow(name, &)
     defn = WorkflowDefinition.new(name.to_s)
-    defn.instance_exec(&block)
+    defn.instance_exec(&)
     REGISTRY[name.to_s] = defn
   end
 end

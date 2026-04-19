@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Installing dependencies..."
+bundle install
+
+echo "==> Checking for Chrome/Chromium..."
+if ! command -v google-chrome &>/dev/null && ! command -v chromium-browser &>/dev/null && ! command -v chromium &>/dev/null; then
+  echo "WARNING: Chrome/Chromium not found on PATH."
+  echo "         Install it before running browserctl."
+  echo "         macOS:  brew install --cask google-chrome"
+  echo "         Ubuntu: sudo apt-get install -y chromium-browser"
+fi
+
+echo ""
+echo "Done. Try: bundle exec browserd &"

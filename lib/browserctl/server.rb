@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "ferrum"
 require "socket"
 require "json"
@@ -5,18 +7,18 @@ require "fileutils"
 require_relative "constants"
 
 module Browserctl
-
   class Server
     def initialize(headless: true)
       FileUtils.mkdir_p(File.dirname(SOCKET_PATH))
       @browser   = Ferrum::Browser.new(headless: headless, timeout: 30)
       @pages     = {}
       @last_used = Time.now
+      @mutex     = Mutex.new
     end
 
     def run
       write_pid
-      File.unlink(SOCKET_PATH) if File.exist?(SOCKET_PATH)
+      FileUtils.rm_f(SOCKET_PATH)
 
       server = UNIXServer.new(SOCKET_PATH)
       File.chmod(0o600, SOCKET_PATH)
@@ -29,13 +31,25 @@ module Browserctl
         client = server.accept
         Thread.new(client) { |c| handle(c) }
       end
-    rescue Interrupt, SignalException
+    rescue SignalException
       # clean shutdown
     ensure
       idle_thread&.kill
-      @browser.quit rescue nil
-      File.unlink(SOCKET_PATH) rescue nil
-      File.unlink(PID_PATH)   rescue nil
+      begin
+        @browser.quit
+      rescue StandardError
+        nil
+      end
+      begin
+        File.unlink(SOCKET_PATH)
+      rescue StandardError
+        nil
+      end
+      begin
+        File.unlink(PID_PATH)
+      rescue StandardError
+        nil
+      end
     end
 
     private
@@ -46,15 +60,23 @@ module Browserctl
 
       @last_used = Time.now
       req = JSON.parse(line.chomp, symbolize_names: true)
-      res = dispatch(req)
+      res = @mutex.synchronize { dispatch(req) }
       socket.puts(JSON.generate(res))
-    rescue => e
-      socket.puts(JSON.generate({ error: e.message })) rescue nil
+    rescue StandardError => e
+      begin
+        socket.puts(JSON.generate({ error: e.message }))
+      rescue StandardError
+        nil
+      end
     ensure
-      socket.close rescue nil
+      begin
+        socket.close
+      rescue StandardError
+        nil
+      end
     end
 
-    def dispatch(req)
+    def dispatch(req) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       case req[:cmd]
       when "open_page"
         name = req[:name]
@@ -74,7 +96,10 @@ module Browserctl
         { pages: @pages.keys }
 
       when "goto"
-        with_page(req[:name]) { |p| p.go_to(req[:url]); { ok: true, url: p.current_url } }
+        with_page(req[:name]) do |p|
+          p.go_to(req[:url])
+          { ok: true, url: p.current_url }
+        end
 
       when "snapshot"
         with_page(req[:name]) do |p|
@@ -90,13 +115,22 @@ module Browserctl
 
       when "fill"
         with_page(req[:name]) do |p|
-          p.at_css(req[:selector])&.focus
-          p.at_css(req[:selector])&.type(req[:value])
+          el = p.at_css(req[:selector])
+          return { error: "selector not found: #{req[:selector]}" } unless el
+
+          el.focus
+          el.type(req[:value])
           { ok: true }
         end
 
       when "click"
-        with_page(req[:name]) { |p| p.at_css(req[:selector])&.click; { ok: true } }
+        with_page(req[:name]) do |p|
+          el = p.at_css(req[:selector])
+          return { error: "selector not found: #{req[:selector]}" } unless el
+
+          el.click
+          { ok: true }
+        end
 
       when "screenshot"
         with_page(req[:name]) do |p|
@@ -107,9 +141,16 @@ module Browserctl
 
       when "wait_for"
         with_page(req[:name]) do |p|
-          timeout = req.fetch(:timeout, 10).to_f
-          p.network.wait_for_idle(timeout: timeout)
-          p.at_css(req[:selector]) # raises if absent
+          timeout  = req.fetch(:timeout, 10).to_f
+          deadline = Time.now + timeout
+          loop do
+            break if p.at_css(req[:selector])
+            if Time.now > deadline
+              return { error: "wait_for timeout: selector '#{req[:selector]}' not found after #{timeout}s" }
+            end
+
+            sleep 0.2
+          end
           { ok: true }
         end
 
@@ -131,6 +172,7 @@ module Browserctl
     def with_page(name)
       page = @pages[name]
       return { error: "no page named '#{name}'" } unless page
+
       yield page
     end
 
@@ -142,16 +184,17 @@ module Browserctl
       doc.css(interactable.join(",")).map do |el|
         ref += 1
         {
-          ref:      "e#{ref}",
-          tag:      el.name,
-          text:     el.text.strip.slice(0, 80),
+          ref: "e#{ref}",
+          tag: el.name,
+          text: el.text.strip.slice(0, 80),
           selector: css_path(el),
-          attrs:    el.attributes.transform_values(&:value).slice("type", "name", "placeholder", "href", "aria-label", "role")
+          attrs: el.attributes.transform_values(&:value).slice("type", "name", "placeholder", "href", "aria-label",
+                                                               "role")
         }
       end
     end
 
-    def css_path(node)
+    def css_path(node) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       parts = []
       while node && node.name != "html"
         id    = node["id"]
@@ -168,12 +211,16 @@ module Browserctl
     def watch_idle(server)
       loop do
         sleep 60
-        if Time.now - @last_used > IDLE_TTL
-          $stdout.puts "browserd idle timeout, shutting down"
-          server.close rescue nil
-          Process.kill("INT", Process.pid)
-          break
+        next unless Time.now - @last_used > IDLE_TTL
+
+        $stdout.puts "browserd idle timeout, shutting down"
+        begin
+          server.close
+        rescue StandardError
+          nil
         end
+        Process.kill("INT", Process.pid)
+        break
       end
     end
 

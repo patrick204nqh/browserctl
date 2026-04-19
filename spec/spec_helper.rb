@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+require "browserctl"
+require "browserctl/server"
+require "browserctl/client"
+
+module BrowserctlHelpers
+  def start_daemon(headed: false)
+    @daemon_pid = fork do
+      $stdout.reopen("/dev/null")
+      $stderr.reopen("/dev/null")
+      Browserctl::Server.new(headless: !headed).run
+    end
+
+    # Wait until socket appears (max 10s)
+    deadline = Time.now + 10
+    sleep 0.1 until File.exist?(Browserctl::SOCKET_PATH) || Time.now > deadline
+    raise "browserd failed to start" unless File.exist?(Browserctl::SOCKET_PATH)
+
+    Browserctl::Client.new
+  end
+
+  def stop_daemon
+    return unless @daemon_pid
+
+    Process.kill("INT", @daemon_pid)
+    Process.wait(@daemon_pid)
+  rescue Errno::ESRCH, Errno::ECHILD
+    nil
+  ensure
+    File.unlink(Browserctl::SOCKET_PATH) rescue nil
+    File.unlink(Browserctl::PID_PATH)   rescue nil
+    @daemon_pid = nil
+  end
+end
+
+RSpec.configure do |config|
+  config.include BrowserctlHelpers
+
+  config.expect_with :rspec do |expectations|
+    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+  end
+
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.order = :random
+  config.warnings = true
+end

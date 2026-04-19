@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "json"
 
 module Browserctl
@@ -18,7 +20,10 @@ module Browserctl
 
       def self.extract_opt(args, flag)
         i = args.index(flag)
-        i ? args.delete_at(i) && args.delete_at(i) : nil
+        return unless i
+
+        args.delete_at(i)
+        args.delete_at(i)
       end
     end
   end

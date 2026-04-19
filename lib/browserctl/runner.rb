@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "workflow"
 require_relative "client"
 
@@ -9,7 +11,7 @@ module Browserctl
       File.expand_path("~/.browserctl/workflows")
     ].freeze
 
-    def run_workflow(name, **params)
+    def run_workflow(name, **params) # rubocop:disable Naming/PredicateMethod
       load_workflow_file(name)
 
       defn = REGISTRY[name.to_s]
@@ -33,6 +35,7 @@ module Browserctl
       loaded = []
       SEARCH_PATHS.each do |dir|
         next unless Dir.exist?(dir)
+
         Dir.glob("#{dir}/*.rb").each do |f|
           load f unless $LOADED_FEATURES.include?(f)
           loaded << f
@@ -45,11 +48,12 @@ module Browserctl
       load_workflow_file(name)
       defn = REGISTRY[name.to_s]
       raise "workflow '#{name}' not found" unless defn
+
       {
-        name:   defn.name,
-        desc:   defn.description,
+        name: defn.name,
+        desc: defn.description,
         params: defn.param_defs.transform_values { |p| { required: p.required, secret: p.secret, default: p.default } },
-        steps:  defn.steps.map(&:first)
+        steps: defn.steps.map(&:first)
       }
     end
 
@@ -58,12 +62,11 @@ module Browserctl
     def load_workflow_file(name)
       return if REGISTRY.key?(name.to_s)
 
-      SEARCH_PATHS.each do |dir|
+      SEARCH_PATHS.find do |dir|
         path = File.join(dir, "#{name}.rb")
-        if File.exist?(path)
-          load path
-          return
-        end
+        next unless File.exist?(path)
+
+        load path
       end
     end
   end

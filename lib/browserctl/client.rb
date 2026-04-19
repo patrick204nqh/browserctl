@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "socket"
 require "json"
 require_relative "constants"
@@ -13,6 +15,7 @@ module Browserctl
         sock.puts(JSON.generate({ cmd: cmd }.merge(params)))
         raw = sock.gets
         raise "browserd closed connection" unless raw
+
         JSON.parse(raw.chomp, symbolize_names: true)
       end
     rescue Errno::ENOENT, Errno::ECONNREFUSED

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "browserctl/version"
 require_relative "browserctl/constants"
 require_relative "browserctl/workflow"
