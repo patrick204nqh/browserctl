@@ -48,6 +48,8 @@ module Browserctl
     end
 
     def fetch_workflow(name)
+      return REGISTRY[name.to_s] if REGISTRY.key?(name.to_s)
+
       validate_name!(name)
       load_workflow_file(name)
       REGISTRY[name.to_s] || raise("workflow '#{name}' not found")

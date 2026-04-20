@@ -12,9 +12,18 @@ RSpec.describe Browserctl::Runner do
         .to raise_error(Browserctl::WorkflowError, /invalid workflow name/)
     end
 
-    it "raises for names with slashes" do
+    it "raises for unregistered names with slashes" do
       expect { runner.run_workflow("foo/bar") }
         .to raise_error(Browserctl::WorkflowError, /invalid workflow name/)
+    end
+
+    it "runs a pre-registered workflow whose name contains a slash" do
+      Browserctl.workflow("the_internet/login") { desc "test" }
+      client = instance_double(Browserctl::Client)
+      allow_any_instance_of(Browserctl::WorkflowDefinition).to receive(:call).and_return([])
+      expect { runner.run_workflow("the_internet/login") }.not_to raise_error
+    ensure
+      Browserctl::REGISTRY.delete("the_internet/login")
     end
 
     it "raises for names with null bytes" do
