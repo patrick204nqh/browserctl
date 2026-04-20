@@ -28,7 +28,8 @@ module Browserctl
       "clear_cookies" => :cmd_clear_cookies
     }.freeze
 
-    SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
+    SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
+    SCREENSHOT_DIRS  = [SCREENSHOT_DIR, File.expand_path(".browserctl/screenshots")].freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
     CLOUDFLARE_SIGNALS = [
       "cf-challenge-running",
@@ -168,8 +169,8 @@ module Browserctl
     def safe_screenshot_path(requested, page_name)
       if requested
         expanded = File.expand_path(requested)
-        return { error: "path outside allowed directory (#{SCREENSHOT_DIR})" } \
-          unless expanded.start_with?(SCREENSHOT_DIR)
+        allowed  = SCREENSHOT_DIRS.any? { |d| expanded.start_with?(d) }
+        return { error: "path outside allowed directories (#{SCREENSHOT_DIRS.join(', ')})" } unless allowed
         return { error: "invalid extension — use .png, .jpg, or .jpeg" } \
           unless SCREENSHOT_EXTS.include?(File.extname(expanded).downcase)
 

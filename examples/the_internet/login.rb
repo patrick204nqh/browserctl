@@ -6,7 +6,7 @@ Browserctl.workflow "the_internet/login" do
   param :username,        default: "tomsmith"
   param :password,        default: "SuperSecretPassword!", secret: true
   param :base_url,        default: "https://the-internet.herokuapp.com"
-  param :screenshot_path, default: File.expand_path("~/.browserctl/screenshots/the_internet_login.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_login.png")
 
   step "open login page" do
     client.open_page("main", url: "#{base_url}/login")
