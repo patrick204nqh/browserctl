@@ -112,6 +112,13 @@ module Browserctl
       @steps << StepDef.new(label: label, block: block, retry_count: retry_count, timeout: timeout)
     end
 
+    def compose(workflow_name)
+      source = REGISTRY[workflow_name.to_s]
+      raise WorkflowError, "workflow '#{workflow_name}' not found for composition" unless source
+
+      @steps.concat(source.steps)
+    end
+
     def call(params, client)
       ctx = WorkflowContext.new(resolve_params(params), client)
       execute_steps(ctx)
