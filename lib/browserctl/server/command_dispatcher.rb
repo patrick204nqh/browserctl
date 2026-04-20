@@ -97,7 +97,9 @@ module Browserctl
     end
 
     def cmd_fill(req)
-      with_page(req[:name]) { |p| type_into(p, req[:selector], req[:value]) }
+      sel = resolve_selector(req[:name], req)
+      return sel if sel.is_a?(Hash)
+      with_page(req[:name]) { |p| type_into(p, sel, req[:value]) }
     end
 
     def type_into(page, selector, value)
@@ -110,7 +112,9 @@ module Browserctl
     end
 
     def cmd_click(req)
-      with_page(req[:name]) { |p| click_element(p, req[:selector]) }
+      sel = resolve_selector(req[:name], req)
+      return sel if sel.is_a?(Hash)
+      with_page(req[:name]) { |p| click_element(p, sel) }
     end
 
     def click_element(page, selector)
@@ -157,6 +161,14 @@ module Browserctl
       return { error: "no page named '#{name}'" } unless page
 
       yield page
+    end
+
+    def resolve_selector(name, req)
+      return req[:selector] if req[:selector]
+      return { error: "selector or ref required" } unless req[:ref]
+
+      sel = @mutex.synchronize { @ref_registries.dig(name, req[:ref]) }
+      sel || { error: "ref '#{req[:ref]}' not found — run snap first" }
     end
   end
 end

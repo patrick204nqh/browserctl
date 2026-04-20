@@ -22,8 +22,15 @@ module Browserctl
     def close_page(name)           = call("close_page", name: name)
     def list_pages                 = call("list_pages")
     def goto(name, url)            = call("goto",        name: name, url: url)
-    def fill(name, selector, val)  = call("fill",        name: name, selector: selector, value: val)
-    def click(name, selector)      = call("click",       name: name, selector: selector)
+    def click(name, selector = nil, ref: nil)
+      raise ArgumentError, "click: provide selector or ref:" unless selector || ref
+      call("click", name: name, selector: selector, ref: ref)
+    end
+
+    def fill(name, selector = nil, value = nil, ref: nil)
+      raise ArgumentError, "fill: provide selector or ref:" unless selector || ref
+      call("fill", name: name, selector: selector, ref: ref, value: value)
+    end
     def screenshot(name, path: nil, full: false) = call("screenshot", name: name, path: path, full: full)
     def snapshot(name, format: "ai")             = call("snapshot",   name: name, format: format)
     def wait_for(name, selector, timeout: 10)    = call("wait_for",   name: name, selector: selector, timeout: timeout)
