@@ -12,6 +12,7 @@ jobs:
   release-please:
     name: Open or update Release PR
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: googleapis/release-please-action@v4
         with:

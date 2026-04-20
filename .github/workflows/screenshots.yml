@@ -11,10 +11,11 @@ jobs:
   screenshots:
     name: Capture Smoke Test Screenshots
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -24,7 +25,7 @@ jobs:
       - name: Start daemon
         run: |
           bundle exec browserd &
-          sleep 2
+          until bundle exec browserctl ping 2>/dev/null; do sleep 0.5; done
 
       - name: Run smoke tests
         run: |

@@ -12,12 +12,17 @@ on:
       - "**/*.md"
       - "docs/**"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
@@ -25,16 +30,13 @@ jobs:
       - run: bundle exec rubocop --parallel
 
   test:
-    name: Test (Ruby ${{ matrix.ruby }})
+    name: Test (Ruby 3.3)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      matrix:
-        ruby: ["3.3"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: "3.3"
           bundler-cache: true
       - run: bundle exec rspec --format progress
