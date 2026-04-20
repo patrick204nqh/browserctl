@@ -9,6 +9,9 @@
 # Run:
 #   browserctl run examples/cloudflare_hitl.rb --url https://example.com
 #
+# Note: modern Cloudflare often passes a real headed Chrome without challenge.
+# The pause/resume branch fires only when the challenge page is actually served
+# (typically against headless or CDP-fingerprinted browsers, or stricter zones).
 # When paused, the terminal prints instructions. Solve the challenge in the open
 # browser window, then run: browserctl resume main
 
