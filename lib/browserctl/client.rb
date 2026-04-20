@@ -3,15 +3,18 @@
 require "socket"
 require "json"
 require_relative "constants"
+require_relative "recording"
 
 module Browserctl
   class Client
-    def initialize(socket_path = SOCKET_PATH)
+    def initialize(socket_path = Browserctl.socket_path)
       @socket_path = socket_path
     end
 
     def call(cmd, **params)
-      communicate(JSON.generate({ cmd: cmd }.merge(params)))
+      result = communicate(JSON.generate({ cmd: cmd }.merge(params)))
+      Recording.append(cmd, **params) if result[:ok]
+      result
     rescue Errno::ENOENT, Errno::ECONNREFUSED
       raise "browserd is not running — start it with: browserd"
     end
@@ -36,6 +39,9 @@ module Browserctl
       call("snapshot", name: name, format: format, diff: diff)
     end
     def wait_for(name, selector, timeout: 10)    = call("wait_for",   name: name, selector: selector, timeout: timeout)
+    def watch(name, selector, timeout: 30)
+      call("watch", name: name, selector: selector, timeout: timeout)
+    end
     def url(name)                  = call("url",         name: name)
     def evaluate(name, expression) = call("evaluate",    name: name, expression: expression)
     def ping                       = call("ping")

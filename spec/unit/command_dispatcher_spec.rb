@@ -135,6 +135,29 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "#cmd_watch" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => page } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it "returns ok with selector when element appears" do
+      call_count = 0
+      allow(page).to receive(:at_css) do |_sel|
+        call_count += 1
+        call_count >= 2 ? double("el") : nil
+      end
+      res = dispatcher.dispatch({ cmd: "watch", name: "main", selector: ".result", timeout: 1 })
+      expect(res[:ok]).to be true
+      expect(res[:selector]).to eq ".result"
+    end
+
+    it "returns error on timeout" do
+      allow(page).to receive(:at_css).and_return(nil)
+      res = dispatcher.dispatch({ cmd: "watch", name: "main", selector: ".missing", timeout: 0.2 })
+      expect(res[:error]).to match(/timeout/)
+    end
+  end
+
   describe "#cmd_snapshot (state storage)" do
     let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
     let(:pages)   { { "main" => page } }

@@ -15,6 +15,7 @@ module Browserctl
       "click" => :cmd_click,
       "screenshot" => :cmd_screenshot,
       "wait_for" => :cmd_wait_for,
+      "watch" => :cmd_watch,
       "url" => :cmd_url,
       "ping" => :cmd_ping,
       "shutdown" => :cmd_shutdown
@@ -135,6 +136,13 @@ module Browserctl
 
     def cmd_wait_for(req)
       with_page(req[:name]) { |p| wait_for_selector(p, req[:selector], req.fetch(:timeout, 10).to_f) }
+    end
+
+    def cmd_watch(req)
+      with_page(req[:name]) do |p|
+        result = wait_for_selector(p, req[:selector], req.fetch(:timeout, 30).to_f)
+        result[:error] ? result : { ok: true, selector: req[:selector] }
+      end
     end
 
     def wait_for_selector(page, selector, timeout)
