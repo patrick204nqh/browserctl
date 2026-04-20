@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "timeout"
 require_relative "client"
 
 module Browserctl
@@ -7,6 +8,7 @@ module Browserctl
 
   ParamDef = Struct.new(:name, :required, :secret, :default, keyword_init: true)
   StepResult = Struct.new(:name, :ok, :error, keyword_init: true)
+  StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
 
   class WorkflowContext
     attr_reader :client
@@ -106,8 +108,8 @@ module Browserctl
       @param_defs[name] = ParamDef.new(name: name, required: required, secret: secret, default: default)
     end
 
-    def step(label, &block)
-      @steps << [label, block]
+    def step(label, retry_count: 0, timeout: nil, &block)
+      @steps << StepDef.new(label: label, block: block, retry_count: retry_count, timeout: timeout)
     end
 
     def call(params, client)
@@ -118,16 +120,32 @@ module Browserctl
     private
 
     def execute_steps(ctx)
-      @steps.map { |label, block| run_step(ctx, label, block) }.each do |r|
+      @steps.map { |defn| run_step(ctx, defn) }.each do |r|
         raise WorkflowError, "step '#{r.name}' failed: #{r.error}" unless r.ok
       end
     end
 
-    def run_step(ctx, label, block)
-      ctx.instance_exec(&block)
-      StepResult.new(name: label, ok: true)
-    rescue WorkflowError, StandardError => e
-      StepResult.new(name: label, ok: false, error: e.message)
+    def run_step(ctx, defn)
+      last_error = nil
+      (defn.retry_count + 1).times do
+        begin
+          execute_block(ctx, defn)
+          return StepResult.new(name: defn.label, ok: true)
+        rescue WorkflowError, StandardError => e
+          last_error = e
+        end
+      end
+      StepResult.new(name: defn.label, ok: false, error: last_error.message)
+    end
+
+    def execute_block(ctx, defn)
+      if defn.timeout
+        ::Timeout.timeout(defn.timeout) { ctx.instance_exec(&defn.block) }
+      else
+        ctx.instance_exec(&defn.block)
+      end
+    rescue ::Timeout::Error
+      raise WorkflowError, "step '#{defn.label}' timed out after #{defn.timeout}s"
     end
 
     def resolve_params(provided)
