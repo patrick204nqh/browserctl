@@ -10,9 +10,9 @@ module Browserctl
         ref  = FlagExtractor.extract_opt(args, "--ref")
 
         if ref
-          value = args.shift
-          abort "usage: browserctl fill <page> --ref <ref> <value>" unless name && value
-          puts client.fill(name, ref: ref, value: value).to_json
+          value = FlagExtractor.extract_opt(args, "--value")
+          abort "usage: browserctl fill <page> --ref <ref> --value <value>" unless name && value
+          puts client.fill(name, nil, value, ref: ref).to_json
         else
           selector = args.shift
           value = args.shift
