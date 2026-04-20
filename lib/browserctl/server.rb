@@ -9,6 +9,7 @@ require_relative "constants"
 require_relative "logger"
 require_relative "server/command_dispatcher"
 require_relative "server/idle_watcher"
+require_relative "server/page_session"
 
 module Browserctl
   class Server
@@ -16,7 +17,7 @@ module Browserctl
       @socket_path = socket_path
       @pid_path    = pid_path
       prepare_runtime(headless)
-      @dispatcher = CommandDispatcher.new(@pages, @browser, mutex: @mutex)
+      @dispatcher = CommandDispatcher.new(@pages, @browser, global_mutex: @mutex)
     end
 
     def run
@@ -85,7 +86,6 @@ module Browserctl
     def dispatch(socket, line)
       return unless line
 
-      @mutex.synchronize { @last_used = Time.now }
       socket.puts JSON.generate(process(line))
     end
 
@@ -109,7 +109,7 @@ module Browserctl
 
     def quietly
       yield
-    rescue StandardError
+    rescue Exception # rubocop:disable Lint/RescueException
       nil
     end
   end

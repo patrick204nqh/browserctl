@@ -1,6 +1,6 @@
 # browserctl — Vision & Roadmap
 
-> _Navigate the web. Stay in command._
+> _Navigate the web. Stay in session._
 
 ---
 
@@ -32,6 +32,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 3. **Unix composability** — every command is one-line, pipeable, scriptable
 4. **Protocol over implementation** — the JSON-RPC wire format is stable and language-agnostic
 5. **Zero magic, full control** — no auto-waiting policies you can't see; every operation is explicit
+6. **Human presence is a resumable event** — when the human needs to act, the session pauses and waits; when they're done, automation resumes exactly where it stopped
 
 ---
 
@@ -65,6 +66,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.3 — Developer Experience
 **Goal:** The gem that developers actually recommend to each other.
 
+- [ ] `browserctl pause` / `browserctl resume` — human-in-the-loop pause/resume primitive
+- [ ] Cloudflare challenge detection in `snapshot` and `goto` responses (`challenge: true` field)
 - [ ] `browserctl init` — scaffold `.browserctl/` in a project
 - [ ] Workflow composition: `include`, `extend`, shared step libraries
 - [ ] Plugin system: `Browserctl.register_command(:my_cmd) { }` in workflow files
@@ -83,8 +86,9 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [ ] Compatibility matrix: Ruby 3.2–3.x, Chrome 120+
 
 ### v1.x and Beyond — Platform
-**Goal:** browserctl becomes the standard browser interface for agents.
+**Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
 
+- [ ] **Annotated session traces**: export pause/resume sessions as fine-tuning data for browser agents
 - [ ] **Cloud daemon**: remote `browserd` instances accessible over mTLS
 - [ ] **Session recording + replay**: deterministic browser regression testing
 - [ ] **Visual regression**: `shot --compare baseline.png` with pixel diff

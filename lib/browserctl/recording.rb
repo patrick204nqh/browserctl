@@ -39,6 +39,8 @@ module Browserctl
       # ref-based interactions have no replayable selector — skip them
       return if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
 
+      attrs = attrs.except(:value) if cmd.to_s == "fill"
+
       File.open(log_path(name), "a") do |f|
         f.puts JSON.generate({ cmd: cmd.to_s }.merge(attrs.transform_keys(&:to_s)))
       end
@@ -90,7 +92,7 @@ module Browserctl
           ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
         when "fill"
           ["fill #{cmd[:selector]} on #{page}",
-           "page(:#{page}).fill(#{cmd[:selector].inspect}, #{cmd[:value].inspect})"]
+           "page(:#{page}).fill(#{cmd[:selector].inspect}, params[:fill_value])"]
         when "click"
           ["click #{cmd[:selector]} on #{page}",
            "page(:#{page}).click(#{cmd[:selector].inspect})"]

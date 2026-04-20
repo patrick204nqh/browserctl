@@ -27,9 +27,18 @@ module Browserctl
       { name: defn.name, desc: defn.description, params: format_params(defn), steps: defn.steps.map(&:label) }
     end
 
+    SAFE_WORKFLOW_NAME = /\A[a-zA-Z0-9_-]+\z/
+
     private
 
+    def validate_name!(name)
+      return if SAFE_WORKFLOW_NAME.match?(name.to_s)
+
+      raise Browserctl::WorkflowError, "invalid workflow name: #{name.inspect} — use letters, digits, _ and - only"
+    end
+
     def fetch_workflow(name)
+      validate_name!(name)
       load_workflow_file(name)
       REGISTRY[name.to_s] || raise("workflow '#{name}' not found")
     end
