@@ -32,7 +32,9 @@ module Browserctl
       call("fill", name: name, selector: selector, ref: ref, value: value)
     end
     def screenshot(name, path: nil, full: false) = call("screenshot", name: name, path: path, full: full)
-    def snapshot(name, format: "ai")             = call("snapshot",   name: name, format: format)
+    def snapshot(name, format: "ai", diff: false)
+      call("snapshot", name: name, format: format, diff: diff)
+    end
     def wait_for(name, selector, timeout: 10)    = call("wait_for",   name: name, selector: selector, timeout: timeout)
     def url(name)                  = call("url",         name: name)
     def evaluate(name, expression) = call("evaluate",    name: name, expression: expression)

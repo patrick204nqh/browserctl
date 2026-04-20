@@ -104,6 +104,37 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "snap --diff" do
+    let(:html_v1) { '<html><body><button id="a">A</button></body></html>' }
+    let(:html_v2) { '<html><body><button id="a">A</button><button id="b">B</button></body></html>' }
+    let(:page)    { instance_double("Ferrum::Page") }
+    let(:pages)   { { "main" => page } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it "returns full snapshot on first call with diff: true (no previous)" do
+      allow(page).to receive(:body).and_return(html_v1)
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      expect(res[:snapshot].length).to eq 1
+    end
+
+    it "returns only new/changed elements on subsequent diff call" do
+      allow(page).to receive(:body).and_return(html_v1)
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+
+      allow(page).to receive(:body).and_return(html_v2)
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      expect(res[:snapshot].length).to eq 1
+      expect(res[:snapshot].first[:selector]).to include("#b")
+    end
+
+    it "returns empty array when nothing changed" do
+      allow(page).to receive(:body).and_return(html_v1)
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      expect(res[:snapshot]).to be_empty
+    end
+  end
+
   describe "#cmd_snapshot (state storage)" do
     let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
     let(:pages)   { { "main" => page } }
