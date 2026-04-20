@@ -19,7 +19,6 @@ RSpec.describe Browserctl::Runner do
 
     it "runs a pre-registered workflow whose name contains a slash" do
       Browserctl.workflow("the_internet/login") { desc "test" }
-      client = instance_double(Browserctl::Client)
       allow_any_instance_of(Browserctl::WorkflowDefinition).to receive(:call).and_return([])
       expect { runner.run_workflow("the_internet/login") }.not_to raise_error
     ensure
