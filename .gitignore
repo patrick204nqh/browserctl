@@ -11,3 +11,4 @@ tmp/
 .claude/settings.local.json
 .worktrees/
 doc/
+.yardoc/
