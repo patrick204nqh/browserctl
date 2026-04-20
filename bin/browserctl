@@ -3,10 +3,16 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
+require "browserctl/version"
+
+if ARGV.intersect?(%w[--version -v])
+  puts "browserctl #{Browserctl::VERSION}"
+  exit 0
+end
+
 require "json"
 require "optimist"
 require "browserctl"
-require "browserctl/version"
 require "browserctl/commands/cli_output"
 require "browserctl/commands/open_page"
 require "browserctl/commands/fill"
@@ -65,11 +71,6 @@ def usage
   exit 0
 end
 # rubocop:enable Metrics/MethodLength
-
-if ARGV.intersect?(%w[--version -v])
-  puts "browserctl #{Browserctl::VERSION}"
-  exit 0
-end
 
 daemon_idx  = ARGV.index("--daemon")
 daemon_name = if daemon_idx
