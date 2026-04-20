@@ -218,8 +218,10 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     context "when page is normal" do
-      let(:page) { instance_double("Ferrum::Page", body: "<html><body>Normal</body></html>",
-                                                   current_url: "https://example.com/page") }
+      let(:page) do
+        instance_double("Ferrum::Page", body: "<html><body>Normal</body></html>",
+                                        current_url: "https://example.com/page")
+      end
 
       it "includes challenge: false in snapshot" do
         res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
@@ -319,7 +321,10 @@ RSpec.describe Browserctl::CommandDispatcher do
   end
 
   describe "#cmd_snapshot (state storage)" do
-    let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com") }
+    let(:page) do
+      instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>",
+                                      current_url: "https://example.com")
+    end
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     let(:builder) { Browserctl::SnapshotBuilder.new }
     subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }

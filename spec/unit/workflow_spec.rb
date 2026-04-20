@@ -145,8 +145,12 @@ RSpec.describe "compose" do
   end
 
   it "compose can be called multiple times to merge several workflows" do
-    Browserctl.workflow "first"  do; step("f1") { nil }; end
-    Browserctl.workflow "second" do; step("f2") { nil }; end
+    Browserctl.workflow "first" do
+      step("f1") { nil }
+    end
+    Browserctl.workflow "second" do
+      step("f2") { nil }
+    end
     Browserctl.workflow "combined" do
       compose "first"
       compose "second"

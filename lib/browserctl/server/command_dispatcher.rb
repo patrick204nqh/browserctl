@@ -6,27 +6,33 @@ require_relative "page_session"
 module Browserctl
   class CommandDispatcher
     COMMAND_MAP = {
-      "open_page"  => :cmd_open_page,
+      "open_page" => :cmd_open_page,
       "close_page" => :cmd_close_page,
       "list_pages" => :cmd_list_pages,
-      "goto"       => :cmd_goto,
-      "snapshot"   => :cmd_snapshot,
-      "evaluate"   => :cmd_evaluate,
-      "fill"       => :cmd_fill,
-      "click"      => :cmd_click,
+      "goto" => :cmd_goto,
+      "snapshot" => :cmd_snapshot,
+      "evaluate" => :cmd_evaluate,
+      "fill" => :cmd_fill,
+      "click" => :cmd_click,
       "screenshot" => :cmd_screenshot,
-      "wait_for"   => :cmd_wait_for,
-      "watch"      => :cmd_watch,
-      "url"        => :cmd_url,
-      "ping"       => :cmd_ping,
-      "shutdown"   => :cmd_shutdown,
-      "pause"      => :cmd_pause,
-      "resume"     => :cmd_resume,
-      "inspect"    => :cmd_inspect
+      "wait_for" => :cmd_wait_for,
+      "watch" => :cmd_watch,
+      "url" => :cmd_url,
+      "ping" => :cmd_ping,
+      "shutdown" => :cmd_shutdown,
+      "pause" => :cmd_pause,
+      "resume" => :cmd_resume,
+      "inspect" => :cmd_inspect
     }.freeze
 
     SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
+    CLOUDFLARE_SIGNALS = [
+      "cf-challenge-running",
+      "cf_chl_opt",
+      "__cf_chl_f_tk",
+      "Just a moment..."
+    ].freeze
 
     def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
       @pages            = pages
@@ -85,9 +91,7 @@ module Browserctl
     def take_snapshot(session, format, diff)
       challenge = cloudflare_challenge?(session.page)
 
-      unless format == "ai"
-        return { ok: true, html: session.page.body, challenge: challenge }
-      end
+      return { ok: true, html: session.page.body, challenge: challenge } unless format == "ai"
 
       snapshot = @snapshot_builder.call(session.page)
       registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
@@ -245,13 +249,6 @@ module Browserctl
         yield session
       end
     end
-
-    CLOUDFLARE_SIGNALS = [
-      "cf-challenge-running",
-      "cf_chl_opt",
-      "__cf_chl_f_tk",
-      "Just a moment..."
-    ].freeze
 
     def cloudflare_challenge?(page)
       url  = page.current_url.to_s

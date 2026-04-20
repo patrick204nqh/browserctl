@@ -18,9 +18,7 @@ module Browserctl
         FileUtils.touch(".browserctl/workflows/.keep")
 
         config_path = ".browserctl/config.yml"
-        unless File.exist?(config_path)
-          File.write(config_path, CONFIG_TEMPLATE)
-        end
+        File.write(config_path, CONFIG_TEMPLATE) unless File.exist?(config_path)
 
         puts "Initialised browserctl project:"
         puts "  .browserctl/workflows/   (place workflow .rb files here)"
