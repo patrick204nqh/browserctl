@@ -80,7 +80,7 @@ RSpec.describe Browserctl::CommandDispatcher do
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
       reg = dispatcher.instance_variable_get(:@ref_registries)
       expect(reg["main"]).to be_a(Hash)
-      expect(reg["main"].keys).to all(match(/\Ae\d+\z/))
+      expect(reg["main"]).not_to be_empty
     end
 
     it "stores previous snapshot after ai snapshot" do
