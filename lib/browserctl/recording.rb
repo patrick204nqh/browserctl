@@ -21,6 +21,7 @@ module Browserctl
     def self.stop
       name = active
       raise "no active recording — run: browserctl record start <name>" unless name
+
       File.unlink(STATE_FILE)
       name
     end
@@ -66,7 +67,7 @@ module Browserctl
           Browserctl.workflow #{name.inspect} do
             desc "Recorded on #{Date.today}"
 
-          #{steps.gsub(/^/, "  ")}
+          #{steps.gsub(/^/, '  ')}
           end
         RUBY
       end

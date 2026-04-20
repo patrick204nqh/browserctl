@@ -16,7 +16,7 @@ end
 
 Browserctl.logger = Browserctl.build_logger(opts[:log_level])
 Browserctl::Server.new(
-  headless:    !opts[:headed],
+  headless: !opts[:headed],
   socket_path: Browserctl.socket_path(opts[:name]),
-  pid_path:    Browserctl.pid_path(opts[:name])
+  pid_path: Browserctl.pid_path(opts[:name])
 ).run

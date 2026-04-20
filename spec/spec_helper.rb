@@ -4,7 +4,7 @@ require "browserctl"
 require "browserctl/server"
 require "browserctl/client"
 
-Browserctl.logger = ::Logger.new(File::NULL)
+Browserctl.logger = Logger.new(File::NULL)
 
 module BrowserctlHelpers
   def start_daemon(headed: false, name: nil)
@@ -15,9 +15,9 @@ module BrowserctlHelpers
       $stdout.reopen(File::NULL)
       $stderr.reopen(File::NULL)
       Browserctl::Server.new(
-        headless:    !headed,
+        headless: !headed,
         socket_path: socket,
-        pid_path:    pid_f
+        pid_path: pid_f
       ).run
     end
 
@@ -36,6 +36,7 @@ module BrowserctlHelpers
     loop do
       Process.wait(@daemon_pid, Process::WNOHANG)
       break if Time.now > deadline
+
       sleep 0.1
     end
     Process.kill("KILL", @daemon_pid)
@@ -43,7 +44,9 @@ module BrowserctlHelpers
     nil
   ensure
     [Browserctl.socket_path, Browserctl.pid_path].each do |f|
-      File.unlink(f) rescue nil
+      File.unlink(f)
+    rescue StandardError
+      nil
     end
     @daemon_pid = nil
   end

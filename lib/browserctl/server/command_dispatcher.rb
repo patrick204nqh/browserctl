@@ -73,20 +73,20 @@ module Browserctl
       return { ok: true, html: page.body } unless format == "ai"
 
       snapshot = @snapshot.call(page)
-      registry = snapshot.each_with_object({}) { |el, h| h[el[:ref]] = el[:selector] }
+      registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
 
       result = @mutex.synchronize do
         prev = @prev_snapshots[name]
         @ref_registries[name] = registry
         @prev_snapshots[name] = snapshot
-        (diff && prev) ? compute_diff(prev, snapshot) : snapshot
+        diff && prev ? compute_diff(prev, snapshot) : snapshot
       end
 
       { ok: true, snapshot: result }
     end
 
     def compute_diff(prev, current)
-      prev_by_sel = prev.each_with_object({}) { |el, h| h[el[:selector]] = el }
+      prev_by_sel = prev.to_h { |el| [el[:selector], el] }
       current.reject do |el|
         old = prev_by_sel[el[:selector]]
         old && old.slice(:text, :attrs) == el.slice(:text, :attrs)
@@ -100,6 +100,7 @@ module Browserctl
     def cmd_fill(req)
       sel = resolve_selector(req[:name], req)
       return sel if sel.is_a?(Hash)
+
       with_page(req[:name]) { |p| type_into(p, sel, req[:value]) }
     end
 
@@ -115,6 +116,7 @@ module Browserctl
     def cmd_click(req)
       sel = resolve_selector(req[:name], req)
       return sel if sel.is_a?(Hash)
+
       with_page(req[:name]) { |p| click_element(p, sel) }
     end
 

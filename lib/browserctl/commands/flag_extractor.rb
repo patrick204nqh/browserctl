@@ -11,9 +11,10 @@ module Browserctl
         args.delete_at(i)
       end
 
-      def self.extract_flag(args, flag)
+      def self.extract_flag?(args, flag)
         i = args.index(flag)
         return false unless i
+
         args.delete_at(i)
         true
       end

@@ -52,9 +52,9 @@ end
 
 daemon_idx  = ARGV.index("--daemon")
 daemon_name = if daemon_idx
-  ARGV.delete_at(daemon_idx)
-  ARGV.delete_at(daemon_idx)
-end
+                ARGV.delete_at(daemon_idx)
+                ARGV.delete_at(daemon_idx)
+              end
 
 cmd  = ARGV.shift
 args = ARGV.dup

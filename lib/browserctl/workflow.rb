@@ -128,12 +128,10 @@ module Browserctl
     def run_step(ctx, defn)
       last_error = nil
       (defn.retry_count + 1).times do
-        begin
-          execute_block(ctx, defn)
-          return StepResult.new(name: defn.label, ok: true)
-        rescue WorkflowError, StandardError => e
-          last_error = e
-        end
+        execute_block(ctx, defn)
+        return StepResult.new(name: defn.label, ok: true)
+      rescue WorkflowError, StandardError => e
+        last_error = e
       end
       StepResult.new(name: defn.label, ok: false, error: last_error.message)
     end
