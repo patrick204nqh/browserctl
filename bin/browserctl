@@ -23,6 +23,7 @@ require "browserctl/commands/watch"
 require "browserctl/commands/record"
 require "browserctl/commands/pause_resume"
 require "browserctl/commands/init"
+require "browserctl/commands/inspect"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -54,8 +55,9 @@ def usage
       url    <page>                                Print current URL
       eval   <page> <expression>                   Evaluate JS expression
       watch  <page> <selector> [--timeout N]       Wait for a selector to appear
-      pause  <page>                                Pause automation — browser stays live
-      resume <page>                                Resume automation after manual action
+      pause   <page>                               Pause automation — browser stays live
+      resume  <page>                               Resume automation after manual action
+      inspect <page>                               Open Chrome DevTools for a named page
 
     Recording commands:
       record start <name>            Start recording browser commands
@@ -136,6 +138,7 @@ else
   when "watch"    then Browserctl::Commands::Watch.run(client, args)
   when "pause"    then Browserctl::Commands::PauseResume.pause(client, args)
   when "resume"   then Browserctl::Commands::PauseResume.resume(client, args)
+  when "inspect"  then Browserctl::Commands::Inspect.run(client, args)
   when "ping"     then print_result(client.ping)
   when "shutdown" then print_result(client.shutdown)
   else

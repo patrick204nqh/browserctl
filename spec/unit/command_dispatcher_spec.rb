@@ -352,4 +352,25 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(pages.key?("temp")).to be false
     end
   end
+
+  describe "#cmd_inspect" do
+    let(:browser) { double("browser") }
+    let(:page)    { instance_double("Ferrum::Page") }
+    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, browser) }
+
+    it "returns a devtools_url for a known page" do
+      allow(browser).to receive_message_chain(:process, :port).and_return(9222)
+      allow(page).to receive(:target_id).and_return("ABCD1234")
+      res = dispatcher.dispatch({ cmd: "inspect", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:devtools_url]).to include("9222")
+      expect(res[:devtools_url]).to include("ABCD1234")
+    end
+
+    it "returns error for unknown page" do
+      res = dispatcher.dispatch({ cmd: "inspect", name: "ghost" })
+      expect(res[:error]).to match(/no page named 'ghost'/)
+    end
+  end
 end
