@@ -41,7 +41,7 @@ RSpec.describe Browserctl::Recording do
       described_class.start("test")
       described_class.append("fill", name: "login", selector: "input", value: "hi")
       ruby = described_class.generate_workflow("test")
-      expect(ruby).to include('page(:login).fill("input", "hi")')
+      expect(ruby).to include('page(:login).fill("input", params[:fill_value])')
     end
 
     it "ignores non-recordable commands" do
@@ -54,6 +54,25 @@ RSpec.describe Browserctl::Recording do
     it "does nothing when no active recording" do
       described_class.append("click", name: "p", selector: "a")
       # no error, no file created
+    end
+  end
+
+  describe ".append for fill commands" do
+    before do
+      File.write(Browserctl::Recording::STATE_FILE, "test")
+    end
+
+    it "does not record the value field for fill commands" do
+      Browserctl::Recording.append(:fill, name: "main", selector: "input[name=email]", value: "secret@example.com")
+      log = File.read(File.join(Browserctl::Recording::RECORDINGS_DIR, "test.jsonl"))
+      expect(log).not_to include("secret@example.com")
+    end
+
+    it "still records the selector for fill commands" do
+      Browserctl::Recording.append(:fill, name: "main", selector: "input[name=email]", value: "secret@example.com")
+      log = File.read(File.join(Browserctl::Recording::RECORDINGS_DIR, "test.jsonl"))
+      parsed = JSON.parse(log.strip)
+      expect(parsed["selector"]).to eq("input[name=email]")
     end
   end
 
