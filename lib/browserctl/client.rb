@@ -130,6 +130,28 @@ module Browserctl
     # @return [Hash] `{ ok: true, devtools_url: }` or `{ error: }`
     def inspect_page(name)         = call("inspect", name: name)
 
+    # Returns all cookies for a named page.
+    # @param name [String] logical page name
+    # @return [Hash] `{ ok: true, cookies: [Hash] }` or `{ error: }`
+    def cookies(name) = call("cookies", name: name)
+
+    # Sets a cookie on a named page.
+    # @param name [String] logical page name
+    # @param cookie_name [String] cookie name (e.g. "cf_clearance")
+    # @param value [String] cookie value
+    # @param domain [String] cookie domain (e.g. ".example.com")
+    # @param path [String] cookie path (default: "/")
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def set_cookie(name, cookie_name, value, domain, path: "/")
+      call("set_cookie", name: name, cookie_name: cookie_name,
+                         value: value, domain: domain, path: path)
+    end
+
+    # Clears all cookies for a named page.
+    # @param name [String] logical page name
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def clear_cookies(name) = call("clear_cookies", name: name)
+
     private
 
     def communicate(payload)

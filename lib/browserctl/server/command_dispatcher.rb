@@ -22,7 +22,10 @@ module Browserctl
       "shutdown" => :cmd_shutdown,
       "pause" => :cmd_pause,
       "resume" => :cmd_resume,
-      "inspect" => :cmd_inspect
+      "inspect" => :cmd_inspect,
+      "cookies" => :cmd_cookies,
+      "set_cookie" => :cmd_set_cookie,
+      "clear_cookies" => :cmd_clear_cookies
     }.freeze
 
     SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
@@ -201,6 +204,35 @@ module Browserctl
 
     def cmd_url(req)
       with_page(req[:name]) { |session| { ok: true, url: session.page.current_url } }
+    end
+
+    def cmd_cookies(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      all = session.page.cookies.all
+      { ok: true, cookies: all.values.map(&:to_h) }
+    end
+
+    def cmd_set_cookie(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      session.page.cookies.set(
+        name: req[:cookie_name],
+        value: req[:value],
+        domain: req[:domain],
+        path: req.fetch(:path, "/")
+      )
+      { ok: true }
+    end
+
+    def cmd_clear_cookies(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      session.page.cookies.clear
+      { ok: true }
     end
 
     def cmd_inspect(req)

@@ -138,6 +138,12 @@ browserctl shutdown
 | `shot <page> [--out PATH] [--full]` | Take a screenshot |
 | `url <page>` | Print current URL |
 | `eval <page> <expression>` | Evaluate a JS expression |
+| `pause <page>` | Pause automation — browser stays live for manual interaction |
+| `resume <page>` | Resume automation after manual action |
+| `inspect <page>` | Open Chrome DevTools for a named page |
+| `cookies <page>` | List all cookies as JSON |
+| `set_cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
+| `clear_cookies <page>` | Clear all cookies for a page |
 | `record start <name>` | Begin recording commands as a replayable workflow |
 | `record stop [--out path]` | End recording; saves to `.browserctl/workflows/` or custom path |
 | `record status` | Show whether a recording is active |
@@ -262,7 +268,7 @@ browserctl run smoke_login --email me@example.com --password s3cr3t
 
 ### PageProxy methods
 
-`goto(url)` · `fill(selector, value)` · `click(selector)` · `snapshot(**opts)` · `screenshot(**opts)` · `wait_for(selector, timeout: 10)` · `url` · `evaluate(expression)`
+`goto(url)` · `fill(selector, value)` · `click(selector)` · `snapshot(**opts)` · `screenshot(**opts)` · `wait_for(selector, timeout: 10)` · `url` · `evaluate(expression)` · `pause` · `resume` · `inspect_page` · `cookies` · `set_cookie(name, value, domain, path: "/")` · `clear_cookies`
 
 ---
 

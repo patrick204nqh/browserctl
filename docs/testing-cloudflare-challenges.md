@@ -94,6 +94,36 @@ The `pause` command blocks all further commands on the named page via a `Conditi
 
 ---
 
+## Capturing and replaying `cf_clearance`
+
+After a human solves a Cloudflare challenge, the browser holds a `cf_clearance` cookie that grants access for subsequent requests. You can capture it and inject it into future sessions to skip re-solving.
+
+**Capture after human solves:**
+
+```bash
+browserctl resume main
+browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
+# → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
+```
+
+**Restore in a new session:**
+
+```bash
+browserctl open main
+browserctl set_cookie main cf_clearance "xyz..." ".example.com"
+browserctl goto main https://example.com   # no challenge shown
+```
+
+Or from Ruby:
+
+```ruby
+client.set_cookie("main", "cf_clearance", "xyz...", ".example.com")
+```
+
+> **Note:** `cf_clearance` cookies expire (typically 30 minutes to a few hours). If the cookie has aged out, Cloudflare will serve a new challenge and you will need to capture a fresh value.
+
+---
+
 ## Adapting to your own protected URL
 
 Replace the `--url` parameter with any Cloudflare-protected site:

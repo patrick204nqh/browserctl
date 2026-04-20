@@ -56,6 +56,18 @@ browserctl record stop                       # end capture + auto-save to .brows
 browserctl record stop --out /tmp/my.rb      # or save to a custom path
 browserctl record status                     # check if a recording is active
 
+# Human-in-the-loop (HITL)
+browserctl pause  login            # pause automation — browser stays live for manual interaction
+browserctl resume login            # resume automation after human action
+
+# DevTools
+browserctl inspect login           # open Chrome DevTools URL for a named page
+
+# Cookies
+browserctl cookies login                                          # list all cookies as JSON
+browserctl set_cookie login cf_clearance "xyz..." ".example.com" # set a cookie (path defaults to /)
+browserctl clear_cookies login                                    # clear all cookies
+
 # Page management
 browserctl pages
 browserctl close login
@@ -187,6 +199,32 @@ Describe one:   `browserctl describe smoke_login`
 Workflows in `./.browserctl/workflows/` are project-local.
 Workflows in `~/.browserctl/workflows/` are global.
 
+## Cloudflare challenges and HITL
+
+`goto` and `snap` responses include `challenge: true` when Cloudflare is detected. Use `pause` to hand control to a human, then poll until cleared:
+
+```sh
+# 1. Navigate — check for challenge
+browserctl goto main https://protected.example.com
+# → { "challenge": true }
+
+# 2. Pause and wait for human to solve
+browserctl pause main
+# (human solves challenge in browser window)
+browserctl resume main
+
+# 3. Capture cf_clearance for future sessions
+browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
+# → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
+
+# 4. Restore in a new session (skips re-solving)
+browserctl open main
+browserctl set_cookie main cf_clearance "xyz..." ".example.com"
+browserctl goto main https://protected.example.com
+```
+
+> `cf_clearance` expires in 30 min–a few hours. Re-capture when Cloudflare challenges again.
+
 ## Rules
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
@@ -198,6 +236,8 @@ Workflows in `~/.browserctl/workflows/` are global.
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
 - **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snap <page>`.
+- **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
+- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `set_cookie` to avoid re-solving in future sessions.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Troubleshooting
