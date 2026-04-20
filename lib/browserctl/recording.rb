@@ -33,6 +33,8 @@ module Browserctl
       name = active
       return unless name
       return unless RECORDABLE.include?(cmd.to_s)
+      # ref-based interactions have no replayable selector — skip them
+      return if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
 
       File.open(log_path(name), "a") do |f|
         f.puts JSON.generate({ cmd: cmd.to_s }.merge(attrs.transform_keys(&:to_s)))

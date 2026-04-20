@@ -24,7 +24,7 @@ module Browserctl
 
     def describe_workflow(name)
       defn = fetch_workflow(name)
-      { name: defn.name, desc: defn.description, params: format_params(defn), steps: defn.steps.map(&:first) }
+      { name: defn.name, desc: defn.description, params: format_params(defn), steps: defn.steps.map(&:label) }
     end
 
     private
