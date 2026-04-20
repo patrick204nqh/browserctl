@@ -58,6 +58,9 @@ def usage
       pause   <page>                               Pause automation — browser stays live
       resume  <page>                               Resume automation after manual action
       inspect <page>                               Open Chrome DevTools for a named page
+      cookies <page>                               List all cookies as JSON
+      set_cookie <page> <name> <value> <domain>    Set a cookie (path defaults to /)
+      clear_cookies <page>                         Clear all cookies for a page
 
     Recording commands:
       record start <name>            Start recording browser commands
@@ -138,7 +141,10 @@ else
   when "watch"    then Browserctl::Commands::Watch.run(client, args)
   when "pause"    then Browserctl::Commands::PauseResume.pause(client, args)
   when "resume"   then Browserctl::Commands::PauseResume.resume(client, args)
-  when "inspect"  then Browserctl::Commands::Inspect.run(client, args)
+  when "inspect"       then Browserctl::Commands::Inspect.run(client, args)
+  when "cookies"       then print_result(client.cookies(args[0]))
+  when "set_cookie"    then print_result(client.set_cookie(args[0], args[1], args[2], args[3]))
+  when "clear_cookies" then print_result(client.clear_cookies(args[0]))
   when "ping"     then print_result(client.ping)
   when "shutdown" then print_result(client.shutdown)
   else
