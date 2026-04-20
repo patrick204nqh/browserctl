@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/patrick204nqh/browserctl/compare/v0.2.1...v0.2.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* never record plaintext fill values in session recordings ([a0ea9a1](https://github.com/patrick204nqh/browserctl/commit/a0ea9a15f4dbdc29a0a6aaa8186fa313e601c691))
+* rescue Timeout::Error in quietly; remove duplicate [@last](https://github.com/last)_used update ([d0b1430](https://github.com/patrick204nqh/browserctl/commit/d0b143051a4a6adcdc80620388390bd649ee0bce))
+* restrict screenshot path to ~/.browserctl/screenshots ([0a1303f](https://github.com/patrick204nqh/browserctl/commit/0a1303f95b1df3135a81c98e531ac31c99e2e275))
+* rubocop offenses — constant scope and hash alignment ([cc11bc5](https://github.com/patrick204nqh/browserctl/commit/cc11bc546746c7f341573ffff43b02fdc94578d8))
+* security patches and PageSession architecture refactor (review fixes) ([a01d0f7](https://github.com/patrick204nqh/browserctl/commit/a01d0f7bd3f58b51d21fc534a67dda25c15b029b))
+* trigger release on tag push; revert release-please to default token ([011d4dc](https://github.com/patrick204nqh/browserctl/commit/011d4dcddd872f0ed88548ee9c2e8b19d64ad5c2))
+* update CI workflows to use actions/checkout@v4 and set timeout for jobs ([15ab5d4](https://github.com/patrick204nqh/browserctl/commit/15ab5d471952ff9759eff7ff77ce2df30eea5e1f))
+* validate workflow name to prevent path traversal ([1d0f221](https://github.com/patrick204nqh/browserctl/commit/1d0f221b35a855c1991bee5177b7e742ecb16e86))
+
 ## [0.2.1](https://github.com/patrick204nqh/browserctl/compare/v0.2.0...v0.2.1) (2026-04-20)
 
 
