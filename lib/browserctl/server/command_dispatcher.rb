@@ -6,20 +6,20 @@ require_relative "page_session"
 module Browserctl
   class CommandDispatcher
     COMMAND_MAP = {
-      "open_page"  => :cmd_open_page,
+      "open_page" => :cmd_open_page,
       "close_page" => :cmd_close_page,
       "list_pages" => :cmd_list_pages,
-      "goto"       => :cmd_goto,
-      "snapshot"   => :cmd_snapshot,
-      "evaluate"   => :cmd_evaluate,
-      "fill"       => :cmd_fill,
-      "click"      => :cmd_click,
+      "goto" => :cmd_goto,
+      "snapshot" => :cmd_snapshot,
+      "evaluate" => :cmd_evaluate,
+      "fill" => :cmd_fill,
+      "click" => :cmd_click,
       "screenshot" => :cmd_screenshot,
-      "wait_for"   => :cmd_wait_for,
-      "watch"      => :cmd_watch,
-      "url"        => :cmd_url,
-      "ping"       => :cmd_ping,
-      "shutdown"   => :cmd_shutdown
+      "wait_for" => :cmd_wait_for,
+      "watch" => :cmd_watch,
+      "url" => :cmd_url,
+      "ping" => :cmd_ping,
+      "shutdown" => :cmd_shutdown
     }.freeze
 
     SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze

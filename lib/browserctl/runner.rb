@@ -27,9 +27,9 @@ module Browserctl
       { name: defn.name, desc: defn.description, params: format_params(defn), steps: defn.steps.map(&:label) }
     end
 
-    private
+    SAFE_WORKFLOW_NAME = /\A[a-zA-Z0-9_-]+\z/
 
-    SAFE_WORKFLOW_NAME = /\A[a-zA-Z0-9_-]+\z/.freeze
+    private
 
     def validate_name!(name)
       return if SAFE_WORKFLOW_NAME.match?(name.to_s)
