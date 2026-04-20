@@ -279,6 +279,45 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "plugin commands" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    after { Browserctl::PLUGIN_COMMANDS.clear }
+
+    it "dispatches a registered plugin command" do
+      Browserctl.register_command(:test_echo) do |_session, req|
+        { ok: true, echoed: req[:value] }
+      end
+      res = dispatcher.dispatch({ cmd: "test_echo", name: "main", value: "hello" })
+      expect(res[:ok]).to be true
+      expect(res[:echoed]).to eq("hello")
+    end
+
+    it "passes the PageSession to the plugin" do
+      received_session = nil
+      Browserctl.register_command(:capture_session) do |session, _req|
+        received_session = session
+        { ok: true }
+      end
+      dispatcher.dispatch({ cmd: "capture_session", name: "main" })
+      expect(received_session).to be_a(Browserctl::PageSession)
+    end
+
+    it "plugin command name does not shadow built-in commands" do
+      Browserctl.register_command(:ping) { |_s, _r| { ok: false, hijacked: true } }
+      res = dispatcher.dispatch({ cmd: "ping" })
+      expect(res[:hijacked]).to be_nil
+      expect(res[:pid]).to eq(Process.pid)
+    end
+
+    it "returns unknown command error if neither built-in nor plugin" do
+      res = dispatcher.dispatch({ cmd: "no_such_cmd" })
+      expect(res[:error]).to match(/unknown command/)
+    end
+  end
+
   describe "#cmd_snapshot (state storage)" do
     let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }

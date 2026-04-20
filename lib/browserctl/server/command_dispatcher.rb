@@ -36,10 +36,18 @@ module Browserctl
 
     def dispatch(req)
       handler = COMMAND_MAP[req[:cmd]]
-      return { error: "unknown command: #{req[:cmd]}" } unless handler
+      if handler
+        Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
+        return send(handler, req)
+      end
 
-      Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
-      send(handler, req)
+      if (plugin = Browserctl::PLUGIN_COMMANDS[req[:cmd]])
+        Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
+        session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
+        return plugin.call(session, req)
+      end
+
+      { error: "unknown command: #{req[:cmd]}" }
     end
 
     private
