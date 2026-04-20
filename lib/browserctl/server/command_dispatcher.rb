@@ -65,7 +65,7 @@ module Browserctl
     def cmd_goto(req)
       with_page(req[:name]) do |session|
         session.page.go_to(req[:url])
-        { ok: true, url: session.page.current_url }
+        { ok: true, url: session.page.current_url, challenge: cloudflare_challenge?(session.page) }
       end
     end
 
@@ -74,7 +74,11 @@ module Browserctl
     end
 
     def take_snapshot(session, format, diff)
-      return { ok: true, html: session.page.body } unless format == "ai"
+      challenge = cloudflare_challenge?(session.page)
+
+      unless format == "ai"
+        return { ok: true, html: session.page.body, challenge: challenge }
+      end
 
       snapshot = @snapshot_builder.call(session.page)
       registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
@@ -84,7 +88,7 @@ module Browserctl
       session.prev_snapshot = snapshot
       result = diff && prev ? compute_diff(prev, snapshot) : snapshot
 
-      { ok: true, snapshot: result }
+      { ok: true, snapshot: result, challenge: challenge }
     end
 
     def compute_diff(prev, current)
@@ -220,6 +224,20 @@ module Browserctl
         session.pause_cv.wait(session.mutex) while session.paused?
         yield session
       end
+    end
+
+    CLOUDFLARE_SIGNALS = [
+      "cf-challenge-running",
+      "cf_chl_opt",
+      "__cf_chl_f_tk",
+      "Just a moment..."
+    ].freeze
+
+    def cloudflare_challenge?(page)
+      url  = page.current_url.to_s
+      body = page.body.to_s
+      url.include?("challenge-platform") ||
+        CLOUDFLARE_SIGNALS.any? { |sig| body.include?(sig) }
     end
 
     def resolve_selector_from(session, req)

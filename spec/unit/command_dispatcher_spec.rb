@@ -74,7 +74,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "ref-based interaction" do
     let(:html) { '<html><body><input name="email"><button>Go</button></body></html>' }
-    let(:page) { instance_double("Ferrum::Page", body: html) }
+    let(:page) { instance_double("Ferrum::Page", body: html, current_url: "https://example.com") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
@@ -109,7 +109,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "snap --diff" do
     let(:html_v1) { '<html><body><button id="a">A</button></body></html>' }
     let(:html_v2) { '<html><body><button id="a">A</button><button id="b">B</button></body></html>' }
-    let(:page)    { instance_double("Ferrum::Page") }
+    let(:page)    { instance_double("Ferrum::Page", current_url: "https://example.com") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
@@ -187,6 +187,53 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "Cloudflare challenge detection" do
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    context "when snapshot detects challenge page" do
+      let(:cf_html) { '<html><body class="cf-challenge-running">Just a moment...</body></html>' }
+      let(:page)    { instance_double("Ferrum::Page", body: cf_html, current_url: "https://example.com") }
+
+      it "includes challenge: true in ai snapshot response" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+        expect(res[:challenge]).to be true
+      end
+
+      it "includes challenge: true in html snapshot response" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+        expect(res[:challenge]).to be true
+      end
+    end
+
+    context "when goto lands on challenge page" do
+      let(:cf_url) { "https://example.com/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1" }
+      let(:page)   { instance_double("Ferrum::Page", body: "<html></html>", current_url: cf_url) }
+
+      it "includes challenge: true in goto response" do
+        allow(page).to receive(:go_to)
+        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        expect(res[:challenge]).to be true
+      end
+    end
+
+    context "when page is normal" do
+      let(:page) { instance_double("Ferrum::Page", body: "<html><body>Normal</body></html>",
+                                                   current_url: "https://example.com/page") }
+
+      it "includes challenge: false in snapshot" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+        expect(res[:challenge]).to be false
+      end
+
+      it "includes challenge: false in goto" do
+        allow(page).to receive(:go_to)
+        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        expect(res[:challenge]).to be false
+      end
+    end
+  end
+
   describe "#cmd_pause and #cmd_resume" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
@@ -233,7 +280,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   end
 
   describe "#cmd_snapshot (state storage)" do
-    let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
+    let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     let(:builder) { Browserctl::SnapshotBuilder.new }
     subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
@@ -256,7 +303,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "evicts ref_registry and prev_snapshot when page is closed" do
-      page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>")
+      page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com")
       allow(page2).to receive(:close)
       pages["temp"] = Browserctl::PageSession.new(page2)
       dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "ai" })
