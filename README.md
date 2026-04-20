@@ -139,8 +139,9 @@ browserctl shutdown
 | `url <page>` | Print current URL |
 | `eval <page> <expression>` | Evaluate a JS expression |
 | `record start <name>` | Begin recording commands as a replayable workflow |
-| `record stop` | End recording |
-| `record generate <name>` | Write recorded session to a `.rb` workflow file |
+| `record stop` | End recording and save workflow to `.browserctl/workflows/` |
+| `record generate <name> [--out path]` | Re-generate workflow from recording; prints to stdout or writes to `--out` |
+| `record status` | Show whether a recording is active |
 
 ### Daemon commands
 

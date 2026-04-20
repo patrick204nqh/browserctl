@@ -52,8 +52,10 @@ browserctl watch login ".toast" --timeout 5       # fail after 5s
 
 # Recording
 browserctl record start my_flow        # start capturing commands
-browserctl record stop                 # end capture
-browserctl record generate my_flow    # write replayable .rb workflow file
+browserctl record stop                       # end capture + auto-save to .browserctl/workflows/
+browserctl record generate my_flow          # print generated workflow to stdout
+browserctl record generate my_flow --out /tmp/my_flow.rb  # write to a specific path
+browserctl record status                     # check if a recording is active
 
 # Page management
 browserctl pages
