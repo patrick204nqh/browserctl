@@ -22,6 +22,7 @@ require "browserctl/commands/screenshot"
 require "browserctl/commands/watch"
 require "browserctl/commands/record"
 require "browserctl/commands/pause_resume"
+require "browserctl/commands/init"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -35,6 +36,9 @@ end
 def usage
   puts <<~USAGE
     Usage: browserctl <command> [args]
+
+    Setup:
+      init                                         Scaffold .browserctl/ in this project
 
     Browser commands (require browserd running):
       open   <page> [--url URL]                   Open or focus a named page
@@ -113,6 +117,7 @@ when "describe"
   puts JSON.pretty_generate(runner.describe_workflow(name))
 
 when "record" then Browserctl::Commands::Record.run(args)
+when "init"   then Browserctl::Commands::Init.run(args)
 
 else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
