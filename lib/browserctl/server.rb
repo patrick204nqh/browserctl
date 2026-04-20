@@ -85,7 +85,6 @@ module Browserctl
     def dispatch(socket, line)
       return unless line
 
-      @mutex.synchronize { @last_used = Time.now }
       socket.puts JSON.generate(process(line))
     end
 
@@ -109,7 +108,7 @@ module Browserctl
 
     def quietly
       yield
-    rescue StandardError
+    rescue Exception # rubocop:disable Lint/RescueException
       nil
     end
   end
