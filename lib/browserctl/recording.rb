@@ -14,6 +14,7 @@ module Browserctl
 
     def self.start(name)
       FileUtils.mkdir_p(RECORDINGS_DIR)
+      FileUtils.mkdir_p(File.dirname(STATE_FILE))
       File.write(STATE_FILE, name)
       FileUtils.rm_f(log_path(name))
       name
@@ -50,8 +51,9 @@ module Browserctl
       lines = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
-      FileUtils.rm_f(log)
       ruby
+    ensure
+      FileUtils.rm_f(log) if log
     end
 
     class << self

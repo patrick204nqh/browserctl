@@ -29,8 +29,11 @@ module Browserctl
         end
 
         def run_stop(args)
-          idx  = args.index("--out")
-          out  = idx && args.delete_at(idx + 1).tap { args.delete_at(idx) }
+          idx = args.index("--out")
+          out = if idx
+                  args.delete_at(idx)
+                  args.delete_at(idx)
+                end
           name = Recording.stop
           if out
             FileUtils.mkdir_p(File.dirname(out))
