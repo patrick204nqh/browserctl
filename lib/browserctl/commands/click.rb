@@ -1,21 +1,27 @@
 # frozen_string_literal: true
 
-require_relative "flag_extractor"
+require "optimist"
+require_relative "cli_output"
 
 module Browserctl
   module Commands
     class Click
-      def self.run(client, args)
-        name = args.shift
-        ref  = FlagExtractor.extract_opt(args, "--ref")
-        selector = args.shift unless ref
+      extend CliOutput
 
-        if ref
+      def self.run(client, args)
+        opts = Optimist.options(args) do
+          banner "Usage: browserctl click <page> <selector>\n       " \
+                 "browserctl click <page> --ref <ref>"
+          opt :ref, "Snapshot ref to click", type: :string, short: "-r"
+        end
+        name = args.shift
+        if opts[:ref]
           abort "usage: browserctl click <page> --ref <ref>" unless name
-          puts client.click(name, ref: ref).to_json
+          print_result(client.click(name, ref: opts[:ref]))
         else
+          selector = args.shift
           abort "usage: browserctl click <page> <selector>" unless name && selector
-          puts client.click(name, selector).to_json
+          print_result(client.click(name, selector))
         end
       end
     end

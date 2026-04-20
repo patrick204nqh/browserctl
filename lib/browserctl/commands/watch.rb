@@ -1,16 +1,26 @@
 # frozen_string_literal: true
 
-require_relative "flag_extractor"
+require "optimist"
+require_relative "cli_output"
 
 module Browserctl
   module Commands
     class Watch
+      extend CliOutput
+
       def self.run(client, args)
+        opts = Optimist.options(args) do
+          banner "Usage: browserctl watch <page> <selector> [--timeout N]"
+          opt :timeout, "Seconds to wait (default: 30)", default: 30.0, short: "-t"
+        end
         name     = args.shift
         selector = args.shift
-        timeout  = (FlagExtractor.extract_opt(args, "--timeout") || 30).to_f
         abort "usage: browserctl watch <page> <selector> [--timeout N]" unless name && selector
-        puts client.watch(name, selector, timeout: timeout).to_json
+        unless opts[:timeout].positive?
+          warn "Error: --timeout must be a positive number"
+          exit 1
+        end
+        print_result(client.watch(name, selector, timeout: opts[:timeout]))
       end
     end
   end
