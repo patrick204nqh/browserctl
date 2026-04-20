@@ -4,6 +4,9 @@ require_relative "snapshot_builder"
 
 module Browserctl
   class CommandDispatcher
+    SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
+    SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
+
     COMMAND_MAP = {
       "open_page" => :cmd_open_page,
       "close_page" => :cmd_close_page,
@@ -127,9 +130,27 @@ module Browserctl
 
     def cmd_screenshot(req)
       with_page(req[:name]) do |p|
-        path = req[:path] || "/tmp/browserctl_shot_#{req[:name]}_#{Time.now.to_i}.png"
+        path = safe_screenshot_path(req[:path], req[:name])
+        return path if path.is_a?(Hash)
+
+        FileUtils.mkdir_p(File.dirname(path))
         p.screenshot(path: path, full: req.fetch(:full, false))
         { ok: true, path: path }
+      end
+    end
+
+    def safe_screenshot_path(requested, page_name)
+      if requested
+        expanded = File.expand_path(requested)
+        return { error: "path outside allowed directory (#{SCREENSHOT_DIR})" } \
+          unless expanded.start_with?(SCREENSHOT_DIR)
+        return { error: "invalid extension — use .png, .jpg, or .jpeg" } \
+          unless SCREENSHOT_EXTS.include?(File.extname(expanded).downcase)
+
+        expanded
+      else
+        name_safe = page_name.to_s.gsub(/[^a-zA-Z0-9_-]/, "_")
+        File.join(SCREENSHOT_DIR, "browserctl_shot_#{name_safe}_#{Time.now.to_i}.png")
       end
     end
 

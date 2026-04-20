@@ -135,6 +135,33 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "#cmd_screenshot" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => page } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it "rejects paths outside the allowed screenshot directory" do
+      res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                  path: "/tmp/../Users/nqhuy25/.ssh/authorized_keys" })
+      expect(res[:error]).to match(/outside allowed directory/)
+    end
+
+    it "rejects paths without .png or .jpg extension" do
+      res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                  path: File.expand_path("~/.browserctl/screenshots/evil.rb") })
+      expect(res[:error]).to match(/invalid extension/)
+    end
+
+    it "accepts a valid path inside the allowed directory" do
+      allowed = File.expand_path("~/.browserctl/screenshots/test.png")
+      FileUtils.mkdir_p(File.dirname(allowed))
+      allow(page).to receive(:screenshot)
+      res = dispatcher.dispatch({ cmd: "screenshot", name: "main", path: allowed })
+      expect(res[:ok]).to be true
+      expect(res[:path]).to eq(allowed)
+    end
+  end
+
   describe "#cmd_watch" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => page } }
