@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/patrick204nqh/browserctl/compare/v0.2.2...v0.3.0) (2026-04-20)
+
+
+### Features
+
+* add cookies, set_cookie, clear_cookies commands for CF clearance replay ([dd38f2d](https://github.com/patrick204nqh/browserctl/commit/dd38f2d587d12f789072326310a1f490e7f993b7))
+* add cookies, set_cookie, clear_cookies commands for CF clearance replay ([c773fe2](https://github.com/patrick204nqh/browserctl/commit/c773fe25e73660cbe5c7e0e3d698fbf7709df51d))
+* browserctl v0.3 — HITL, Cloudflare detection, init, compose, plugins, inspect, RBS, YARD ([ec24c85](https://github.com/patrick204nqh/browserctl/commit/ec24c85a7772b508c477ef4413b0b4a64be8dfa2))
+
+
+### Bug Fixes
+
+* rubocop offenses — bump ClassLength max to 240, fix hash alignment ([52669fd](https://github.com/patrick204nqh/browserctl/commit/52669fd21051e1fef581d1c6acd3189d7d805dfb))
+* rubocop offenses — move CLOUDFLARE_SIGNALS above private, autocorrect style ([0ad3d38](https://github.com/patrick204nqh/browserctl/commit/0ad3d38127671284c935809e189478c7160294f6))
+
 ## [0.2.2](https://github.com/patrick204nqh/browserctl/compare/v0.2.1...v0.2.2) (2026-04-20)
 
 
