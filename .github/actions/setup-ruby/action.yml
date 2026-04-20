@@ -1,0 +1,13 @@
+name: Setup Ruby
+description: Setup Ruby with bundler cache
+inputs:
+  ruby-version:
+    description: Ruby version to use
+    default: "3.3"
+runs:
+  using: composite
+  steps:
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ inputs.ruby-version }}
+        bundler-cache: true

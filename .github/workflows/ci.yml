@@ -23,20 +23,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
+      - uses: ./.github/actions/setup-ruby
       - run: bundle exec rubocop --parallel
 
   test:
     name: Test (Ruby 3.3)
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
+      - uses: ./.github/actions/setup-ruby
       - run: bundle exec rspec --format progress

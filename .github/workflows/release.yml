@@ -7,8 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    name: Test before publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-ruby
+      - run: bundle exec rspec --format progress
+
   release:
     name: Push to RubyGems
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: rubygems-release
@@ -16,10 +26,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
+      - uses: ./.github/actions/setup-ruby
       - name: Build gem
         run: gem build browserctl.gemspec
       - name: Push to RubyGems
