@@ -7,8 +7,8 @@ module Browserctl
         i = args.index(flag)
         return unless i
 
-        args.delete_at(i)
-        args.delete_at(i)
+        sliced = args.slice!(i, 2)
+        sliced.length == 2 ? sliced.last : nil
       end
 
       def self.extract_flag?(args, flag)

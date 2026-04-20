@@ -1,7 +1,4 @@
 {
-  "enabledPlugins": {
-    "patrick@patrick-nexus": true
-  },
   "permissions": {
     "allow": [
       "Read",

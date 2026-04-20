@@ -3,16 +3,18 @@
 require "json"
 require "date"
 require "fileutils"
+require "tmpdir"
 
 module Browserctl
   class Recording
-    RECORDINGS_DIR = File.expand_path("~/.browserctl/recordings")
+    RECORDINGS_DIR = File.join(Dir.tmpdir, "browserctl-recordings")
     STATE_FILE     = File.expand_path("~/.browserctl/active_recording")
 
     RECORDABLE = %w[open_page goto fill click screenshot evaluate].freeze
 
     def self.start(name)
       FileUtils.mkdir_p(RECORDINGS_DIR)
+      FileUtils.mkdir_p(File.dirname(STATE_FILE))
       File.write(STATE_FILE, name)
       FileUtils.rm_f(log_path(name))
       name
@@ -50,14 +52,16 @@ module Browserctl
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
       ruby
-    end
-
-    def self.log_path(name)
-      File.join(RECORDINGS_DIR, "#{name}.jsonl")
+    ensure
+      FileUtils.rm_f(log) if log
     end
 
     class << self
       private
+
+      def log_path(name)
+        File.join(RECORDINGS_DIR, "#{name}.jsonl")
+      end
 
       def build_workflow_ruby(name, commands)
         steps = commands.map { |c| build_step(c) }.join("\n\n")

@@ -41,10 +41,7 @@ module Browserctl
     private
 
     def cmd_open_page(req)
-      page = @mutex.synchronize { @pages[req[:name]] } || begin
-        new_page = @browser.create_page
-        @mutex.synchronize { @pages[req[:name]] ||= new_page }
-      end
+      page = @mutex.synchronize { @pages[req[:name]] ||= @browser.create_page }
       page.go_to(req[:url]) if req[:url]
       { ok: true, name: req[:name] }
     end
