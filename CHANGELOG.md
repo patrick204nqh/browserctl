@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/patrick204nqh/browserctl/compare/v0.2.0...v0.2.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* align CLI with standard conventions ([215c2af](https://github.com/patrick204nqh/browserctl/commit/215c2af3a4c4d27397476932147f3fda39e4039c))
+* remove flag_extractor spec after deleting the module ([cd80045](https://github.com/patrick204nqh/browserctl/commit/cd8004515fcbae68248d7133e10d5c0223be10e1))
+* use GH_PAT for release-please to trigger release workflow ([da83358](https://github.com/patrick204nqh/browserctl/commit/da83358e8ff19e8a30c23b9f5d744cb11ffbc7c6))
+* use PAT for release-please to trigger release workflow ([4a9ea99](https://github.com/patrick204nqh/browserctl/commit/4a9ea99f418cbf719a16e2a971672175e0292221))
+
 ## [0.2.0](https://github.com/patrick204nqh/browserctl/compare/v0.1.1...v0.2.0) (2026-04-20)
 
 
