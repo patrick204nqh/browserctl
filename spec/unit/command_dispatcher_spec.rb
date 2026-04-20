@@ -3,6 +3,7 @@
 require "spec_helper"
 require "browserctl/server/command_dispatcher"
 require "browserctl/server/snapshot_builder"
+require "browserctl/server/page_session"
 
 RSpec.describe Browserctl::CommandDispatcher do
   let(:browser)    { double("browser") }
@@ -22,7 +23,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "responds to list_pages" do
-      pages["main"] = double("page")
+      pages["main"] = Browserctl::PageSession.new(double("page"))
       expect(dispatcher.dispatch({ cmd: "list_pages" })).to eq({ pages: ["main"] })
     end
 
@@ -36,7 +37,8 @@ RSpec.describe Browserctl::CommandDispatcher do
       allow(browser).to receive(:create_page).and_return(page)
       result = dispatcher.dispatch({ cmd: "open_page", name: "home" })
       expect(result).to eq({ ok: true, name: "home" })
-      expect(pages["home"]).to eq(page)
+      expect(pages["home"]).to be_a(Browserctl::PageSession)
+      expect(pages["home"].page).to eq(page)
     end
 
     it "open_page navigates to url when given" do
@@ -48,7 +50,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "open_page re-navigates an existing page when url is given" do
       page = double("page")
-      pages["home"] = page
+      pages["home"] = Browserctl::PageSession.new(page)
       expect(page).to receive(:go_to).with("http://example.com/new")
       result = dispatcher.dispatch({ cmd: "open_page", name: "home", url: "http://example.com/new" })
       expect(result).to eq({ ok: true, name: "home" })
@@ -57,7 +59,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     it "close_page removes page and closes it" do
       page = double("page")
       allow(page).to receive(:close)
-      pages["home"] = page
+      pages["home"] = Browserctl::PageSession.new(page)
       result = dispatcher.dispatch({ cmd: "close_page", name: "home" })
       expect(result).to eq({ ok: true })
       expect(pages.key?("home")).to be false
@@ -73,7 +75,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "ref-based interaction" do
     let(:html) { '<html><body><input name="email"><button>Go</button></body></html>' }
     let(:page) { instance_double("Ferrum::Page", body: html) }
-    let(:pages) { { "main" => page } }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
     before do
@@ -108,7 +110,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:html_v1) { '<html><body><button id="a">A</button></body></html>' }
     let(:html_v2) { '<html><body><button id="a">A</button><button id="b">B</button></body></html>' }
     let(:page)    { instance_double("Ferrum::Page") }
-    let(:pages)   { { "main" => page } }
+    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
     it "returns full snapshot on first call with diff: true (no previous)" do
@@ -137,7 +139,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "#cmd_screenshot" do
     let(:page)  { instance_double("Ferrum::Page") }
-    let(:pages) { { "main" => page } }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
     it "rejects paths outside the allowed screenshot directory" do
@@ -164,7 +166,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "#cmd_watch" do
     let(:page)  { instance_double("Ferrum::Page") }
-    let(:pages) { { "main" => page } }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
     it "returns ok with selector when element appears" do
@@ -187,27 +189,36 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "#cmd_snapshot (state storage)" do
     let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
-    let(:pages)   { { "main" => page } }
+    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     let(:builder) { Browserctl::SnapshotBuilder.new }
     subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
 
     it "stores ref registry after ai snapshot" do
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
-      reg = dispatcher.instance_variable_get(:@ref_registries)
-      expect(reg["main"]).to be_a(Hash)
-      expect(reg["main"]).not_to be_empty
+      expect(pages["main"].ref_registry).to be_a(Hash)
+      expect(pages["main"].ref_registry).not_to be_empty
     end
 
     it "stores previous snapshot after ai snapshot" do
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
-      prev = dispatcher.instance_variable_get(:@prev_snapshots)
-      expect(prev["main"]).to be_an(Array)
+      expect(pages["main"].prev_snapshot).to be_an(Array)
     end
 
     it "does not store state for html format" do
       allow(page).to receive(:body).and_return("<html></html>")
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
-      expect(dispatcher.instance_variable_get(:@ref_registries)["main"]).to be_nil
+      expect(pages["main"].ref_registry).to be_empty
+    end
+
+    it "evicts ref_registry and prev_snapshot when page is closed" do
+      page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>")
+      allow(page2).to receive(:close)
+      pages["temp"] = Browserctl::PageSession.new(page2)
+      dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "ai" })
+      expect(pages["temp"].ref_registry).not_to be_empty
+
+      dispatcher.dispatch({ cmd: "close_page", name: "temp" })
+      expect(pages.key?("temp")).to be false
     end
   end
 end

@@ -1,36 +1,35 @@
 # frozen_string_literal: true
 
 require_relative "snapshot_builder"
+require_relative "page_session"
 
 module Browserctl
   class CommandDispatcher
+    COMMAND_MAP = {
+      "open_page"  => :cmd_open_page,
+      "close_page" => :cmd_close_page,
+      "list_pages" => :cmd_list_pages,
+      "goto"       => :cmd_goto,
+      "snapshot"   => :cmd_snapshot,
+      "evaluate"   => :cmd_evaluate,
+      "fill"       => :cmd_fill,
+      "click"      => :cmd_click,
+      "screenshot" => :cmd_screenshot,
+      "wait_for"   => :cmd_wait_for,
+      "watch"      => :cmd_watch,
+      "url"        => :cmd_url,
+      "ping"       => :cmd_ping,
+      "shutdown"   => :cmd_shutdown
+    }.freeze
+
     SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
 
-    COMMAND_MAP = {
-      "open_page" => :cmd_open_page,
-      "close_page" => :cmd_close_page,
-      "list_pages" => :cmd_list_pages,
-      "goto" => :cmd_goto,
-      "snapshot" => :cmd_snapshot,
-      "evaluate" => :cmd_evaluate,
-      "fill" => :cmd_fill,
-      "click" => :cmd_click,
-      "screenshot" => :cmd_screenshot,
-      "wait_for" => :cmd_wait_for,
-      "watch" => :cmd_watch,
-      "url" => :cmd_url,
-      "ping" => :cmd_ping,
-      "shutdown" => :cmd_shutdown
-    }.freeze
-
-    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, mutex: Mutex.new)
-      @pages          = pages
-      @browser        = browser
-      @snapshot       = snapshot_builder
-      @mutex          = mutex
-      @ref_registries = {}
-      @prev_snapshots = {}
+    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
+      @pages            = pages
+      @browser          = browser
+      @snapshot_builder = snapshot_builder
+      @global_mutex     = global_mutex
     end
 
     def dispatch(req)
@@ -44,43 +43,44 @@ module Browserctl
     private
 
     def cmd_open_page(req)
-      page = @mutex.synchronize { @pages[req[:name]] ||= @browser.create_page }
-      page.go_to(req[:url]) if req[:url]
+      session = @global_mutex.synchronize do
+        @pages[req[:name]] ||= PageSession.new(@browser.create_page)
+      end
+      session.page.go_to(req[:url]) if req[:url]
       { ok: true, name: req[:name] }
     end
 
     def cmd_close_page(req)
-      @mutex.synchronize { @pages.delete(req[:name]) }&.close
+      session = @global_mutex.synchronize { @pages.delete(req[:name]) }
+      session&.page&.close
       { ok: true }
     end
 
     def cmd_list_pages(_req)
-      { pages: @mutex.synchronize { @pages.keys } }
+      { pages: @global_mutex.synchronize { @pages.keys } }
     end
 
     def cmd_goto(req)
-      with_page(req[:name]) do |p|
-        p.go_to(req[:url])
-        { ok: true, url: p.current_url }
+      with_page(req[:name]) do |session|
+        session.page.go_to(req[:url])
+        { ok: true, url: session.page.current_url }
       end
     end
 
     def cmd_snapshot(req)
-      with_page(req[:name]) { |p| take_snapshot(req[:name], p, req[:format], req[:diff]) }
+      with_page(req[:name]) { |session| take_snapshot(session, req[:format], req[:diff]) }
     end
 
-    def take_snapshot(name, page, format, diff)
-      return { ok: true, html: page.body } unless format == "ai"
+    def take_snapshot(session, format, diff)
+      return { ok: true, html: session.page.body } unless format == "ai"
 
-      snapshot = @snapshot.call(page)
+      snapshot = @snapshot_builder.call(session.page)
       registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
 
-      result = @mutex.synchronize do
-        prev = @prev_snapshots[name]
-        @ref_registries[name] = registry
-        @prev_snapshots[name] = snapshot
-        diff && prev ? compute_diff(prev, snapshot) : snapshot
-      end
+      prev = session.prev_snapshot
+      session.ref_registry  = registry
+      session.prev_snapshot = snapshot
+      result = diff && prev ? compute_diff(prev, snapshot) : snapshot
 
       { ok: true, snapshot: result }
     end
@@ -94,14 +94,16 @@ module Browserctl
     end
 
     def cmd_evaluate(req)
-      with_page(req[:name]) { |p| { ok: true, result: p.evaluate(req[:expression]) } }
+      with_page(req[:name]) { |session| { ok: true, result: session.page.evaluate(req[:expression]) } }
     end
 
     def cmd_fill(req)
-      sel = resolve_selector(req[:name], req)
-      return sel if sel.is_a?(Hash)
+      with_page(req[:name]) do |session|
+        sel = resolve_selector_from(session, req)
+        return sel if sel.is_a?(Hash)
 
-      with_page(req[:name]) { |p| type_into(p, sel, req[:value]) }
+        type_into(session.page, sel, req[:value])
+      end
     end
 
     def type_into(page, selector, value)
@@ -114,10 +116,12 @@ module Browserctl
     end
 
     def cmd_click(req)
-      sel = resolve_selector(req[:name], req)
-      return sel if sel.is_a?(Hash)
+      with_page(req[:name]) do |session|
+        sel = resolve_selector_from(session, req)
+        return sel if sel.is_a?(Hash)
 
-      with_page(req[:name]) { |p| click_element(p, sel) }
+        click_element(session.page, sel)
+      end
     end
 
     def click_element(page, selector)
@@ -129,12 +133,12 @@ module Browserctl
     end
 
     def cmd_screenshot(req)
-      with_page(req[:name]) do |p|
+      with_page(req[:name]) do |session|
         path = safe_screenshot_path(req[:path], req[:name])
         return path if path.is_a?(Hash)
 
         FileUtils.mkdir_p(File.dirname(path))
-        p.screenshot(path: path, full: req.fetch(:full, false))
+        session.page.screenshot(path: path, full: req.fetch(:full, false))
         { ok: true, path: path }
       end
     end
@@ -155,29 +159,32 @@ module Browserctl
     end
 
     def cmd_wait_for(req)
-      with_page(req[:name]) { |p| wait_for_selector(p, req[:selector], req.fetch(:timeout, 10).to_f) }
+      with_page(req[:name]) { |session| wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 10).to_f) }
     end
 
     def cmd_watch(req)
-      with_page(req[:name]) do |p|
-        result = wait_for_selector(p, req[:selector], req.fetch(:timeout, 30).to_f)
+      with_page(req[:name]) do |session|
+        result = wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 30).to_f)
         result[:error] ? result : { ok: true, selector: req[:selector] }
       end
     end
 
     def wait_for_selector(page, selector, timeout)
       deadline = Time.now + timeout
-      sleep 0.2 until (found = page.at_css(selector)) || Time.now > deadline
-      found ? { ok: true } : { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" }
+      loop do
+        found = page.at_css(selector)
+        break { ok: true } if found
+        break { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" } if Time.now >= deadline
+
+        sleep 0.2
+      end
     end
 
     def cmd_url(req)
-      with_page(req[:name]) { |p| { ok: true, url: p.current_url } }
+      with_page(req[:name]) { |session| { ok: true, url: session.page.current_url } }
     end
 
-    def cmd_ping(_req)
-      { ok: true, pid: Process.pid }
-    end
+    def cmd_ping(_req) = { ok: true, pid: Process.pid }
 
     def cmd_shutdown(_req)
       Process.kill("INT", Process.pid)
@@ -185,18 +192,17 @@ module Browserctl
     end
 
     def with_page(name)
-      page = @mutex.synchronize { @pages[name] }
-      return { error: "no page named '#{name}'" } unless page
+      session = @global_mutex.synchronize { @pages[name] }
+      return { error: "no page named '#{name}'" } unless session
 
-      yield page
+      session.mutex.synchronize { yield session }
     end
 
-    def resolve_selector(name, req)
+    def resolve_selector_from(session, req)
       return req[:selector] if req[:selector]
       return { error: "selector or ref required" } unless req[:ref]
 
-      sel = @mutex.synchronize { @ref_registries.dig(name, req[:ref]) }
-      sel || { error: "ref '#{req[:ref]}' not found — run snap first" }
+      session.ref_registry[req[:ref]] || { error: "ref '#{req[:ref]}' not found — run snap first" }
     end
   end
 end
