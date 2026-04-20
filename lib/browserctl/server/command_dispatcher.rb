@@ -219,10 +219,10 @@ module Browserctl
       return { error: "no page named '#{req[:name]}'" } unless session
 
       session.page.cookies.set(
-        name:   req[:cookie_name],
-        value:  req[:value],
+        name: req[:cookie_name],
+        value: req[:value],
         domain: req[:domain],
-        path:   req.fetch(:path, "/")
+        path: req.fetch(:path, "/")
       )
       { ok: true }
     end
