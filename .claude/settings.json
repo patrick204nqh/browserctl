@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "patrick@patrick-nexus": true
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Bash(bundle exec rspec *)",
+      "Bash(bundle exec rubocop *)",
+      "Bash(bundle exec ruby *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git worktree *)",
+      "Bash(mkdir -p *)"
+    ]
+  }
+}

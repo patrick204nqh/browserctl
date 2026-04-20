@@ -7,9 +7,10 @@ module Browserctl
   module Commands
     class Snapshot
       def self.run(client, args)
-        name   = args.shift or abort "usage: browserctl snapshot <page> [--format ai|html]"
+        name   = args.shift or abort "usage: browserctl snap <page> [--format ai|html] [--diff]"
         format = FlagExtractor.extract_opt(args, "--format") || "ai"
-        res    = client.snapshot(name, format: format)
+        diff   = FlagExtractor.extract_flag?(args, "--diff")
+        res    = client.snapshot(name, format: format, diff: diff)
         output_snapshot(res, format)
       end
 

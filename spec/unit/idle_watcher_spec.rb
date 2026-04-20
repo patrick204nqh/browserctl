@@ -38,7 +38,6 @@ RSpec.describe Browserctl::IdleWatcher do
       server  = double("server")
       allow(server).to receive(:close)
       allow(Process).to receive(:kill)
-      allow($stdout).to receive(:puts)
       watcher.send(:shutdown, server)
       expect(server).to have_received(:close)
       expect(Process).to have_received(:kill).with("INT", Process.pid)

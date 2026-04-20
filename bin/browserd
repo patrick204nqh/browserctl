@@ -3,8 +3,20 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
+require "optimist"
 require "nokogiri"
+require "browserctl/logger"
 require "browserctl/server"
 
-headless = !ARGV.include?("--headed")
-Browserctl::Server.new(headless: headless).run
+opts = Optimist.options do
+  opt :headed,    "Run with a visible browser window",        default: false
+  opt :log_level, "Log verbosity: debug, info, warn, error",  default: "info", type: :string
+  opt :name,      "Daemon instance name for multi-agent use", default: nil, type: :string
+end
+
+Browserctl.logger = Browserctl.build_logger(opts[:log_level])
+Browserctl::Server.new(
+  headless: !opts[:headed],
+  socket_path: Browserctl.socket_path(opts[:name]),
+  pid_path: Browserctl.pid_path(opts[:name])
+).run

@@ -6,12 +6,15 @@ require "json"
 require "fileutils"
 require "timeout"
 require_relative "constants"
+require_relative "logger"
 require_relative "server/command_dispatcher"
 require_relative "server/idle_watcher"
 
 module Browserctl
   class Server
-    def initialize(headless: true)
+    def initialize(headless: true, socket_path: SOCKET_PATH, pid_path: PID_PATH)
+      @socket_path = socket_path
+      @pid_path    = pid_path
       prepare_runtime(headless)
       @dispatcher = CommandDispatcher.new(@pages, @browser, mutex: @mutex)
     end
@@ -29,7 +32,7 @@ module Browserctl
     private
 
     def prepare_runtime(headless)
-      FileUtils.mkdir_p(File.dirname(SOCKET_PATH))
+      FileUtils.mkdir_p(File.dirname(@socket_path))
       @browser = init_browser(headless)
       init_state
     end
@@ -56,16 +59,11 @@ module Browserctl
     end
 
     def setup_socket
-      FileUtils.rm_f(SOCKET_PATH)
-      server = UNIXServer.new(SOCKET_PATH)
-      File.chmod(0o600, SOCKET_PATH)
-      announce_socket
+      FileUtils.rm_f(@socket_path)
+      server = UNIXServer.new(@socket_path)
+      File.chmod(0o600, @socket_path)
+      Browserctl.logger.info "listening on #{@socket_path}"
       server
-    end
-
-    def announce_socket
-      $stdout.puts "browserd listening on #{SOCKET_PATH}"
-      $stdout.flush
     end
 
     def serve(server)
@@ -78,6 +76,7 @@ module Browserctl
     def handle(socket)
       dispatch(socket, socket.gets)
     rescue StandardError => e
+      Browserctl.logger.error "#{e.class}: #{e.message}"
       quietly { socket.puts JSON.generate({ error: e.message }) }
     ensure
       quietly { socket.close }
@@ -100,12 +99,12 @@ module Browserctl
       idle&.kill
       quietly { server&.close }
       quietly { Timeout.timeout(5) { @browser.quit } }
-      quietly { File.unlink(SOCKET_PATH) }
-      quietly { File.unlink(PID_PATH) }
+      quietly { File.unlink(@socket_path) }
+      quietly { File.unlink(@pid_path) }
     end
 
     def write_pid
-      File.write(PID_PATH, Process.pid.to_s)
+      File.write(@pid_path, Process.pid.to_s)
     end
 
     def quietly

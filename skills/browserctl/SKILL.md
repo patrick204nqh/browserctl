@@ -30,16 +30,30 @@ browserctl open  login --url https://app.example.com/login
 browserctl goto  login https://app.example.com/other
 browserctl url   login
 
-# Interaction
+# Interaction — by selector
 browserctl fill  login "input[name=email]"    user@example.com
 browserctl fill  login "input[name=password]" secret
 browserctl click login "button[type=submit]"
 
+# Interaction — by snapshot ref (preferred for AI agents)
+browserctl fill  login --ref e1 --value user@example.com
+browserctl click login --ref e2
+
 # Observation
 browserctl snap login                   # AI-friendly DOM (use this first for unknown layouts)
+browserctl snap login --diff            # only elements changed since last snap
 browserctl snap login --format html     # raw HTML
 browserctl shot login                   # screenshot → /tmp/
 browserctl shot login --out /tmp/my.png --full
+
+# Waiting
+browserctl watch login "button#submit"            # poll until selector appears
+browserctl watch login ".toast" --timeout 5       # fail after 5s
+
+# Recording
+browserctl record start my_flow        # start capturing commands
+browserctl record stop                 # end capture
+browserctl record generate my_flow    # write replayable .rb workflow file
 
 # Page management
 browserctl pages
@@ -48,6 +62,10 @@ browserctl close login
 # Daemon
 browserctl ping
 browserctl shutdown
+
+# Named daemon (multi-agent isolation)
+browserd --name session-abc &
+browserctl --daemon session-abc open main --url https://app.example.com
 ```
 
 ## AI snapshot format
@@ -61,7 +79,20 @@ browserctl shutdown
 ]
 ```
 
-Use `selector` values directly in `fill` and `click`. Prefer `snap` over raw HTML for token efficiency.
+Use `ref` values directly with `--ref` for zero-fragility interactions — no selector knowledge required:
+
+```sh
+browserctl fill  login --ref e1 --value user@example.com
+browserctl click login --ref e2
+```
+
+Or use `selector` values with `fill` and `click`. Prefer `snap` over raw HTML for token efficiency.
+
+After the first `snap`, use `--diff` to fetch only what changed — avoids re-processing the full DOM on every step:
+
+```sh
+browserctl snap login --diff
+```
 
 ## Naming pages
 
@@ -159,10 +190,14 @@ Workflows in `~/.browserctl/workflows/` are global.
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
 - **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
-- **Use `snap --format ai`** for any page you haven't seen before — it gives valid selectors without reading raw HTML.
+- **Use `snap --format ai`** for any page you haven't seen before — it gives valid selectors and ref IDs without reading raw HTML.
+- **Use `--ref` for interactions** — after a `snap`, prefer `--ref eN` over CSS selectors. Refs don't break when the DOM is refactored.
+- **Use `snap --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
+- **Use `watch`** when you need to wait for an element that appears asynchronously — more efficient than polling `snap`.
+- **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
 - **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snap <page>`.
-- **Save stable sequences as workflows** — ask the user first, then write the `.rb` file.
+- **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Troubleshooting
 

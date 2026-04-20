@@ -77,6 +77,30 @@ step "label shown in output" do
 end
 ```
 
+Both `retry_count:` and `timeout:` are optional and independent:
+
+```ruby
+# retry up to 3 times before failing
+step "submit form", retry_count: 3 do
+  page(:main).click("button[type=submit]")
+end
+
+# fail the step if it takes longer than 10 seconds
+step "wait for results", timeout: 10 do
+  page(:main).wait_for(".results-list")
+end
+
+# combine both
+step "flaky network call", retry_count: 2, timeout: 30 do
+  page(:main).evaluate("fetch('/api/data').then(r => r.json())")
+end
+```
+
+| Option | Default | Behaviour |
+|---|---|---|
+| `retry_count: N` | 0 | Retry the step up to N additional times on any error |
+| `timeout: seconds` | nil | Raise `WorkflowError` if the step exceeds this duration |
+
 ### `assert`
 
 Raises `WorkflowError` with a message if the condition is falsy.

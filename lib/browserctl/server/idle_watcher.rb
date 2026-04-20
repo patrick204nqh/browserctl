@@ -25,7 +25,7 @@ module Browserctl
     end
 
     def shutdown(server)
-      $stdout.puts "browserd idle timeout, shutting down"
+      Browserctl.logger.info "idle timeout (#{IDLE_TTL / 60}min), shutting down"
       quietly { server.close }
       Process.kill("INT", Process.pid)
     end

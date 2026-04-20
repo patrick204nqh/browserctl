@@ -10,6 +10,8 @@ require "browserctl/commands/fill"
 require "browserctl/commands/click"
 require "browserctl/commands/snapshot"
 require "browserctl/commands/screenshot"
+require "browserctl/commands/watch"
+require "browserctl/commands/record"
 
 def usage
   puts <<~USAGE
@@ -26,6 +28,12 @@ def usage
       snap   <page> [--format ai|html]     Snapshot DOM (default: ai)
       url    <page>                        Print current URL
       eval   <page> <expression>           Evaluate JS expression
+      watch  <page> <selector> [--timeout N]  Wait for a selector to appear
+
+    Recording commands:
+      record start <name>    Start recording browser commands
+      record stop            Stop recording and save workflow
+      record status          Show active recording name
 
     Workflow commands:
       run      <name|file> [--key value]   Run a workflow
@@ -35,9 +43,18 @@ def usage
     Daemon commands:
       ping                                 Check if browserd is alive
       shutdown                             Stop browserd
+
+    Options:
+      --daemon <name>    Connect to a named daemon instance
   USAGE
   exit 0
 end
+
+daemon_idx  = ARGV.index("--daemon")
+daemon_name = if daemon_idx
+                ARGV.delete_at(daemon_idx)
+                ARGV.delete_at(daemon_idx)
+              end
 
 cmd  = ARGV.shift
 args = ARGV.dup
@@ -70,8 +87,10 @@ when "describe"
   name = args.shift or abort "usage: browserctl describe <workflow_name>"
   puts JSON.pretty_generate(runner.describe_workflow(name))
 
+when "record" then Browserctl::Commands::Record.run(args)
+
 else
-  client = Browserctl::Client.new
+  client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
 
   case cmd
   when "open"   then Browserctl::Commands::OpenPage.run(client, args)
@@ -84,6 +103,7 @@ else
   when "snap"   then Browserctl::Commands::Snapshot.run(client, args)
   when "url"    then puts client.url(args[0]).to_json
   when "eval"   then puts client.evaluate(args[0], args[1]).to_json
+  when "watch"  then Browserctl::Commands::Watch.run(client, args)
   when "ping"   then puts client.ping.to_json
   when "shutdown" then puts client.shutdown.to_json
   else

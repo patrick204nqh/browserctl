@@ -28,6 +28,24 @@ bin/setup
 
 ---
 
+## Environment Variables
+
+Copy `.envrc.example` to `.envrc` and fill in your values:
+
+```bash
+cp .envrc.example .envrc
+```
+
+`.envrc` is listed in `.gitignore` and will never be committed. Use [direnv](https://direnv.net) to load it automatically (`direnv allow`), or `source .envrc` manually.
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `GH_TOKEN` | Maintainers only | GitHub personal access token used by release-please to open Release PRs and create GitHub Releases. Needs `repo` scope. |
+
+Day-to-day development (running tests, linting, using the daemon) does not require any environment variables.
+
+---
+
 ## Running Tests
 
 ```bash

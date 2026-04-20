@@ -61,6 +61,47 @@ RSpec.describe Browserctl::WorkflowDefinition do
       expect(received).to eq("https://example.com")
     end
   end
+
+  describe "step retry" do
+    it "retries a failing step the given number of times" do
+      attempts = 0
+      defn = Browserctl::WorkflowDefinition.new("test")
+      defn.step("flaky", retry_count: 2) do
+        attempts += 1
+        raise "boom" if attempts < 3
+      end
+
+      client = double("client")
+      expect { defn.call({}, client) }.not_to raise_error
+      expect(attempts).to eq 3
+    end
+
+    it "fails after exhausting retries" do
+      defn = Browserctl::WorkflowDefinition.new("test")
+      defn.step("always fails", retry_count: 1) { raise "permanent" }
+
+      client = double("client")
+      expect { defn.call({}, client) }.to raise_error(Browserctl::WorkflowError, /always fails/)
+    end
+  end
+
+  describe "step timeout" do
+    it "raises WorkflowError when step exceeds timeout" do
+      defn = Browserctl::WorkflowDefinition.new("test")
+      defn.step("slow", timeout: 0.1) { sleep 5 }
+
+      client = double("client")
+      expect { defn.call({}, client) }.to raise_error(Browserctl::WorkflowError, /timed out/)
+    end
+
+    it "succeeds when step completes within timeout" do
+      defn = Browserctl::WorkflowDefinition.new("test")
+      defn.step("fast", timeout: 5) { 1 + 1 }
+
+      client = double("client")
+      expect { defn.call({}, client) }.not_to raise_error
+    end
+  end
 end
 
 RSpec.describe Browserctl::WorkflowContext do

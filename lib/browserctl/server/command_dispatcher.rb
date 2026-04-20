@@ -15,22 +15,26 @@ module Browserctl
       "click" => :cmd_click,
       "screenshot" => :cmd_screenshot,
       "wait_for" => :cmd_wait_for,
+      "watch" => :cmd_watch,
       "url" => :cmd_url,
       "ping" => :cmd_ping,
       "shutdown" => :cmd_shutdown
     }.freeze
 
     def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, mutex: Mutex.new)
-      @pages    = pages
-      @browser  = browser
-      @snapshot = snapshot_builder
-      @mutex    = mutex
+      @pages          = pages
+      @browser        = browser
+      @snapshot       = snapshot_builder
+      @mutex          = mutex
+      @ref_registries = {}
+      @prev_snapshots = {}
     end
 
     def dispatch(req)
       handler = COMMAND_MAP[req[:cmd]]
       return { error: "unknown command: #{req[:cmd]}" } unless handler
 
+      Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
       send(handler, req)
     end
 
@@ -62,11 +66,31 @@ module Browserctl
     end
 
     def cmd_snapshot(req)
-      with_page(req[:name]) { |p| build_snapshot(p, req[:format]) }
+      with_page(req[:name]) { |p| take_snapshot(req[:name], p, req[:format], req[:diff]) }
     end
 
-    def build_snapshot(page, format)
-      format == "ai" ? { ok: true, snapshot: @snapshot.call(page) } : { ok: true, html: page.body }
+    def take_snapshot(name, page, format, diff)
+      return { ok: true, html: page.body } unless format == "ai"
+
+      snapshot = @snapshot.call(page)
+      registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
+
+      result = @mutex.synchronize do
+        prev = @prev_snapshots[name]
+        @ref_registries[name] = registry
+        @prev_snapshots[name] = snapshot
+        diff && prev ? compute_diff(prev, snapshot) : snapshot
+      end
+
+      { ok: true, snapshot: result }
+    end
+
+    def compute_diff(prev, current)
+      prev_by_sel = prev.to_h { |el| [el[:selector], el] }
+      current.reject do |el|
+        old = prev_by_sel[el[:selector]]
+        old && old.slice(:text, :attrs) == el.slice(:text, :attrs)
+      end
     end
 
     def cmd_evaluate(req)
@@ -74,7 +98,10 @@ module Browserctl
     end
 
     def cmd_fill(req)
-      with_page(req[:name]) { |p| type_into(p, req[:selector], req[:value]) }
+      sel = resolve_selector(req[:name], req)
+      return sel if sel.is_a?(Hash)
+
+      with_page(req[:name]) { |p| type_into(p, sel, req[:value]) }
     end
 
     def type_into(page, selector, value)
@@ -87,7 +114,10 @@ module Browserctl
     end
 
     def cmd_click(req)
-      with_page(req[:name]) { |p| click_element(p, req[:selector]) }
+      sel = resolve_selector(req[:name], req)
+      return sel if sel.is_a?(Hash)
+
+      with_page(req[:name]) { |p| click_element(p, sel) }
     end
 
     def click_element(page, selector)
@@ -108,6 +138,13 @@ module Browserctl
 
     def cmd_wait_for(req)
       with_page(req[:name]) { |p| wait_for_selector(p, req[:selector], req.fetch(:timeout, 10).to_f) }
+    end
+
+    def cmd_watch(req)
+      with_page(req[:name]) do |p|
+        result = wait_for_selector(p, req[:selector], req.fetch(:timeout, 30).to_f)
+        result[:error] ? result : { ok: true, selector: req[:selector] }
+      end
     end
 
     def wait_for_selector(page, selector, timeout)
@@ -134,6 +171,14 @@ module Browserctl
       return { error: "no page named '#{name}'" } unless page
 
       yield page
+    end
+
+    def resolve_selector(name, req)
+      return req[:selector] if req[:selector]
+      return { error: "selector or ref required" } unless req[:ref]
+
+      sel = @mutex.synchronize { @ref_registries.dig(name, req[:ref]) }
+      sel || { error: "ref '#{req[:ref]}' not found — run snap first" }
     end
   end
 end
