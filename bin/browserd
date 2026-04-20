@@ -11,7 +11,12 @@ require "browserctl/server"
 opts = Optimist.options do
   opt :headed,    "Run with a visible browser window",        default: false
   opt :log_level, "Log verbosity: debug, info, warn, error",  default: "info", type: :string
+  opt :name,      "Daemon instance name for multi-agent use", default: nil, type: :string
 end
 
 Browserctl.logger = Browserctl.build_logger(opts[:log_level])
-Browserctl::Server.new(headless: !opts[:headed]).run
+Browserctl::Server.new(
+  headless:    !opts[:headed],
+  socket_path: Browserctl.socket_path(opts[:name]),
+  pid_path:    Browserctl.pid_path(opts[:name])
+).run

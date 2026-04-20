@@ -7,19 +7,25 @@ require "browserctl/client"
 Browserctl.logger = ::Logger.new(File::NULL)
 
 module BrowserctlHelpers
-  def start_daemon(headed: false)
+  def start_daemon(headed: false, name: nil)
+    socket = Browserctl.socket_path(name)
+    pid_f  = Browserctl.pid_path(name)
+
     @daemon_pid = fork do
       $stdout.reopen(File::NULL)
       $stderr.reopen(File::NULL)
-      Browserctl::Server.new(headless: !headed).run
+      Browserctl::Server.new(
+        headless:    !headed,
+        socket_path: socket,
+        pid_path:    pid_f
+      ).run
     end
 
-    # Wait until socket appears (max 10s)
     deadline = Time.now + 10
-    sleep 0.1 until File.exist?(Browserctl::SOCKET_PATH) || Time.now > deadline
-    raise "browserd failed to start" unless File.exist?(Browserctl::SOCKET_PATH)
+    sleep 0.1 until File.exist?(socket) || Time.now > deadline
+    raise "browserd failed to start" unless File.exist?(socket)
 
-    Browserctl::Client.new
+    Browserctl::Client.new(socket)
   end
 
   def stop_daemon
@@ -30,22 +36,14 @@ module BrowserctlHelpers
     loop do
       Process.wait(@daemon_pid, Process::WNOHANG)
       break if Time.now > deadline
-
       sleep 0.1
     end
     Process.kill("KILL", @daemon_pid)
   rescue Errno::ESRCH, Errno::ECHILD
     nil
   ensure
-    begin
-      File.unlink(Browserctl::SOCKET_PATH)
-    rescue StandardError
-      nil
-    end
-    begin
-      File.unlink(Browserctl::PID_PATH)
-    rescue StandardError
-      nil
+    [Browserctl.socket_path, Browserctl.pid_path].each do |f|
+      File.unlink(f) rescue nil
     end
     @daemon_pid = nil
   end
