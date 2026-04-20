@@ -4,6 +4,8 @@ require "browserctl"
 require "browserctl/server"
 require "browserctl/client"
 
+Browserctl.logger = ::Logger.new(File::NULL)
+
 module BrowserctlHelpers
   def start_daemon(headed: false)
     @daemon_pid = fork do

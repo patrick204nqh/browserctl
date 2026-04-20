@@ -31,6 +31,7 @@ module Browserctl
       handler = COMMAND_MAP[req[:cmd]]
       return { error: "unknown command: #{req[:cmd]}" } unless handler
 
+      Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
       send(handler, req)
     end
 

@@ -49,8 +49,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] Gemspec: add `changelog_uri`, `source_code_uri`, `bug_tracker_uri`
 - [x] CHANGELOG.md
 - [x] Release automation via release-please + RubyGems push
-- [ ] Structured logging with severity levels (`--log-level`)
-- [ ] `.envrc` out of version control; document env var setup
+- [x] Structured logging with severity levels (`--log-level`)
+- [x] `.envrc` out of version control; document env var setup
 
 ### v0.2 — AI-First Enhancements
 **Goal:** Make the AI integration story first-class.
@@ -61,7 +61,6 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [ ] Multi-agent isolation: named daemon instances (`browserd --name session-abc`)
 - [ ] Workflow `retry` and `timeout` options per step
 - [ ] `record` command — capture a session as a replayable workflow
-- [ ] Python and Node.js client SDKs (same JSON-RPC protocol)
 
 ### v0.3 — Developer Experience
 **Goal:** The gem that developers actually recommend to each other.
@@ -88,7 +87,6 @@ It is the difference between a browser **you restart** and a browser **you steer
 
 - [ ] **Cloud daemon**: remote `browserd` instances accessible over mTLS
 - [ ] **Session recording + replay**: deterministic browser regression testing
-- [ ] **browserctl MCP server**: expose commands as MCP tools for Claude and other agents
 - [ ] **Visual regression**: `shot --compare baseline.png` with pixel diff
 - [ ] **Distributed sessions**: fan-out a command across N named pages in parallel
 - [ ] **Webhook triggers**: run a workflow when an HTTP POST arrives

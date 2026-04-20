@@ -6,6 +6,7 @@ require "json"
 require "fileutils"
 require "timeout"
 require_relative "constants"
+require_relative "logger"
 require_relative "server/command_dispatcher"
 require_relative "server/idle_watcher"
 
@@ -64,8 +65,7 @@ module Browserctl
     end
 
     def announce_socket
-      $stdout.puts "browserd listening on #{SOCKET_PATH}"
-      $stdout.flush
+      Browserctl.logger.info "listening on #{SOCKET_PATH}"
     end
 
     def serve(server)
@@ -78,6 +78,7 @@ module Browserctl
     def handle(socket)
       dispatch(socket, socket.gets)
     rescue StandardError => e
+      Browserctl.logger.error "#{e.class}: #{e.message}"
       quietly { socket.puts JSON.generate({ error: e.message }) }
     ensure
       quietly { socket.close }
