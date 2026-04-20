@@ -15,9 +15,9 @@ Unlike tools that restart the browser on every script run, **browserctl keeps a 
 ```bash
 browserd &                                           # start the daemon (headless)
 browserctl open login --url https://example.com/login
-browserctl fill login "input[name=email]" me@example.com
-browserctl click login "button[type=submit]"
-browserctl snap login                                # AI-friendly JSON snapshot
+browserctl snap login                                # AI-friendly JSON snapshot with ref IDs
+browserctl fill login --ref e1 --value me@example.com   # interact by ref
+browserctl click login --ref e2
 browserctl shutdown
 ```
 
@@ -81,24 +81,34 @@ browserd --headed  # visible browser window
 browserctl open login --url https://app.example.com/login
 ```
 
-**3. Interact with the page**
+**3. Snapshot the page to discover refs**
 
 ```bash
+browserctl snap login              # AI-friendly JSON with ref IDs (default)
+browserctl snap login --format html
+```
+
+**4. Interact using refs or selectors**
+
+```bash
+browserctl fill  login --ref e1 --value user@example.com
+browserctl fill  login --ref e2 --value s3cr3t
+browserctl click login --ref e3
+
+# or using explicit CSS selectors
 browserctl fill  login "input[name=email]"    user@example.com
-browserctl fill  login "input[name=password]" s3cr3t
 browserctl click login "button[type=submit]"
 ```
 
-**4. Observe the result**
+**5. Observe the result**
 
 ```bash
-browserctl snap login              # AI-friendly JSON (default)
-browserctl snap login --format html
+browserctl snap login --diff       # only changed elements since last snap
 browserctl shot login --out /tmp/after-login.png --full
 browserctl url  login
 ```
 
-**5. Manage pages and daemon**
+**6. Manage pages and daemon**
 
 ```bash
 browserctl pages
@@ -119,12 +129,18 @@ browserctl shutdown
 | `close <page>` | Close a named page |
 | `pages` | List open pages |
 | `goto <page> <url>` | Navigate a page to a URL |
-| `fill <page> <selector> <value>` | Fill an input field |
-| `click <page> <selector>` | Click an element |
-| `snap <page> [--format ai\|html]` | Snapshot DOM (default: ai) |
+| `fill <page> <selector> <value>` | Fill an input field by CSS selector |
+| `fill <page> --ref <id> --value <v>` | Fill an input field by snapshot ref |
+| `click <page> <selector>` | Click an element by CSS selector |
+| `click <page> --ref <id>` | Click an element by snapshot ref |
+| `snap <page> [--format ai\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
+| `watch <page> <selector> [--timeout N]` | Poll until selector appears (default timeout: 30s) |
 | `shot <page> [--out PATH] [--full]` | Take a screenshot |
 | `url <page>` | Print current URL |
 | `eval <page> <expression>` | Evaluate a JS expression |
+| `record start <name>` | Begin recording commands as a replayable workflow |
+| `record stop` | End recording |
+| `record generate <name>` | Write recorded session to a `.rb` workflow file |
 
 ### Daemon commands
 
@@ -172,7 +188,24 @@ browserctl shutdown
 ]
 ```
 
-Use `selector` values directly with `fill` and `click`.
+Use `ref` values directly with `--ref` for zero-fragility interactions, or use `selector` values with `fill` and `click`.
+
+### Ref-based interaction
+
+After a `snap`, use ref IDs instead of CSS selectors — no selector knowledge required:
+
+```bash
+browserctl fill  login --ref e1 --value user@example.com
+browserctl click login --ref e2
+```
+
+### Diff snapshots
+
+Track only what changed since the last snapshot — useful for AI agents monitoring async updates:
+
+```bash
+browserctl snap login --diff
+```
 
 ---
 
@@ -222,6 +255,7 @@ browserctl run smoke_login --email me@example.com --password s3cr3t
 | `desc "text"` | Human-readable description |
 | `param :name, required:, secret:, default:` | Declare a parameter |
 | `step "label" { }` | Add a step (runs in order, halts on failure) |
+| `step "label", retry_count: N, timeout: S { }` | Step with retry and/or timeout |
 | `page(:name)` | Returns a `PageProxy` for the named page |
 | `invoke "other_workflow", **overrides` | Call another workflow |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
@@ -242,7 +276,15 @@ For a full guide on building your own workflows, see [docs/writing-workflows.md]
 
 ## How it works
 
-`browserd` runs as a background process, listening on a Unix socket at `~/.browserctl/browserd.sock`. It manages a Ferrum (Chrome DevTools Protocol) browser instance with named page handles.
+`browserd` runs as a background process, listening on a Unix socket at `~/.browserctl/browserd.sock`. Start multiple named instances for agent isolation:
+
+```bash
+browserd --name agent-a &
+browserd --name agent-b &
+browserctl --daemon agent-a open main --url https://app.example.com
+```
+
+It manages a Ferrum (Chrome DevTools Protocol) browser instance with named page handles.
 
 `browserctl` sends JSON-RPC commands over the socket and prints the result. Workflows run in-process through the same client.
 
