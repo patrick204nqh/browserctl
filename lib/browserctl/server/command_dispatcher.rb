@@ -21,10 +21,12 @@ module Browserctl
     }.freeze
 
     def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, mutex: Mutex.new)
-      @pages    = pages
-      @browser  = browser
-      @snapshot = snapshot_builder
-      @mutex    = mutex
+      @pages          = pages
+      @browser        = browser
+      @snapshot       = snapshot_builder
+      @mutex          = mutex
+      @ref_registries = {}
+      @prev_snapshots = {}
     end
 
     def dispatch(req)
@@ -63,11 +65,31 @@ module Browserctl
     end
 
     def cmd_snapshot(req)
-      with_page(req[:name]) { |p| build_snapshot(p, req[:format]) }
+      with_page(req[:name]) { |p| take_snapshot(req[:name], p, req[:format], req[:diff]) }
     end
 
-    def build_snapshot(page, format)
-      format == "ai" ? { ok: true, snapshot: @snapshot.call(page) } : { ok: true, html: page.body }
+    def take_snapshot(name, page, format, diff)
+      return { ok: true, html: page.body } unless format == "ai"
+
+      snapshot = @snapshot.call(page)
+      registry = snapshot.each_with_object({}) { |el, h| h[el[:ref]] = el[:selector] }
+
+      result = @mutex.synchronize do
+        prev = @prev_snapshots[name]
+        @ref_registries[name] = registry
+        @prev_snapshots[name] = snapshot
+        (diff && prev) ? compute_diff(prev, snapshot) : snapshot
+      end
+
+      { ok: true, snapshot: result }
+    end
+
+    def compute_diff(prev, current)
+      prev_by_sel = prev.each_with_object({}) { |el, h| h[el[:selector]] = el }
+      current.reject do |el|
+        old = prev_by_sel[el[:selector]]
+        old && old.slice(:text, :attrs) == el.slice(:text, :attrs)
+      end
     end
 
     def cmd_evaluate(req)

@@ -69,4 +69,30 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(result).to eq({ ok: true })
     end
   end
+
+  describe "#cmd_snapshot (state storage)" do
+    let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
+    let(:pages)   { { "main" => page } }
+    let(:builder) { Browserctl::SnapshotBuilder.new }
+    subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
+
+    it "stores ref registry after ai snapshot" do
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      reg = dispatcher.instance_variable_get(:@ref_registries)
+      expect(reg["main"]).to be_a(Hash)
+      expect(reg["main"].keys).to all(match(/\Ae\d+\z/))
+    end
+
+    it "stores previous snapshot after ai snapshot" do
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      prev = dispatcher.instance_variable_get(:@prev_snapshots)
+      expect(prev["main"]).to be_an(Array)
+    end
+
+    it "does not store state for html format" do
+      allow(page).to receive(:body).and_return("<html></html>")
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+      expect(dispatcher.instance_variable_get(:@ref_registries)["main"]).to be_nil
+    end
+  end
 end
