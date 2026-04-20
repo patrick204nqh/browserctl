@@ -14,10 +14,6 @@
     },
     {
       "type": "non_fast_forward"
-    },
-    {
-      "type": "creation",
-      "parameters": {}
     }
   ],
   "bypass_actors": []
