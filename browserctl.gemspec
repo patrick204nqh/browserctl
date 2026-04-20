@@ -34,4 +34,5 @@ Gem::Specification.new do |s| # rubocop:disable Metrics/BlockLength
 
   s.add_development_dependency "rspec",   "~> 3.13"
   s.add_development_dependency "rubocop", "~> 1.65"
+  s.add_development_dependency "yard",    "~> 0.9"
 end

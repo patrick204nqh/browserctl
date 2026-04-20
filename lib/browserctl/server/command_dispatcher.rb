@@ -19,11 +19,20 @@ module Browserctl
       "watch" => :cmd_watch,
       "url" => :cmd_url,
       "ping" => :cmd_ping,
-      "shutdown" => :cmd_shutdown
+      "shutdown" => :cmd_shutdown,
+      "pause" => :cmd_pause,
+      "resume" => :cmd_resume,
+      "inspect" => :cmd_inspect
     }.freeze
 
     SCREENSHOT_DIR  = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
+    CLOUDFLARE_SIGNALS = [
+      "cf-challenge-running",
+      "cf_chl_opt",
+      "__cf_chl_f_tk",
+      "Just a moment..."
+    ].freeze
 
     def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
       @pages            = pages
@@ -34,10 +43,18 @@ module Browserctl
 
     def dispatch(req)
       handler = COMMAND_MAP[req[:cmd]]
-      return { error: "unknown command: #{req[:cmd]}" } unless handler
+      if handler
+        Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
+        return send(handler, req)
+      end
 
-      Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
-      send(handler, req)
+      if (plugin = Browserctl::PLUGIN_COMMANDS[req[:cmd]])
+        Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
+        session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
+        return plugin.call(session, req)
+      end
+
+      { error: "unknown command: #{req[:cmd]}" }
     end
 
     private
@@ -63,7 +80,7 @@ module Browserctl
     def cmd_goto(req)
       with_page(req[:name]) do |session|
         session.page.go_to(req[:url])
-        { ok: true, url: session.page.current_url }
+        { ok: true, url: session.page.current_url, challenge: cloudflare_challenge?(session.page) }
       end
     end
 
@@ -72,7 +89,9 @@ module Browserctl
     end
 
     def take_snapshot(session, format, diff)
-      return { ok: true, html: session.page.body } unless format == "ai"
+      challenge = cloudflare_challenge?(session.page)
+
+      return { ok: true, html: session.page.body, challenge: challenge } unless format == "ai"
 
       snapshot = @snapshot_builder.call(session.page)
       registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
@@ -82,7 +101,7 @@ module Browserctl
       session.prev_snapshot = snapshot
       result = diff && prev ? compute_diff(prev, snapshot) : snapshot
 
-      { ok: true, snapshot: result }
+      { ok: true, snapshot: result, challenge: challenge }
     end
 
     def compute_diff(prev, current)
@@ -184,6 +203,36 @@ module Browserctl
       with_page(req[:name]) { |session| { ok: true, url: session.page.current_url } }
     end
 
+    def cmd_inspect(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      port      = @browser.process.port
+      target_id = session.page.target_id
+      devtools_url = "http://127.0.0.1:#{port}/devtools/inspector.html" \
+                     "?ws=127.0.0.1:#{port}/devtools/page/#{target_id}"
+      { ok: true, devtools_url: devtools_url }
+    end
+
+    def cmd_pause(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      session.mutex.synchronize { session.pause! }
+      { ok: true, paused: true }
+    end
+
+    def cmd_resume(req)
+      session = @global_mutex.synchronize { @pages[req[:name]] }
+      return { error: "no page named '#{req[:name]}'" } unless session
+
+      session.mutex.synchronize do
+        session.resume!
+        session.pause_cv.signal
+      end
+      { ok: true, paused: false }
+    end
+
     def cmd_ping(_req) = { ok: true, pid: Process.pid }
 
     def cmd_shutdown(_req)
@@ -195,7 +244,17 @@ module Browserctl
       session = @global_mutex.synchronize { @pages[name] }
       return { error: "no page named '#{name}'" } unless session
 
-      session.mutex.synchronize { yield session }
+      session.mutex.synchronize do
+        session.pause_cv.wait(session.mutex) while session.paused?
+        yield session
+      end
+    end
+
+    def cloudflare_challenge?(page)
+      url  = page.current_url.to_s
+      body = page.body.to_s
+      url.include?("challenge-platform") ||
+        CLOUDFLARE_SIGNALS.any? { |sig| body.include?(sig) }
     end
 
     def resolve_selector_from(session, req)

@@ -1,0 +1,14 @@
+module Browserctl
+  class PageSession
+    attr_reader page: untyped
+    attr_reader mutex: Mutex
+    attr_reader pause_cv: ConditionVariable
+    attr_accessor ref_registry: Hash[String, String]
+    attr_accessor prev_snapshot: Array[Hash[Symbol, untyped]]?
+
+    def initialize: (untyped page) -> void
+    def paused?: () -> bool
+    def pause!: () -> bool
+    def resume!: () -> bool
+  end
+end

@@ -10,6 +10,11 @@ module Browserctl
       File.expand_path("~/.browserctl/workflows")
     ].freeze
 
+    # Runs a named workflow with the given parameters.
+    # @param name [String] workflow name (must match /\A[a-zA-Z0-9_-]+\z/)
+    # @param params [Hash] keyword arguments passed to the workflow
+    # @return [Boolean] true if all steps succeeded
+    # @raise [WorkflowError] if the name is invalid or a step fails
     def run_workflow(name, **params)
       defn    = fetch_workflow(name)
       results = defn.call(params, Client.new)
@@ -17,11 +22,16 @@ module Browserctl
       results.all?(&:ok)
     end
 
+    # Lists all registered workflows from the standard search paths.
+    # @return [Array<Hash>] array of `{ name:, desc: }` hashes
     def list_workflows
       load_all_workflows
       REGISTRY.map { |name, defn| { name: name, desc: defn.description } }
     end
 
+    # Returns detailed information about a workflow.
+    # @param name [String] workflow name
+    # @return [Hash] `{ name:, desc:, params:, steps: }`
     def describe_workflow(name)
       defn = fetch_workflow(name)
       { name: defn.name, desc: defn.description, params: format_params(defn), steps: defn.steps.map(&:label) }

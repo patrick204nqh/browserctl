@@ -38,4 +38,30 @@ RSpec.describe Browserctl::PageSession do
     other = described_class.new(double("page2"))
     expect(session.mutex).not_to equal(other.mutex)
   end
+
+  describe "pause/resume" do
+    it "starts unpaused" do
+      expect(session.paused?).to be false
+    end
+
+    it "pause! marks the session as paused" do
+      session.pause!
+      expect(session.paused?).to be true
+    end
+
+    it "resume! clears the paused flag" do
+      session.pause!
+      session.resume!
+      expect(session.paused?).to be false
+    end
+
+    it "exposes a ConditionVariable" do
+      expect(session.pause_cv).to be_a(ConditionVariable)
+    end
+
+    it "has a separate pause_cv per instance" do
+      other = described_class.new(double("page2"))
+      expect(session.pause_cv).not_to equal(other.pause_cv)
+    end
+  end
 end

@@ -9,3 +9,6 @@ tmp/
 .envrc
 .DS_Store
 .claude/settings.local.json
+.worktrees/
+doc/
+.yardoc/

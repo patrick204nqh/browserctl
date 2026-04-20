@@ -74,7 +74,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "ref-based interaction" do
     let(:html) { '<html><body><input name="email"><button>Go</button></body></html>' }
-    let(:page) { instance_double("Ferrum::Page", body: html) }
+    let(:page) { instance_double("Ferrum::Page", body: html, current_url: "https://example.com") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
@@ -109,7 +109,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "snap --diff" do
     let(:html_v1) { '<html><body><button id="a">A</button></body></html>' }
     let(:html_v2) { '<html><body><button id="a">A</button><button id="b">B</button></body></html>' }
-    let(:page)    { instance_double("Ferrum::Page") }
+    let(:page)    { instance_double("Ferrum::Page", current_url: "https://example.com") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
@@ -187,8 +187,144 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "Cloudflare challenge detection" do
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    context "when snapshot detects challenge page" do
+      let(:cf_html) { '<html><body class="cf-challenge-running">Just a moment...</body></html>' }
+      let(:page)    { instance_double("Ferrum::Page", body: cf_html, current_url: "https://example.com") }
+
+      it "includes challenge: true in ai snapshot response" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+        expect(res[:challenge]).to be true
+      end
+
+      it "includes challenge: true in html snapshot response" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+        expect(res[:challenge]).to be true
+      end
+    end
+
+    context "when goto lands on challenge page" do
+      let(:cf_url) { "https://example.com/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1" }
+      let(:page)   { instance_double("Ferrum::Page", body: "<html></html>", current_url: cf_url) }
+
+      it "includes challenge: true in goto response" do
+        allow(page).to receive(:go_to)
+        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        expect(res[:challenge]).to be true
+      end
+    end
+
+    context "when page is normal" do
+      let(:page) do
+        instance_double("Ferrum::Page", body: "<html><body>Normal</body></html>",
+                                        current_url: "https://example.com/page")
+      end
+
+      it "includes challenge: false in snapshot" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+        expect(res[:challenge]).to be false
+      end
+
+      it "includes challenge: false in goto" do
+        allow(page).to receive(:go_to)
+        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        expect(res[:challenge]).to be false
+      end
+    end
+  end
+
+  describe "#cmd_pause and #cmd_resume" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it "pause returns ok and marks page as paused" do
+      res = dispatcher.dispatch({ cmd: "pause", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:paused]).to be true
+      expect(pages["main"].paused?).to be true
+    end
+
+    it "resume returns ok and clears paused flag" do
+      pages["main"].pause!
+      res = dispatcher.dispatch({ cmd: "resume", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:paused]).to be false
+      expect(pages["main"].paused?).to be false
+    end
+
+    it "pause returns error for unknown page" do
+      res = dispatcher.dispatch({ cmd: "pause", name: "ghost" })
+      expect(res[:error]).to match(/no page named 'ghost'/)
+    end
+
+    it "resumes unblocks a waiting thread" do
+      pages["main"].pause!
+      unblocked = false
+
+      t = Thread.new do
+        dispatcher.dispatch({ cmd: "pause", name: "main" })
+        pages["main"].mutex.synchronize do
+          pages["main"].pause_cv.wait(pages["main"].mutex) while pages["main"].paused?
+          unblocked = true
+        end
+      end
+
+      sleep 0.05
+      dispatcher.dispatch({ cmd: "resume", name: "main" })
+      t.join(1)
+
+      expect(unblocked).to be true
+    end
+  end
+
+  describe "plugin commands" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    after { Browserctl::PLUGIN_COMMANDS.clear }
+
+    it "dispatches a registered plugin command" do
+      Browserctl.register_command(:test_echo) do |_session, req|
+        { ok: true, echoed: req[:value] }
+      end
+      res = dispatcher.dispatch({ cmd: "test_echo", name: "main", value: "hello" })
+      expect(res[:ok]).to be true
+      expect(res[:echoed]).to eq("hello")
+    end
+
+    it "passes the PageSession to the plugin" do
+      received_session = nil
+      Browserctl.register_command(:capture_session) do |session, _req|
+        received_session = session
+        { ok: true }
+      end
+      dispatcher.dispatch({ cmd: "capture_session", name: "main" })
+      expect(received_session).to be_a(Browserctl::PageSession)
+    end
+
+    it "plugin command name does not shadow built-in commands" do
+      Browserctl.register_command(:ping) { |_s, _r| { ok: false, hijacked: true } }
+      res = dispatcher.dispatch({ cmd: "ping" })
+      expect(res[:hijacked]).to be_nil
+      expect(res[:pid]).to eq(Process.pid)
+    end
+
+    it "returns unknown command error if neither built-in nor plugin" do
+      res = dispatcher.dispatch({ cmd: "no_such_cmd" })
+      expect(res[:error]).to match(/unknown command/)
+    end
+  end
+
   describe "#cmd_snapshot (state storage)" do
-    let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
+    let(:page) do
+      instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>",
+                                      current_url: "https://example.com")
+    end
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     let(:builder) { Browserctl::SnapshotBuilder.new }
     subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
@@ -211,7 +347,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "evicts ref_registry and prev_snapshot when page is closed" do
-      page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>")
+      page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com")
       allow(page2).to receive(:close)
       pages["temp"] = Browserctl::PageSession.new(page2)
       dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "ai" })
@@ -219,6 +355,27 @@ RSpec.describe Browserctl::CommandDispatcher do
 
       dispatcher.dispatch({ cmd: "close_page", name: "temp" })
       expect(pages.key?("temp")).to be false
+    end
+  end
+
+  describe "#cmd_inspect" do
+    let(:browser) { double("browser") }
+    let(:page)    { instance_double("Ferrum::Page") }
+    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, browser) }
+
+    it "returns a devtools_url for a known page" do
+      allow(browser).to receive_message_chain(:process, :port).and_return(9222)
+      allow(page).to receive(:target_id).and_return("ABCD1234")
+      res = dispatcher.dispatch({ cmd: "inspect", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:devtools_url]).to include("9222")
+      expect(res[:devtools_url]).to include("ABCD1234")
+    end
+
+    it "returns error for unknown page" do
+      res = dispatcher.dispatch({ cmd: "inspect", name: "ghost" })
+      expect(res[:error]).to match(/no page named 'ghost'/)
     end
   end
 end

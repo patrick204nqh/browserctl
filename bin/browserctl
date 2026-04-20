@@ -21,6 +21,9 @@ require "browserctl/commands/snapshot"
 require "browserctl/commands/screenshot"
 require "browserctl/commands/watch"
 require "browserctl/commands/record"
+require "browserctl/commands/pause_resume"
+require "browserctl/commands/init"
+require "browserctl/commands/inspect"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -34,6 +37,9 @@ end
 def usage
   puts <<~USAGE
     Usage: browserctl <command> [args]
+
+    Setup:
+      init                                         Scaffold .browserctl/ in this project
 
     Browser commands (require browserd running):
       open   <page> [--url URL]                   Open or focus a named page
@@ -49,6 +55,9 @@ def usage
       url    <page>                                Print current URL
       eval   <page> <expression>                   Evaluate JS expression
       watch  <page> <selector> [--timeout N]       Wait for a selector to appear
+      pause   <page>                               Pause automation — browser stays live
+      resume  <page>                               Resume automation after manual action
+      inspect <page>                               Open Chrome DevTools for a named page
 
     Recording commands:
       record start <name>            Start recording browser commands
@@ -110,6 +119,7 @@ when "describe"
   puts JSON.pretty_generate(runner.describe_workflow(name))
 
 when "record" then Browserctl::Commands::Record.run(args)
+when "init"   then Browserctl::Commands::Init.run(args)
 
 else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
@@ -126,6 +136,9 @@ else
   when "url"      then print_result(client.url(args[0]))
   when "eval"     then print_result(client.evaluate(args[0], args[1]))
   when "watch"    then Browserctl::Commands::Watch.run(client, args)
+  when "pause"    then Browserctl::Commands::PauseResume.pause(client, args)
+  when "resume"   then Browserctl::Commands::PauseResume.resume(client, args)
+  when "inspect"  then Browserctl::Commands::Inspect.run(client, args)
   when "ping"     then print_result(client.ping)
   when "shutdown" then print_result(client.shutdown)
   else

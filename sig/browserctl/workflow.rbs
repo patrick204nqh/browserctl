@@ -1,0 +1,38 @@
+module Browserctl
+  class WorkflowError < StandardError
+  end
+
+  class ParamDef
+    attr_reader name: Symbol
+    attr_reader required: bool
+    attr_reader secret: bool
+    attr_reader default: untyped
+  end
+
+  class StepResult
+    attr_reader name: String
+    attr_reader ok: bool
+    attr_reader error: String?
+  end
+
+  class StepDef
+    attr_reader label: String
+    attr_reader block: Proc
+    attr_reader retry_count: Integer
+    attr_reader timeout: Numeric?
+  end
+
+  class WorkflowDefinition
+    attr_reader name: String
+    attr_reader description: String?
+    attr_reader param_defs: Hash[Symbol, ParamDef]
+    attr_reader steps: Array[StepDef]
+
+    def initialize: (String name) -> void
+    def desc: (String text) -> void
+    def param: (Symbol name, ?required: bool, ?secret: bool, ?default: untyped) -> void
+    def step: (String label, ?retry_count: Integer, ?timeout: Numeric?) { () -> void } -> void
+    def compose: (String workflow_name) -> void
+    def call: (Hash[Symbol, untyped] params, Client client) -> Array[StepResult]
+  end
+end

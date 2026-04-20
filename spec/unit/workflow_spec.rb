@@ -104,6 +104,63 @@ RSpec.describe Browserctl::WorkflowDefinition do
   end
 end
 
+RSpec.describe "compose" do
+  before { Browserctl::REGISTRY.clear }
+  after  { Browserctl::REGISTRY.clear }
+
+  it "inlines steps from another workflow" do
+    Browserctl.workflow "shared" do
+      step("shared step") { nil }
+    end
+
+    Browserctl.workflow "main" do
+      compose "shared"
+      step("own step") { nil }
+    end
+
+    defn = Browserctl::REGISTRY["main"]
+    expect(defn.steps.map(&:label)).to eq(["shared step", "own step"])
+  end
+
+  it "raises WorkflowError when composed workflow is not registered" do
+    expect do
+      Browserctl.workflow "broken" do
+        compose "nonexistent"
+      end
+    end.to raise_error(Browserctl::WorkflowError, /nonexistent/)
+  end
+
+  it "composed steps run in order" do
+    order = []
+    Browserctl.workflow "base" do
+      step("a") { order << :a }
+    end
+    Browserctl.workflow "extended" do
+      compose "base"
+      step("b") { order << :b }
+    end
+    client = double("client", ping: { ok: true })
+    Browserctl::REGISTRY["extended"].call({}, client)
+    expect(order).to eq(%i[a b])
+  end
+
+  it "compose can be called multiple times to merge several workflows" do
+    Browserctl.workflow "first" do
+      step("f1") { nil }
+    end
+    Browserctl.workflow "second" do
+      step("f2") { nil }
+    end
+    Browserctl.workflow "combined" do
+      compose "first"
+      compose "second"
+      step("own") { nil }
+    end
+    labels = Browserctl::REGISTRY["combined"].steps.map(&:label)
+    expect(labels).to eq(%w[f1 f2 own])
+  end
+end
+
 RSpec.describe Browserctl::WorkflowContext do
   let(:client) { instance_double(Browserctl::Client) }
 
