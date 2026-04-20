@@ -1,0 +1,7 @@
+module Browserctl
+  class Runner
+    def run_workflow: (String name, **untyped params) -> bool
+    def list_workflows: () -> Array[{ name: String, desc: String? }]
+    def describe_workflow: (String name) -> Hash[Symbol, untyped]
+  end
+end

@@ -1,0 +1,22 @@
+module Browserctl
+  class Client
+    def initialize: (?String socket_path) -> void
+    def open_page: (String name, ?url: String?) -> Hash[Symbol, untyped]
+    def close_page: (String name) -> Hash[Symbol, untyped]
+    def list_pages: () -> Hash[Symbol, untyped]
+    def goto: (String name, String url) -> Hash[Symbol, untyped]
+    def click: (String name, ?String? selector, ?ref: String?) -> Hash[Symbol, untyped]
+    def fill: (String name, ?String? selector, ?String? value, ?ref: String?) -> Hash[Symbol, untyped]
+    def screenshot: (String name, ?path: String?, ?full: bool) -> Hash[Symbol, untyped]
+    def snapshot: (String name, ?format: String, ?diff: bool) -> Hash[Symbol, untyped]
+    def wait_for: (String name, String selector, ?timeout: Numeric) -> Hash[Symbol, untyped]
+    def watch: (String name, String selector, ?timeout: Numeric) -> Hash[Symbol, untyped]
+    def url: (String name) -> Hash[Symbol, untyped]
+    def evaluate: (String name, String expression) -> Hash[Symbol, untyped]
+    def ping: () -> Hash[Symbol, untyped]
+    def shutdown: () -> Hash[Symbol, untyped]
+    def pause: (String name) -> Hash[Symbol, untyped]
+    def resume: (String name) -> Hash[Symbol, untyped]
+    def inspect_page: (String name) -> Hash[Symbol, untyped]
+  end
+end
