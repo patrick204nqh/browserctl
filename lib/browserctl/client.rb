@@ -54,6 +54,8 @@ module Browserctl
     def evaluate(name, expression) = call("evaluate",    name: name, expression: expression)
     def ping                       = call("ping")
     def shutdown                   = call("shutdown")
+    def pause(name)                = call("pause",  name: name)
+    def resume(name)               = call("resume", name: name)
 
     private
 

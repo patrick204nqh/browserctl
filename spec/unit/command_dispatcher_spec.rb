@@ -187,6 +187,51 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "#cmd_pause and #cmd_resume" do
+    let(:page)  { instance_double("Ferrum::Page") }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it "pause returns ok and marks page as paused" do
+      res = dispatcher.dispatch({ cmd: "pause", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:paused]).to be true
+      expect(pages["main"].paused?).to be true
+    end
+
+    it "resume returns ok and clears paused flag" do
+      pages["main"].pause!
+      res = dispatcher.dispatch({ cmd: "resume", name: "main" })
+      expect(res[:ok]).to be true
+      expect(res[:paused]).to be false
+      expect(pages["main"].paused?).to be false
+    end
+
+    it "pause returns error for unknown page" do
+      res = dispatcher.dispatch({ cmd: "pause", name: "ghost" })
+      expect(res[:error]).to match(/no page named 'ghost'/)
+    end
+
+    it "resumes unblocks a waiting thread" do
+      pages["main"].pause!
+      unblocked = false
+
+      t = Thread.new do
+        dispatcher.dispatch({ cmd: "pause", name: "main" })
+        pages["main"].mutex.synchronize do
+          pages["main"].pause_cv.wait(pages["main"].mutex) while pages["main"].paused?
+          unblocked = true
+        end
+      end
+
+      sleep 0.05
+      dispatcher.dispatch({ cmd: "resume", name: "main" })
+      t.join(1)
+
+      expect(unblocked).to be true
+    end
+  end
+
   describe "#cmd_snapshot (state storage)" do
     let(:page)    { instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
