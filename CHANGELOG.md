@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/patrick204nqh/browserctl/compare/v0.3.0...v0.3.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* allow pre-registered workflows with slash names (e.g. the_internet/login) ([e755a4a](https://github.com/patrick204nqh/browserctl/commit/e755a4aa20608fb11ce425c81ed8c0a43f3b13fe))
+* remove unused client variable in runner spec ([94e1a31](https://github.com/patrick204nqh/browserctl/commit/94e1a310acc1d5ddb5e538860907040d3504f2c9))
+
 ## [0.3.0](https://github.com/patrick204nqh/browserctl/compare/v0.2.2...v0.3.0) (2026-04-20)
 
 
