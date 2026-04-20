@@ -32,7 +32,7 @@ def usage
 
     Recording commands:
       record start <name>    Start recording browser commands
-      record stop            Stop recording and save workflow
+      record stop [--out path]  Stop recording and save workflow
       record status          Show active recording name
 
     Workflow commands:
