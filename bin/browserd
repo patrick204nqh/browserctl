@@ -7,11 +7,13 @@ require "optimist"
 require "nokogiri"
 require "browserctl/logger"
 require "browserctl/server"
+require "browserctl/version"
 
 opts = Optimist.options do
-  opt :headed,    "Run with a visible browser window",        default: false
-  opt :log_level, "Log verbosity: debug, info, warn, error",  default: "info", type: :string
-  opt :name,      "Daemon instance name for multi-agent use", default: nil, type: :string
+  version "browserd #{Browserctl::VERSION}"
+  opt :headed,    "Run with a visible browser window",        default: false,  short: "-H"
+  opt :log_level, "Log verbosity: debug, info, warn, error",  default: "info", short: "-l", type: :string
+  opt :name,      "Daemon instance name for multi-agent use", default: nil,    short: "-n", type: :string
 end
 
 Browserctl.logger = Browserctl.build_logger(opts[:log_level])

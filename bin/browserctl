@@ -4,7 +4,10 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "json"
+require "optimist"
 require "browserctl"
+require "browserctl/version"
+require "browserctl/commands/cli_output"
 require "browserctl/commands/open_page"
 require "browserctl/commands/fill"
 require "browserctl/commands/click"
@@ -13,40 +16,58 @@ require "browserctl/commands/screenshot"
 require "browserctl/commands/watch"
 require "browserctl/commands/record"
 
+def print_result(res)
+  if res.is_a?(Hash) && res[:error]
+    warn "Error: #{res[:error]}"
+    exit 1
+  end
+  puts res.to_json
+end
+
+# rubocop:disable Metrics/MethodLength
 def usage
   puts <<~USAGE
     Usage: browserctl <command> [args]
 
     Browser commands (require browserd running):
-      open   <page> [--url URL]           Open or focus a named page
-      close  <page>                        Close a named page
-      pages                                List open pages
-      goto   <page> <url>                  Navigate a page
-      fill   <page> <selector> <value>     Fill an input
-      click  <page> <selector>             Click an element
-      shot   <page> [--out PATH] [--full]  Take a screenshot
-      snap   <page> [--format ai|html]     Snapshot DOM (default: ai)
-      url    <page>                        Print current URL
-      eval   <page> <expression>           Evaluate JS expression
-      watch  <page> <selector> [--timeout N]  Wait for a selector to appear
+      open   <page> [--url URL]                   Open or focus a named page
+      close  <page>                                Close a named page
+      pages                                        List open pages
+      goto   <page> <url>                          Navigate a page
+      fill   <page> <selector> <value>             Fill an input
+             <page> --ref <ref> --value <value>    Fill via snapshot ref
+      click  <page> <selector>                     Click an element
+             <page> --ref <ref>                    Click via snapshot ref
+      shot   <page> [--out PATH] [--full]          Take a screenshot
+      snap   <page> [--format ai|html] [--diff]    Snapshot DOM (default: ai)
+      url    <page>                                Print current URL
+      eval   <page> <expression>                   Evaluate JS expression
+      watch  <page> <selector> [--timeout N]       Wait for a selector to appear
 
     Recording commands:
-      record start <name>    Start recording browser commands
-      record stop [--out path]  Stop recording and save workflow
-      record status          Show active recording name
+      record start <name>            Start recording browser commands
+      record stop  [--out PATH]      Stop recording and save workflow
+      record status                  Show active recording name
 
     Workflow commands:
-      run      <name|file> [--key value]   Run a workflow
-      workflows                            List available workflows
-      describe <name>                      Describe a workflow
+      run      <name|file> [--key value ...]   Run a workflow
+      workflows                                List available workflows
+      describe <name>                          Describe a workflow
 
     Daemon commands:
-      ping                                 Check if browserd is alive
-      shutdown                             Stop browserd
+      ping                   Check if browserd is alive
+      shutdown               Stop browserd
 
     Options:
       --daemon <name>    Connect to a named daemon instance
+      --version, -v      Print version and exit
   USAGE
+  exit 0
+end
+# rubocop:enable Metrics/MethodLength
+
+if ARGV.intersect?(%w[--version -v])
+  puts "browserctl #{Browserctl::VERSION}"
   exit 0
 end
 
@@ -93,19 +114,19 @@ else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
 
   case cmd
-  when "open"   then Browserctl::Commands::OpenPage.run(client, args)
-  when "close"  then puts client.close_page(args[0]).to_json
-  when "pages"  then puts client.list_pages.to_json
-  when "goto"   then puts client.goto(args[0], args[1]).to_json
-  when "fill"   then Browserctl::Commands::Fill.run(client, args)
-  when "click"  then Browserctl::Commands::Click.run(client, args)
-  when "shot"   then Browserctl::Commands::Screenshot.run(client, args)
-  when "snap"   then Browserctl::Commands::Snapshot.run(client, args)
-  when "url"    then puts client.url(args[0]).to_json
-  when "eval"   then puts client.evaluate(args[0], args[1]).to_json
-  when "watch"  then Browserctl::Commands::Watch.run(client, args)
-  when "ping"   then puts client.ping.to_json
-  when "shutdown" then puts client.shutdown.to_json
+  when "open"     then Browserctl::Commands::OpenPage.run(client, args)
+  when "close"    then print_result(client.close_page(args[0]))
+  when "pages"    then print_result(client.list_pages)
+  when "goto"     then print_result(client.goto(args[0], args[1]))
+  when "fill"     then Browserctl::Commands::Fill.run(client, args)
+  when "click"    then Browserctl::Commands::Click.run(client, args)
+  when "shot"     then Browserctl::Commands::Screenshot.run(client, args)
+  when "snap"     then Browserctl::Commands::Snapshot.run(client, args)
+  when "url"      then print_result(client.url(args[0]))
+  when "eval"     then print_result(client.evaluate(args[0], args[1]))
+  when "watch"    then Browserctl::Commands::Watch.run(client, args)
+  when "ping"     then print_result(client.ping)
+  when "shutdown" then print_result(client.shutdown)
   else
     abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."
   end
