@@ -3,7 +3,8 @@
 Browserctl.workflow "the_internet/dropdown" do
   desc "Dropdown: select each option via JS, assert selected value"
 
-  param :base_url, default: "https://the-internet.herokuapp.com"
+  param :base_url,        default: "https://the-internet.herokuapp.com"
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_dropdown.png")
 
   step "open dropdown page" do
     client.open_page("main", url: "#{base_url}/dropdown")
@@ -27,7 +28,6 @@ Browserctl.workflow "the_internet/dropdown" do
   end
 
   step "capture screenshot" do
-    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
-    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_dropdown.png")
+    page(:main).screenshot(path: screenshot_path)
   end
 end

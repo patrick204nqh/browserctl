@@ -3,7 +3,8 @@
 Browserctl.workflow "the_internet/checkboxes" do
   desc "Checkboxes: read state, toggle each, verify both checked"
 
-  param :base_url, default: "https://the-internet.herokuapp.com"
+  param :base_url,        default: "https://the-internet.herokuapp.com"
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_checkboxes.png")
 
   step "open checkboxes page" do
     client.open_page("main", url: "#{base_url}/checkboxes")
@@ -29,7 +30,6 @@ Browserctl.workflow "the_internet/checkboxes" do
   end
 
   step "capture screenshot" do
-    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
-    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_checkboxes.png")
+    page(:main).screenshot(path: screenshot_path)
   end
 end

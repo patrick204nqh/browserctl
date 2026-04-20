@@ -3,7 +3,8 @@
 Browserctl.workflow "the_internet/dynamic_loading" do
   desc "Dynamic loading: click Start, wait for hidden element to appear"
 
-  param :base_url, default: "https://the-internet.herokuapp.com"
+  param :base_url,        default: "https://the-internet.herokuapp.com"
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_dynamic_loading.png")
 
   step "open dynamic loading page" do
     client.open_page("main", url: "#{base_url}/dynamic_loading/1")
@@ -27,7 +28,6 @@ Browserctl.workflow "the_internet/dynamic_loading" do
     sleep 0.2 until client.evaluate("main",
                                     "document.querySelector('#loading')?.style?.display")[:result] == "none" ||
                     Time.now > deadline
-    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
-    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_dynamic_loading.png")
+    page(:main).screenshot(path: screenshot_path)
   end
 end

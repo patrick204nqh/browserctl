@@ -26,11 +26,11 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          bundle exec browserctl run examples/the_internet/login.rb
-          bundle exec browserctl run examples/the_internet/checkboxes.rb
-          bundle exec browserctl run examples/the_internet/dropdown.rb
-          bundle exec browserctl run examples/the_internet/dynamic_loading.rb
-          bundle exec browserctl run examples/the_internet/add_remove_elements.rb
+          bundle exec browserctl run examples/the_internet/login.rb             --screenshot_path docs/screenshots/the_internet_login.png
+          bundle exec browserctl run examples/the_internet/checkboxes.rb        --screenshot_path docs/screenshots/the_internet_checkboxes.png
+          bundle exec browserctl run examples/the_internet/dropdown.rb          --screenshot_path docs/screenshots/the_internet_dropdown.png
+          bundle exec browserctl run examples/the_internet/dynamic_loading.rb   --screenshot_path docs/screenshots/the_internet_dynamic_loading.png
+          bundle exec browserctl run examples/the_internet/add_remove_elements.rb --screenshot_path docs/screenshots/the_internet_add_remove_elements.png
 
       - name: Stop daemon
         if: always()

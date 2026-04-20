@@ -3,7 +3,8 @@
 Browserctl.workflow "the_internet/add_remove_elements" do
   desc "Add/Remove Elements: add several elements, remove some, assert final count"
 
-  param :base_url, default: "https://the-internet.herokuapp.com"
+  param :base_url,        default: "https://the-internet.herokuapp.com"
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_add_remove_elements.png")
 
   step "open add/remove elements page" do
     client.open_page("main", url: "#{base_url}/add_remove_elements/")
@@ -13,8 +14,7 @@ Browserctl.workflow "the_internet/add_remove_elements" do
     3.times { page(:main).click("button[onclick]") }
     count = client.evaluate("main", "document.querySelectorAll('#elements button').length")[:result]
     assert count == 3, "expected 3 elements, got: #{count}"
-    screenshots_dir = File.expand_path("../../docs/screenshots", __dir__)
-    page(:main).screenshot(path: "#{screenshots_dir}/the_internet_add_remove_elements.png")
+    page(:main).screenshot(path: screenshot_path)
   end
 
   step "remove one element" do
