@@ -66,14 +66,15 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.3 — Developer Experience
 **Goal:** The gem that developers actually recommend to each other.
 
-- [ ] `browserctl pause` / `browserctl resume` — human-in-the-loop pause/resume primitive
-- [ ] Cloudflare challenge detection in `snapshot` and `goto` responses (`challenge: true` field)
-- [ ] `browserctl init` — scaffold `.browserctl/` in a project
-- [ ] Workflow composition: `include`, `extend`, shared step libraries
-- [ ] Plugin system: `Browserctl.register_command(:my_cmd) { }` in workflow files
+- [x] `browserctl pause` / `browserctl resume` — human-in-the-loop pause/resume primitive
+- [x] Cloudflare challenge detection in `snapshot` and `goto` responses (`challenge: true` field)
+- [x] `browserctl init` — scaffold `.browserctl/` in a project
+- [x] Workflow composition: `include`, `extend`, shared step libraries
+- [x] Plugin system: `Browserctl.register_command(:my_cmd) { }` in workflow files
+- [x] `browserctl inspect` — open DevTools UI for a named page
+- [x] `browserctl cookies` / `set_cookie` / `clear_cookies` — read and restore browser cookies (e.g. `cf_clearance` replay after Cloudflare HITL)
 - [ ] RBS type signatures for all public API
 - [ ] YARD documentation
-- [ ] `browserctl inspect` — open DevTools UI for a named page
 
 ### v1.0 — Production-Ready
 **Goal:** The tool you put in a Dockerfile without hesitation.
