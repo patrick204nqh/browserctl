@@ -40,17 +40,15 @@ RSpec.describe Browserctl::Recording do
     it "appends a JSON line for recordable commands" do
       described_class.start("test")
       described_class.append("fill", name: "login", selector: "input", value: "hi")
-      lines = File.readlines(described_class.log_path("test"))
-      expect(lines.length).to eq 1
-      data = JSON.parse(lines.first, symbolize_names: true)
-      expect(data[:cmd]).to eq "fill"
-      expect(data[:value]).to eq "hi"
+      ruby = described_class.generate_workflow("test")
+      expect(ruby).to include('page(:login).fill("input", "hi")')
     end
 
     it "ignores non-recordable commands" do
       described_class.start("test")
       described_class.append("ping")
-      expect(File.exist?(described_class.log_path("test"))).to be false
+      log = File.join(@tmp_dir, "test.jsonl")
+      expect(File.exist?(log)).to be false
     end
 
     it "does nothing when no active recording" do
