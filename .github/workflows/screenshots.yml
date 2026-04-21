@@ -9,7 +9,7 @@ on:
 
 jobs:
   screenshots:
-    name: Capture Smoke Test Screenshots
+    name: Screenshots
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
