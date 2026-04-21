@@ -29,7 +29,7 @@ module Browserctl
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
-    SCREENSHOT_DIRS  = [SCREENSHOT_DIR, File.expand_path(".browserctl/screenshots")].freeze
+    SCREENSHOT_ROOTS = [SCREENSHOT_DIR, File.expand_path(".")].freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
     CLOUDFLARE_SIGNALS = [
       "cf-challenge-running",
@@ -169,8 +169,8 @@ module Browserctl
     def safe_screenshot_path(requested, page_name)
       if requested
         expanded = File.expand_path(requested)
-        allowed  = SCREENSHOT_DIRS.any? { |d| expanded.start_with?(d) }
-        return { error: "path outside allowed directories (#{SCREENSHOT_DIRS.join(', ')})" } unless allowed
+        allowed  = SCREENSHOT_ROOTS.any? { |d| expanded.start_with?("#{d}/") || expanded.start_with?(d) }
+        return { error: "path outside allowed directory (#{SCREENSHOT_DIR} or project directory)" } unless allowed
         return { error: "invalid extension — use .png, .jpg, or .jpeg" } \
           unless SCREENSHOT_EXTS.include?(File.extname(expanded).downcase)
 
