@@ -74,7 +74,7 @@ browserctl ships as a Claude Code plugin. Install it once and Claude automatical
 
 ```
 /plugin marketplace add patrick204nqh/browserctl
-/plugin install browserctl@patrick204nqh
+/plugin install browserctl@browserctl
 ```
 
 **Install (project settings** — commit `.claude/settings.json` to share with your team)

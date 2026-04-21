@@ -1,0 +1,22 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "browserctl",
+  "owner": {
+    "name": "Patrick",
+    "email": "patrick204nqh@gmail.com"
+  },
+  "metadata": {
+    "description": "Persistent browser automation for AI agents"
+  },
+  "plugins": [
+    {
+      "name": "browserctl",
+      "description": "Persistent browser daemon skill — named sessions, ref-based interaction, snapshot diffs, HITL pause/resume, Cloudflare handling, and replayable Ruby workflows.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/browserctl"
+      ]
+    }
+  ]
+}

@@ -77,7 +77,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.4 — Installable Claude Plugin
 **Goal:** The skill that any Claude Code user can install with one command.
 
-- [x] `.claude-plugin/plugin.json` — package the repo as a Claude Code installable plugin
+- [x] `.claude-plugin/marketplace.json` — marketplace index so `/plugin marketplace add` works
+- [x] `.claude-plugin/plugin.json` — plugin manifest declaring the skill
 - [x] YAML frontmatter on `skills/browserctl/SKILL.md` — follow the Claude skill standard
 - [x] Install instructions in README (`/plugin marketplace add` + `/plugin install`)
 - [ ] RBS type signatures for all public API
