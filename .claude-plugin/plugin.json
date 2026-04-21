@@ -1,0 +1,13 @@
+{
+  "name": "browserctl",
+  "description": "Persistent browser automation skill for AI agents — named sessions, ref-based interaction, snapshot diffs, HITL pause/resume, Cloudflare challenge handling, and replayable Ruby workflows.",
+  "version": "0.4.0",
+  "author": {
+    "name": "Patrick",
+    "email": "patrick204nqh@gmail.com"
+  },
+  "homepage": "https://github.com/patrick204nqh/browserctl",
+  "repository": "https://github.com/patrick204nqh/browserctl",
+  "license": "MIT",
+  "keywords": ["browser", "automation", "ai-agent", "playwright-alternative", "workflow"]
+}

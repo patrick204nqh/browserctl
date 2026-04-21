@@ -66,6 +66,36 @@ gem "browserctl"
 
 ---
 
+## Claude Code Plugin
+
+browserctl ships as a Claude Code plugin. Install it once and Claude automatically knows how to use the daemon, ref-based interaction, HITL patterns, and workflow authoring.
+
+**Install (interactive)**
+
+```
+/plugin marketplace add patrick204nqh/browserctl
+/plugin install browserctl@patrick204nqh
+```
+
+**Install (project settings** — commit `.claude/settings.json` to share with your team)
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "browserctl": {
+      "source": { "source": "github", "repo": "patrick204nqh/browserctl" }
+    }
+  },
+  "enabledPlugins": {
+    "browserctl@browserctl": true
+  }
+}
+```
+
+Once installed, Claude Code loads the `browserctl` skill automatically — no `/invoke` needed.
+
+---
+
 ## Quick Start
 
 **1. Start the daemon**

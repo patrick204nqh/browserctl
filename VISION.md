@@ -63,7 +63,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] Workflow `retry_count:` and `timeout:` options per step
 - [x] `record` command — capture a session as a replayable workflow
 
-### v0.3 — Developer Experience
+### v0.3 — Developer Experience ✓ _(shipped)_
 **Goal:** The gem that developers actually recommend to each other.
 
 - [x] `browserctl pause` / `browserctl resume` — human-in-the-loop pause/resume primitive
@@ -73,6 +73,13 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] Plugin system: `Browserctl.register_command(:my_cmd) { }` in workflow files
 - [x] `browserctl inspect` — open DevTools UI for a named page
 - [x] `browserctl cookies` / `set_cookie` / `clear_cookies` — read and restore browser cookies (e.g. `cf_clearance` replay after Cloudflare HITL)
+
+### v0.4 — Installable Claude Plugin
+**Goal:** The skill that any Claude Code user can install with one command.
+
+- [x] `.claude-plugin/plugin.json` — package the repo as a Claude Code installable plugin
+- [x] YAML frontmatter on `skills/browserctl/SKILL.md` — follow the Claude skill standard
+- [x] Install instructions in README (`/plugin marketplace add` + `/plugin install`)
 - [ ] RBS type signatures for all public API
 - [ ] YARD documentation
 

@@ -1,3 +1,9 @@
+---
+name: browserctl
+description: Control a persistent browser daemon with discrete shell commands. Use for web automation, AI agent browser tasks, login flows, form filling, screenshots, and replayable Ruby workflows.
+user-invocable: false
+---
+
 # browserctl — AI agent skill
 
 ## What this is
