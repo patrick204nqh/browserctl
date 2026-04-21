@@ -7,6 +7,10 @@ on:
     paths:
       - "examples/the_internet/**"
 
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   screenshots:
     name: Screenshots

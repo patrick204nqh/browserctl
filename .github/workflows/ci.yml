@@ -29,7 +29,6 @@ jobs:
 
   test:
     name: Test (Ruby 3.3)
-    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
