@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  release-please:
+  release-pr:
     name: Release PR
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -26,8 +26,8 @@ jobs:
 
   publish:
     name: Publish
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    needs: release-pr
+    if: ${{ needs.release-pr.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: rubygems-release
@@ -36,11 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          ref: ${{ needs.release-pr.outputs.tag_name }}
       - uses: ./.github/actions/setup-ruby
       - name: Build gem
         run: gem build browserctl.gemspec
-      - name: Push to RubyGems
+      - name: Push gem
         run: gem push browserctl-*.gem
         env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}

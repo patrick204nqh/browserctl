@@ -24,7 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-ruby
-      - run: bundle exec rubocop --parallel
+      - name: Lint
+        run: bundle exec rubocop --parallel
 
   test:
     name: Test (Ruby 3.3)
@@ -34,4 +35,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-ruby
-      - run: bundle exec rspec --format progress
+      - name: Test
+        run: bundle exec rspec --format progress
