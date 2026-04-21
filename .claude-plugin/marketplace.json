@@ -13,7 +13,7 @@
       "name": "browserctl",
       "description": "Persistent browser daemon skill — named sessions, ref-based interaction, snapshot diffs, HITL pause/resume, Cloudflare handling, and replayable Ruby workflows.",
       "source": "./",
-      "strict": false,
+      "strict": true,
       "skills": [
         "./skills/browserctl"
       ]
