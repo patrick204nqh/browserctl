@@ -14,3 +14,5 @@ doc/
 .yardoc/
 docs/plan/
 docs/superpowers/
+examples/smoke/*.yml
+examples/smoke/*.json
