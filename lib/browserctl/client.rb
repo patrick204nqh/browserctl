@@ -152,6 +152,29 @@ module Browserctl
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def clear_cookies(name) = call("clear_cookies", name: name)
 
+    # Exports all cookies for a named page to a JSON file.
+    # @param name [String] logical page name
+    # @param path [String] file path to write cookies to
+    # @return [Hash] `{ ok: true, path:, count: }` or `{ error: }`
+    def export_cookies(name, path)
+      result = call("cookies", name: name)
+      return result unless result[:ok]
+
+      File.write(path, JSON.generate(result[:cookies]))
+      { ok: true, path: path, count: result[:cookies].length }
+    end
+
+    # Imports cookies from a JSON file into a named page.
+    # @param name [String] logical page name
+    # @param path [String] file path to read cookies from
+    # @return [Hash] `{ ok: true, count: }` or `{ error: }`
+    def import_cookies(name, path)
+      raise "params file not found: #{path}" unless File.exist?(path)
+
+      cookies = JSON.parse(File.read(path), symbolize_names: true)
+      call("import_cookies", name: name, cookies: cookies)
+    end
+
     private
 
     def communicate(payload)

@@ -24,6 +24,8 @@ require "browserctl/commands/record"
 require "browserctl/commands/pause_resume"
 require "browserctl/commands/init"
 require "browserctl/commands/inspect"
+require "browserctl/commands/export_cookies"
+require "browserctl/commands/import_cookies"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -61,6 +63,8 @@ def usage
       cookies <page>                               List all cookies as JSON
       set_cookie <page> <name> <value> <domain>    Set a cookie (path defaults to /)
       clear_cookies <page>                         Clear all cookies for a page
+      export-cookies <page> <path>                 Export cookies to a JSON file
+      import-cookies <page> <path>                 Import cookies from a JSON file
 
     Recording commands:
       record start <name>            Start recording browser commands
@@ -68,7 +72,7 @@ def usage
       record status                  Show active recording name
 
     Workflow commands:
-      run      <name|file> [--key value ...]   Run a workflow
+      run      <name|file> [--params file] [--key value ...]   Run a workflow
       workflows                                List available workflows
       describe <name>                          Describe a workflow
 
@@ -105,11 +109,23 @@ when "run"
     load File.expand_path(name)
     name = (Browserctl::REGISTRY.keys - before).first || File.basename(name, ".rb")
   end
-  params = {}
+  params_file_idx = args.index("--params")
+  file_params = {}
+  if params_file_idx
+    params_path = args.delete_at(params_file_idx + 1)
+    args.delete_at(params_file_idx)
+    begin
+      file_params = Browserctl::Runner.load_params_file(params_path)
+    rescue => e
+      abort "Error loading params file: #{e.message}"
+    end
+  end
+  cli_params = {}
   args.each_slice(2) do |flag, val|
     key = flag.sub(/\A--/, "").to_sym
-    params[key] = val
+    cli_params[key] = val
   end
+  params = file_params.merge(cli_params)
   success = runner.run_workflow(name, **params)
   exit(success ? 0 : 1)
 
@@ -142,9 +158,11 @@ else
   when "pause"    then Browserctl::Commands::PauseResume.pause(client, args)
   when "resume"   then Browserctl::Commands::PauseResume.resume(client, args)
   when "inspect"       then Browserctl::Commands::Inspect.run(client, args)
-  when "cookies"       then print_result(client.cookies(args[0]))
-  when "set_cookie"    then print_result(client.set_cookie(args[0], args[1], args[2], args[3]))
-  when "clear_cookies" then print_result(client.clear_cookies(args[0]))
+  when "cookies"        then print_result(client.cookies(args[0]))
+  when "set_cookie"     then print_result(client.set_cookie(args[0], args[1], args[2], args[3]))
+  when "clear_cookies"  then print_result(client.clear_cookies(args[0]))
+  when "export-cookies" then Browserctl::Commands::ExportCookies.run(client, args)
+  when "import-cookies" then Browserctl::Commands::ImportCookies.run(client, args)
   when "ping"     then print_result(client.ping)
   when "shutdown" then print_result(client.shutdown)
   else

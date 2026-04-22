@@ -21,7 +21,7 @@ Gem::Specification.new do |s| # rubocop:disable Metrics/BlockLength
     "rubygems_mfa_required" => "true"
   }
 
-  s.required_ruby_version = ">= 3.2"
+  s.required_ruby_version = ">= 3.3"
 
   s.files         = Dir["lib/**/*.rb", "bin/*", "examples/**/*.rb"] +
                     %w[README.md CHANGELOG.md LICENSE]
