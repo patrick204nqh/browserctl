@@ -241,13 +241,13 @@ module Browserctl
       with_page(req[:name]) do |session|
         req[:cookies].each do |c|
           session.page.cookies.set(
-            name:     c[:name],
-            value:    c[:value],
-            domain:   c[:domain],
-            path:     c.fetch(:path, "/"),
+            name: c[:name],
+            value: c[:value],
+            domain: c[:domain],
+            path: c.fetch(:path, "/"),
             httponly: c[:httpOnly],
-            secure:   c[:secure],
-            expires:  c[:expires] ? Time.at(c[:expires].to_i) : nil
+            secure: c[:secure],
+            expires: c[:expires] ? Time.at(c[:expires].to_i) : nil
           )
         end
         { ok: true, count: req[:cookies].length }
