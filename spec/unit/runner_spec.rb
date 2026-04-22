@@ -10,7 +10,10 @@ RSpec.describe Browserctl::Runner do
 
   describe ".load_params_file" do
     around do |example|
-      Dir.mktmpdir { |dir| @tmp = dir; example.run }
+      Dir.mktmpdir do |dir|
+        @tmp = dir
+        example.run
+      end
     end
 
     it "loads a YAML file and symbolizes keys" do

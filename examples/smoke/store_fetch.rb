@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Smoke test for WorkflowContext#store / #fetch (Task 7.3).
 #
@@ -30,11 +31,9 @@ Browserctl.workflow "smoke/store_fetch" do
   end
 
   step "confirm fetch raises for unknown key" do
-    begin
-      fetch(:nonexistent_key)
-      assert false, "expected KeyError was not raised"
-    rescue KeyError => e
-      puts "  [ok] KeyError raised as expected: #{e.message}"
-    end
+    fetch(:nonexistent_key)
+    assert false, "expected KeyError was not raised"
+  rescue KeyError => e
+    puts "  [ok] KeyError raised as expected: #{e.message}"
   end
 end

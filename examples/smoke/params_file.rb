@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Smoke test for --params file loading (Task 7.5).
 #

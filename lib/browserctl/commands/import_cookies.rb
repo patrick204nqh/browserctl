@@ -8,7 +8,7 @@ module Browserctl
         path = args.shift or abort "usage: browserctl import-cookies <page> <path>"
         begin
           result = client.import_cookies(page, path)
-        rescue => e
+        rescue StandardError => e
           warn "Error: #{e.message}"
           exit 1
         end

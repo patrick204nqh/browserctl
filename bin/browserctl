@@ -116,7 +116,7 @@ when "run"
     args.delete_at(params_file_idx)
     begin
       file_params = Browserctl::Runner.load_params_file(params_path)
-    rescue => e
+    rescue StandardError => e
       abort "Error loading params file: #{e.message}"
     end
   end

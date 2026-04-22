@@ -44,8 +44,7 @@ module Browserctl
       # ref-based interactions have no replayable selector — skip them
       return if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
 
-      attrs = attrs.except(:value) if cmd.to_s == "fill"
-      attrs[:url] = redact_url(attrs[:url]) if %w[goto open_page].include?(cmd.to_s) && attrs[:url]
+      attrs = prepare_attrs(cmd.to_s, attrs)
 
       File.open(log_path(name), "a") do |f|
         f.puts JSON.generate({ cmd: cmd.to_s }.merge(attrs.transform_keys(&:to_s)))
@@ -116,12 +115,18 @@ module Browserctl
         end
       end
 
+      def prepare_attrs(cmd, attrs)
+        attrs = attrs.except(:value) if cmd == "fill"
+        attrs[:url] = redact_url(attrs[:url]) if %w[goto open_page].include?(cmd) && attrs[:url]
+        attrs
+      end
+
       def redact_url(url)
         uri = URI.parse(url)
         return url if uri.query.nil?
 
         uri.query = uri.query.gsub(/([^&=]+)=([^&]*)/) do |full_match|
-          raw_key = $1
+          raw_key = ::Regexp.last_match(1)
           key = URI.decode_www_form_component(raw_key)
           key =~ SENSITIVE_PARAM_PATTERN ? "#{raw_key}=[REDACTED]" : full_match
         end

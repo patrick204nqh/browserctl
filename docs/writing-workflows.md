@@ -67,6 +67,20 @@ Pass params at runtime with `--key value` flags:
 browserctl run my_workflow --email me@example.com --password s3cr3t
 ```
 
+Or load them from a YAML or JSON file to keep credentials out of your shell history:
+
+```bash
+browserctl run my_workflow --params .browserctl/params.yml
+```
+
+```yaml
+# .browserctl/params.yml  (git-ignored)
+email: me@example.com
+password: s3cr3t
+```
+
+CLI `--key value` flags take priority over file params when both are provided. Both `.yml`/`.yaml` and `.json` extensions are supported.
+
 ### `step`
 
 Steps run in order. A step that raises halts the workflow and marks it `[fail]`.
@@ -100,6 +114,26 @@ end
 |---|---|---|
 | `retry_count: N` | 0 | Retry the step up to N additional times on any error |
 | `timeout: seconds` | nil | Raise `WorkflowError` if the step exceeds this duration |
+
+### `store` and `fetch`
+
+Pass values between steps in the same workflow run — useful for OTP codes, extracted text, or anything computed in one step and consumed in a later one.
+
+```ruby
+step "read confirmation code" do
+  code = page(:inbox).evaluate("document.querySelector('.otp-code')?.innerText?.trim()")
+  store(:otp, code)
+end
+
+step "enter code on target site" do
+  page(:app).fill("input#otp", fetch(:otp))
+  page(:app).click("button[type=submit]")
+end
+```
+
+`fetch` raises `KeyError` with a descriptive message if the key was never stored. Stored values do not persist across separate `browserctl run` invocations.
+
+---
 
 ### `assert`
 
@@ -237,6 +271,30 @@ step "wait for results" do
   assert count > 0, "no results returned"
 end
 ```
+
+### Skipping login with cookie export/import
+
+Authenticate once, export the session, then import it in future runs to skip the login step entirely.
+
+```bash
+# After a successful login session:
+browserctl export-cookies main .browserctl/sessions/app.json
+
+# On the next run (daemon restarted):
+browserctl import-cookies main .browserctl/sessions/app.json
+```
+
+The `sessions/` directory is git-ignored by default when you run `browserctl init`.
+
+You can also do this inside a workflow:
+
+```ruby
+step "restore session" do
+  client.import_cookies("main", ".browserctl/sessions/app.json")
+end
+```
+
+---
 
 ### Composing workflows with `invoke`
 

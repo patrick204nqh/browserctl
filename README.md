@@ -47,7 +47,7 @@ Most automation tools are stateless — every script spins up a fresh browser an
 
 ## Requirements
 
-- Ruby >= 3.2
+- Ruby >= 3.3
 - Chrome or Chromium installed and on `PATH`
 
 ---
@@ -174,6 +174,8 @@ browserctl shutdown
 | `cookies <page>` | List all cookies as JSON |
 | `set_cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
 | `clear_cookies <page>` | Clear all cookies for a page |
+| `export-cookies <page> <path>` | Export all cookies to a JSON file |
+| `import-cookies <page> <path>` | Restore cookies from a JSON file |
 | `record start <name>` | Begin recording commands as a replayable workflow |
 | `record stop [--out path]` | End recording; saves to `.browserctl/workflows/` or custom path |
 | `record status` | Show whether a recording is active |
@@ -189,7 +191,7 @@ browserctl shutdown
 
 | Command | Description |
 |---|---|
-| `run <name\|file.rb> [--key value ...]` | Run a named workflow or workflow file |
+| `run <name\|file.rb> [--params file] [--key value ...]` | Run a named workflow or workflow file |
 | `workflows` | List available workflows |
 | `describe <name>` | Show workflow params and steps |
 
@@ -293,6 +295,8 @@ browserctl run smoke_login --email me@example.com --password s3cr3t
 | `step "label" { }` | Add a step (runs in order, halts on failure) |
 | `step "label", retry_count: N, timeout: S { }` | Step with retry and/or timeout |
 | `page(:name)` | Returns a `PageProxy` for the named page |
+| `store(key, value)` | Store a value for use in later steps |
+| `fetch(key)` | Retrieve a stored value (raises `KeyError` if missing) |
 | `invoke "other_workflow", **overrides` | Call another workflow |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
 
