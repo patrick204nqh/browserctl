@@ -12,3 +12,5 @@ tmp/
 .worktrees/
 doc/
 .yardoc/
+docs/plan/
+docs/superpowers/
