@@ -245,8 +245,8 @@ module Browserctl
             value: c[:value],
             domain: c[:domain],
             path: c.fetch(:path, "/"),
-            httponly: c[:httpOnly],
-            secure: c[:secure],
+            httponly: c[:httpOnly] == true,
+            secure: c[:secure] == true,
             expires: c[:expires] ? Time.at(c[:expires].to_i) : nil
           )
         end

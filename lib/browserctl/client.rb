@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "socket"
 require "json"
 require_relative "constants"
@@ -160,7 +161,8 @@ module Browserctl
       result = call("cookies", name: name)
       return result unless result[:ok]
 
-      File.write(path, JSON.generate(result[:cookies]))
+      FileUtils.mkdir_p(File.dirname(path))
+      File.open(path, "w", 0o600) { |f| f.write(JSON.generate(result[:cookies])) }
       { ok: true, path: path, count: result[:cookies].length }
     end
 
@@ -169,7 +171,7 @@ module Browserctl
     # @param path [String] file path to read cookies from
     # @return [Hash] `{ ok: true, count: }` or `{ error: }`
     def import_cookies(name, path)
-      raise "params file not found: #{path}" unless File.exist?(path)
+      raise "cookie file not found: #{path}" unless File.exist?(path)
 
       cookies = JSON.parse(File.read(path), symbolize_names: true)
       call("import_cookies", name: name, cookies: cookies)
