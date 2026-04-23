@@ -13,10 +13,10 @@ A persistent browser automation daemon and CLI, purpose-built for AI agents and 
 Unlike tools that restart the browser on every script run, **browserctl keeps a named browser session alive** — preserving cookies, localStorage, open tabs, and page state across discrete commands.
 
 ```bash
-browserd &                                           # start the daemon (headless)
+browserd &                                               # start the daemon (headless)
 browserctl open login --url https://example.com/login
-browserctl snap login                                # AI-friendly JSON snapshot with ref IDs
-browserctl fill login --ref e1 --value me@example.com   # interact by ref
+browserctl snap login                                    # AI-friendly JSON snapshot with ref IDs
+browserctl fill login --ref e1 --value me@example.com   # interact by ref, no selectors needed
 browserctl click login --ref e2
 browserctl shutdown
 ```
@@ -35,11 +35,12 @@ Most automation tools are stateless — every script spins up a fresh browser an
 | Session persists across commands | ✓ | ✗ (per-script lifecycle) |
 | Named page handles | ✓ | ✗ |
 | AI-friendly DOM snapshot | ✓ | ✗ |
+| Human-in-the-loop pause/resume | ✓ | ✗ |
 | Lightweight CLI interface | ✓ | ✗ |
 | Full browser automation API | — | ✓ |
 | Parallel multi-browser testing | — | ✓ |
 
-**Use browserctl when** you need a browser that stays alive and remembers state — for AI agents, iterative dev workflows, or lightweight smoke tests.
+**Use browserctl when** you need a browser that stays alive and remembers state — for AI agents, iterative dev workflows, or tasks that mix automation with human judgment.
 
 **Use Playwright/Selenium when** you need parallel test suites, multi-browser support, or a full programmatic API.
 
@@ -48,7 +49,7 @@ Most automation tools are stateless — every script spins up a fresh browser an
 ## Requirements
 
 - Ruby >= 3.3
-- Chrome or Chromium installed and on `PATH`
+- Chrome or Chromium on your `PATH`
 
 ---
 
@@ -98,225 +99,38 @@ Once installed, Claude Code loads the `browserctl` skill automatically — no `/
 
 ## Quick Start
 
-**1. Start the daemon**
-
 ```bash
-browserd           # headless (default)
-browserd --headed  # visible browser window
-```
+# 1. Start the daemon
+browserd &
 
-**2. Open a named page**
+# 2. Open a named page
+browserctl open main --url https://the-internet.herokuapp.com/login
 
-```bash
-browserctl open login --url https://app.example.com/login
-```
+# 3. Snapshot the page — get AI-friendly JSON with ref IDs
+browserctl snap main
 
-**3. Snapshot the page to discover refs**
+# 4. Interact using refs
+browserctl fill  main --ref e1 --value tomsmith
+browserctl fill  main --ref e2 --value SuperSecretPassword!
+browserctl click main --ref e3
 
-```bash
-browserctl snap login              # AI-friendly JSON with ref IDs (default)
-browserctl snap login --format html
-```
+# 5. Observe
+browserctl url  main
+browserctl snap main --diff   # only what changed
 
-**4. Interact using refs or selectors**
-
-```bash
-browserctl fill  login --ref e1 --value user@example.com
-browserctl fill  login --ref e2 --value s3cr3t
-browserctl click login --ref e3
-
-# or using explicit CSS selectors
-browserctl fill  login "input[name=email]"    user@example.com
-browserctl click login "button[type=submit]"
-```
-
-**5. Observe the result**
-
-```bash
-browserctl snap login --diff       # only changed elements since last snap
-browserctl shot login --out /tmp/after-login.png --full
-browserctl url  login
-```
-
-**6. Manage pages and daemon**
-
-```bash
-browserctl pages
-browserctl close login
-browserctl ping
+# 6. Done
 browserctl shutdown
 ```
 
----
-
-## All Commands
-
-### Browser commands _(require `browserd` running)_
-
-| Command | Description |
-|---|---|
-| `open <page> [--url URL]` | Open or focus a named page |
-| `close <page>` | Close a named page |
-| `pages` | List open pages |
-| `goto <page> <url>` | Navigate a page to a URL |
-| `fill <page> <selector> <value>` | Fill an input field by CSS selector |
-| `fill <page> --ref <id> --value <v>` | Fill an input field by snapshot ref |
-| `click <page> <selector>` | Click an element by CSS selector |
-| `click <page> --ref <id>` | Click an element by snapshot ref |
-| `snap <page> [--format ai\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
-| `watch <page> <selector> [--timeout N]` | Poll until selector appears (default timeout: 30s) |
-| `shot <page> [--out PATH] [--full]` | Take a screenshot |
-| `url <page>` | Print current URL |
-| `eval <page> <expression>` | Evaluate a JS expression |
-| `pause <page>` | Pause automation — browser stays live for manual interaction |
-| `resume <page>` | Resume automation after manual action |
-| `inspect <page>` | Open Chrome DevTools for a named page |
-| `cookies <page>` | List all cookies as JSON |
-| `set_cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
-| `clear_cookies <page>` | Clear all cookies for a page |
-| `export-cookies <page> <path>` | Export all cookies to a JSON file |
-| `import-cookies <page> <path>` | Restore cookies from a JSON file |
-| `record start <name>` | Begin recording commands as a replayable workflow |
-| `record stop [--out path]` | End recording; saves to `.browserctl/workflows/` or custom path |
-| `record status` | Show whether a recording is active |
-
-### Daemon commands
-
-| Command | Description |
-|---|---|
-| `ping` | Check if `browserd` is alive |
-| `shutdown` | Stop `browserd` |
-
-### Workflow commands
-
-| Command | Description |
-|---|---|
-| `run <name\|file.rb> [--params file] [--key value ...]` | Run a named workflow or workflow file |
-| `workflows` | List available workflows |
-| `describe <name>` | Show workflow params and steps |
-
----
-
-## AI Snapshot Format
-
-`browserctl snap <page>` returns a compact JSON array of interactable elements — designed to be token-efficient for AI agents:
-
-```json
-[
-  {
-    "ref": "e1",
-    "tag": "input",
-    "text": "",
-    "selector": "form > input[name=email]",
-    "attrs": {
-      "type": "email",
-      "name": "email",
-      "placeholder": "Enter email"
-    }
-  },
-  {
-    "ref": "e2",
-    "tag": "button",
-    "text": "Sign in",
-    "selector": "form > button",
-    "attrs": {
-      "type": "submit"
-    }
-  }
-]
-```
-
-Use `ref` values directly with `--ref` for zero-fragility interactions, or use `selector` values with `fill` and `click`.
-
-### Ref-based interaction
-
-After a `snap`, use ref IDs instead of CSS selectors — no selector knowledge required:
-
-```bash
-browserctl fill  login --ref e1 --value user@example.com
-browserctl click login --ref e2
-```
-
-### Diff snapshots
-
-Track only what changed since the last snapshot — useful for AI agents monitoring async updates:
-
-```bash
-browserctl snap login --diff
-```
-
----
-
-## Workflows
-
-Workflows are Ruby files using the `Browserctl.workflow` DSL. Place them in any of:
-
-- `./.browserctl/workflows/`
-- `~/.browserctl/workflows/`
-
-### Example
-
-```ruby
-# .browserctl/workflows/smoke_login.rb
-Browserctl.workflow "smoke_login" do
-  desc "Log in and confirm the dashboard loads"
-
-  param :email,    required: true
-  param :password, required: true, secret: true
-  param :base_url, default: "https://app.example.com"
-
-  step "open login page" do
-    page(:login).goto("#{base_url}/login")
-  end
-
-  step "submit credentials" do
-    page(:login).fill("input[name=email]",    email)
-    page(:login).fill("input[name=password]", password)
-    page(:login).click("button[type=submit]")
-  end
-
-  step "verify dashboard" do
-    page(:login).wait_for("[data-test=dashboard]", timeout: 10)
-    assert page(:login).url.include?("/dashboard")
-  end
-end
-```
-
-```bash
-browserctl run smoke_login --email me@example.com --password s3cr3t
-```
-
-### Workflow DSL reference
-
-| Method | Description |
-|---|---|
-| `desc "text"` | Human-readable description |
-| `param :name, required:, secret:, default:` | Declare a parameter |
-| `step "label" { }` | Add a step (runs in order, halts on failure) |
-| `step "label", retry_count: N, timeout: S { }` | Step with retry and/or timeout |
-| `page(:name)` | Returns a `PageProxy` for the named page |
-| `store(key, value)` | Store a value for use in later steps |
-| `fetch(key)` | Retrieve a stored value (raises `KeyError` if missing) |
-| `invoke "other_workflow", **overrides` | Call another workflow |
-| `assert condition, "message"` | Raise `WorkflowError` if condition is false |
-
-### PageProxy methods
-
-`goto(url)` · `fill(selector, value)` · `click(selector)` · `snapshot(**opts)` · `screenshot(**opts)` · `wait_for(selector, timeout: 10)` · `url` · `evaluate(expression)` · `pause` · `resume` · `inspect_page` · `cookies` · `set_cookie(name, value, domain, path: "/")` · `clear_cookies`
-
----
-
-## Examples
-
-Ready-to-run smoke tests against [the-internet.herokuapp.com](https://the-internet.herokuapp.com) are included in `examples/the_internet/`. See [docs/smoke-testing-the-internet.md](docs/smoke-testing-the-internet.md) for annotated output and auto-generated screenshots of each scenario.
-
-For a full guide on building your own workflows, see [docs/writing-workflows.md](docs/writing-workflows.md).
+→ [Full Getting Started guide](docs/getting-started.md)
 
 ---
 
 ## How it works
 
-`browserd` runs as a background process, listening on a Unix socket at `~/.browserctl/browserd.sock`. Start multiple named instances for agent isolation:
+`browserd` runs as a background process, listening on a Unix socket at `~/.browserctl/browserd.sock`. It manages a Ferrum (Chrome DevTools Protocol) browser instance with named page handles. `browserctl` sends JSON-RPC commands over the socket and prints the result.
+
+Start multiple named instances for agent isolation:
 
 ```bash
 browserd --name agent-a &
@@ -324,11 +138,19 @@ browserd --name agent-b &
 browserctl --daemon agent-a open main --url https://app.example.com
 ```
 
-It manages a Ferrum (Chrome DevTools Protocol) browser instance with named page handles.
-
-`browserctl` sends JSON-RPC commands over the socket and prints the result. Workflows run in-process through the same client.
-
 The daemon shuts itself down after 30 minutes of inactivity.
+
+---
+
+## Documentation
+
+| | |
+|---|---|
+| [Getting Started](docs/getting-started.md) | Install, first session, first snapshot |
+| [Concepts](docs/concepts/) | Sessions, snapshots, human-in-the-loop |
+| [Guides](docs/guides/) | Writing workflows, handling challenges, smoke testing |
+| [Command Reference](docs/reference/commands.md) | Every command and flag |
+| [vs. agent-browser](docs/vs-agent-browser.md) | How browserctl differs from Vercel's agent-browser |
 
 ---
 

@@ -181,6 +181,8 @@ Circular invocation (`a → b → a`) raises immediately.
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 
+For the full list of PageProxy methods including `pause`, `resume`, and cookie management, see the [Command Reference](../reference/commands.md#pageproxy-methods).
+
 ---
 
 ## Full example
@@ -316,3 +318,24 @@ Browserctl.workflow "full_checkout" do
   end
 end
 ```
+
+### Human-in-the-loop inside a workflow
+
+When a step hits a wall that needs human action, pause the session and resume when the human is done:
+
+```ruby
+step "navigate to protected page" do
+  res = client.goto("main", target_url)
+  if res[:challenge]
+    puts "→ Challenge detected. Solve it in the browser, then: browserctl resume main"
+    client.pause("main")
+    loop do
+      snap = client.snapshot("main", format: "html")
+      break unless snap[:challenge]
+      sleep 3
+    end
+  end
+end
+```
+
+See [Handling Challenges](handling-challenges.md) for a full runnable example.
