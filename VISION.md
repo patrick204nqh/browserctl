@@ -33,6 +33,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 4. **Protocol over implementation** — the JSON-RPC wire format is stable and language-agnostic
 5. **Zero magic, full control** — no auto-waiting policies you can't see; every operation is explicit
 6. **Human presence is a resumable event** — when the human needs to act, the session pauses and waits; when they're done, automation resumes exactly where it stopped
+7. **Local-only, always** — the daemon runs on your machine; no cloud layer, no third-party access to your sessions, no SaaS dependency
+8. **Detection before intervention** — built-in modules surface signals (Cloudflare challenges, bot-detection walls) so agents and workflows can decide when to invoke HITL; the detection layer is extensible, not hardcoded
 
 ---
 
@@ -98,7 +100,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 **Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
 
 - [ ] **Annotated session traces**: export pause/resume sessions as fine-tuning data for browser agents
-- [ ] **Cloud daemon**: remote `browserd` instances accessible over mTLS
+- [ ] **Extensible HITL detection modules**: a registry of built-in detectors (Cloudflare, DataDome, 2FA prompts, consent banners) that signal when human intervention is needed; third-party detectors installable via the plugin system
 - [ ] **Session recording + replay**: deterministic browser regression testing
 - [ ] **Visual regression**: `shot --compare baseline.png` with pixel diff
 - [ ] **Distributed sessions**: fan-out a command across N named pages in parallel
@@ -113,6 +115,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 - Not a scraping library (use Nokogiri/Mechanize for HTML-only work)
 - Not a general-purpose RPA platform (no GUI recorder, no cloud SaaS)
 - Not a replacement for Playwright in CI test suites
+- Not a cloud browser service — the daemon runs on your machine, period
 
 browserctl occupies the space between `curl` and Playwright: **interactive, stateful, composable browser control from the command line and from code**.
 
