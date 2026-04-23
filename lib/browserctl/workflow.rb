@@ -16,6 +16,15 @@ module Browserctl
     def initialize(params, client)
       @params = params
       @client = client
+      @_store = {}
+    end
+
+    def store(key, value)
+      @_store[key] = value
+    end
+
+    def fetch(key)
+      @_store.fetch(key) { raise KeyError, "no value stored for key #{key.inspect}" }
     end
 
     def method_missing(name, *args)

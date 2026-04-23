@@ -1,6 +1,6 @@
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 3.2
+  TargetRubyVersion: 3.3
   Exclude:
     - "vendor/**/*"
     - "tmp/**/*"
@@ -19,7 +19,7 @@ Metrics/MethodLength:
   Max: 30
 
 Metrics/ClassLength:
-  Max: 240
+  Max: 260
 
 Metrics/AbcSize:
   Max: 30

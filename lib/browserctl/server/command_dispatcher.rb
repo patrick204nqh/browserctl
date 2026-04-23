@@ -25,7 +25,8 @@ module Browserctl
       "inspect" => :cmd_inspect,
       "cookies" => :cmd_cookies,
       "set_cookie" => :cmd_set_cookie,
-      "clear_cookies" => :cmd_clear_cookies
+      "clear_cookies" => :cmd_clear_cookies,
+      "import_cookies" => :cmd_import_cookies
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
@@ -234,6 +235,23 @@ module Browserctl
 
       session.page.cookies.clear
       { ok: true }
+    end
+
+    def cmd_import_cookies(req)
+      with_page(req[:name]) do |session|
+        req[:cookies].each do |c|
+          session.page.cookies.set(
+            name: c[:name],
+            value: c[:value],
+            domain: c[:domain],
+            path: c.fetch(:path, "/"),
+            httponly: c[:httpOnly] == true,
+            secure: c[:secure] == true,
+            expires: c[:expires] ? Time.at(c[:expires].to_i) : nil
+          )
+        end
+        { ok: true, count: req[:cookies].length }
+      end
     end
 
     def cmd_inspect(req)

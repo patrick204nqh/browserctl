@@ -48,7 +48,7 @@ Most automation tools are stateless — every script spins up a fresh browser an
 
 ## Requirements
 
-- Ruby >= 3.2
+- Ruby >= 3.3
 - Chrome or Chromium on your `PATH`
 
 ---

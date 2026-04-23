@@ -164,6 +164,38 @@ end
 RSpec.describe Browserctl::WorkflowContext do
   let(:client) { instance_double(Browserctl::Client) }
 
+  describe "#store and #fetch" do
+    subject(:ctx) { described_class.new({}, client) }
+
+    it "stores and retrieves a value by key" do
+      ctx.store(:code, "abc123")
+      expect(ctx.fetch(:code)).to eq("abc123")
+    end
+
+    it "allows overwriting a stored value" do
+      ctx.store(:x, 1)
+      ctx.store(:x, 2)
+      expect(ctx.fetch(:x)).to eq(2)
+    end
+
+    it "raises KeyError for a missing key" do
+      expect { ctx.fetch(:missing) }.to raise_error(KeyError, /missing/)
+    end
+
+    it "store keys do not conflict with param names" do
+      ctx_with_param = described_class.new({ email: "a@b.com" }, client)
+      ctx_with_param.store(:email, "override")
+      expect(ctx_with_param.fetch(:email)).to eq("override")
+      expect(ctx_with_param.email).to eq("a@b.com")
+    end
+
+    it "does not persist values across separate context instances" do
+      ctx.store(:val, 42)
+      fresh_ctx = described_class.new({}, client)
+      expect { fresh_ctx.fetch(:val) }.to raise_error(KeyError)
+    end
+  end
+
   describe "#assert" do
     it "does nothing when condition is true" do
       ctx = described_class.new({}, client)

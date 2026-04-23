@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "workflow"
 require_relative "client"
 
@@ -38,6 +39,24 @@ module Browserctl
     end
 
     SAFE_WORKFLOW_NAME = /\A[a-zA-Z0-9_-]+\z/
+
+    def self.load_params_file(path)
+      raise "params file not found: #{path}" unless File.exist?(path)
+
+      case File.extname(path).downcase
+      when ".yml", ".yaml"
+        require "yaml"
+        YAML.safe_load_file(path, symbolize_names: true)
+      when ".json"
+        JSON.parse(File.read(path), symbolize_names: true)
+      else
+        raise "unsupported params file format: #{path} (use .yml, .yaml, or .json)"
+      end
+    rescue Psych::SyntaxError => e
+      raise "invalid YAML in #{path}: #{e.message}"
+    rescue JSON::ParserError => e
+      raise "invalid JSON in #{path}: #{e.message}"
+    end
 
     private
 
