@@ -28,13 +28,14 @@ It is the difference between a browser **you restart** and a browser **you steer
 ## Core Philosophy
 
 1. **Persistence over restart** — the browser session is a first-class citizen, not a throwaway
-2. **AI-first, human-compatible** — snapshots are token-efficient JSON; workflows are readable Ruby
-3. **Unix composability** — every command is one-line, pipeable, scriptable
-4. **Protocol over implementation** — the JSON-RPC wire format is stable and language-agnostic
-5. **Zero magic, full control** — no auto-waiting policies you can't see; every operation is explicit
-6. **Human presence is a resumable event** — when the human needs to act, the session pauses and waits; when they're done, automation resumes exactly where it stopped
-7. **Local-only, always** — the daemon runs on your machine; no cloud layer, no third-party access to your sessions, no SaaS dependency
-8. **Detection before intervention** — built-in modules surface signals (Cloudflare challenges, bot-detection walls) so agents and workflows can decide when to invoke HITL; the detection layer is extensible, not hardcoded
+2. **Human presence is a resumable event** — when the human needs to act, the session pauses; when they're done, automation resumes exactly where it stopped
+3. **Evidence by default** — every session can produce screenshots, traces, and recordings; capture is built in, not bolted on
+4. **Local-only, always** — the daemon runs on your machine; no cloud layer, no third-party access to your sessions, no SaaS dependency, zero telemetry
+5. **Detection before intervention** — built-in modules surface signals (Cloudflare challenges, bot-detection walls) so agents and workflows can decide when to invoke HITL; the detection layer is extensible, not hardcoded
+6. **AI-first, human-compatible** — snapshots are token-efficient JSON; workflows are readable Ruby
+7. **Unix composability** — every command is one-line, pipeable, scriptable
+8. **Protocol over implementation** — the JSON-RPC wire format is stable and language-agnostic
+9. **Zero magic, full control** — no auto-waiting policies you can't see; every operation is explicit
 
 ---
 
@@ -71,41 +72,56 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] `browserctl pause` / `browserctl resume` — human-in-the-loop pause/resume primitive
 - [x] Cloudflare challenge detection in `snapshot` and `goto` responses (`challenge: true` field)
 - [x] `browserctl init` — scaffold `.browserctl/` in a project
-- [x] Workflow composition: `include`, `extend`, shared step libraries
+- [x] Workflow composition: `compose` — inline another workflow's steps
 - [x] Plugin system: `Browserctl.register_command(:my_cmd) { }` in workflow files
 - [x] `browserctl inspect` — open DevTools UI for a named page
-- [x] `browserctl cookies` / `set_cookie` / `clear_cookies` — read and restore browser cookies (e.g. `cf_clearance` replay after Cloudflare HITL)
+- [x] `browserctl cookies` / `set_cookie` / `clear_cookies` / `export-cookies` / `import-cookies` — full cookie management including CF clearance replay
 
-### v0.4 — Installable Claude Plugin
-**Goal:** The skill that any Claude Code user can install with one command.
+### v0.4 — Distribution & Installability _(current)_
+**Goal:** Install with one command, anywhere.
 
 - [x] `.claude-plugin/marketplace.json` — marketplace index so `/plugin marketplace add` works
 - [x] `.claude-plugin/plugin.json` — plugin manifest declaring the skill
 - [x] YAML frontmatter on `skills/browserctl/SKILL.md` — follow the Claude skill standard
 - [x] Install instructions in README (`/plugin marketplace add` + `/plugin install`)
+- [x] Homebrew formula — `brew install patrick204nqh/tap/browserctl`
 - [ ] RBS type signatures for all public API
 - [ ] YARD documentation
 
-### v1.0 — Production-Ready
-**Goal:** The tool you put in a Dockerfile without hesitation.
+### v0.5 — Architecture & Hardening
+**Goal:** A codebase that contributors can navigate and a daemon that operators can trust.
 
-- [ ] Stable public API with deprecation policy
-- [ ] Security audit (socket permissions, workflow param sanitization)
-- [ ] Homebrew formula (`brew install browserctl`)
-- [ ] RubyGems publish pipeline with signed gems
-- [ ] Benchmarks: snapshot latency, command throughput
+- [ ] `Browserctl::Error` hierarchy — typed error codes surfaced in daemon JSON responses
+- [ ] Extract `Browserctl::Detectors` module — challenge detection isolated from dispatch logic
+- [ ] Split `CommandDispatcher` into per-concern handler files
+- [ ] Thread-safe plugin registry — replace mutable constants with mutex-protected accessors
+- [ ] Security audit: socket permissions, workflow param sanitisation, screenshot path boundaries
 - [ ] Compatibility matrix: Ruby 3.2–3.x, Chrome 120+
+- [ ] Benchmarks: snapshot latency, command throughput
 
-### v1.x and Beyond — Platform
+### v0.6 — Evidence & Reproduction
+**Goal:** Every session leaves a trail. Every bug is reproducible from code.
+
+- [ ] Evidence capture hooks — configurable auto-screenshot (on HITL pause, on step failure, per-step)
+- [ ] Session trace export — structured JSON log of every command; `browserctl export main`
+- [ ] `replay` command — step through a recorded workflow with live screenshots at each step
+- [ ] Extensible HITL detection modules — DataDome, 2FA prompts, consent banners as built-in detectors
+- [ ] `register_detector` plugin API — third-party detectors installable via plugin system
+
+### v0.7 — Platform
 **Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
 
-- [ ] **Annotated session traces**: export pause/resume sessions as fine-tuning data for browser agents
-- [ ] **Extensible HITL detection modules**: a registry of built-in detectors (Cloudflare, DataDome, 2FA prompts, consent banners) that signal when human intervention is needed; third-party detectors installable via the plugin system
-- [ ] **Session recording + replay**: deterministic browser regression testing
-- [ ] **Visual regression**: `shot --compare baseline.png` with pixel diff
-- [ ] **Distributed sessions**: fan-out a command across N named pages in parallel
-- [ ] **Webhook triggers**: run a workflow when an HTTP POST arrives
-- [ ] **GUI companion app**: macOS status bar showing live page list and daemon health
+- [ ] Annotated session traces — export pause/resume sessions as fine-tuning data for browser agents
+- [ ] Session recording + replay — deterministic browser regression testing
+- [ ] Visual regression — `shot --compare baseline.png` with pixel diff
+- [ ] Distributed sessions — fan-out a command across N named pages in parallel
+- [ ] Webhook triggers — run a workflow when an HTTP POST arrives
+- [ ] GUI companion app — macOS status bar showing live page list and daemon health
+
+### v1.0 — Production-Ready
+**Goal:** Ship it when it's ready. No checklist owns this milestone — it will be cut when the project is stable enough to warrant a compatibility promise and a deprecation policy.
+
+What "ready" means: the public API is settled, the security audit is closed, the architecture has absorbed real usage feedback, and breaking it would be a considered decision, not an accident.
 
 ---
 
@@ -123,4 +139,4 @@ browserctl occupies the space between `curl` and Playwright: **interactive, stat
 
 ## The One-Line Pitch
 
-> A persistent browser daemon with a Unix CLI and a Ruby DSL — built for AI agents that need to navigate the web without starting from scratch every time.
+> The browser you delegate to your agents — with a pause button for the parts that still need you.

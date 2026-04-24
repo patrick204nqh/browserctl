@@ -27,6 +27,8 @@ All commands require `browserd` to be running unless noted.
 | `cookies <page>` | List all cookies as JSON |
 | `set_cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
 | `clear_cookies <page>` | Clear all cookies for a page |
+| `export-cookies <page> <path>` | Export all cookies to a JSON file |
+| `import-cookies <page> <path>` | Import cookies from a JSON file |
 | `record start <name>` | Begin recording commands as a replayable workflow |
 | `record stop [--out path]` | End recording; saves to `.browserctl/workflows/` or custom path |
 | `record status` | Show whether a recording is active |
@@ -133,11 +135,5 @@ Methods available on `page(:name)` inside a workflow:
 | `evaluate(expression)` | Evaluate a JS expression and return the result |
 | `snapshot(**opts)` | Return a DOM snapshot (same as `browserctl snap`) |
 | `screenshot(**opts)` | Take a screenshot (same as `browserctl shot`) |
-| `pause` | Pause automation on this page |
-| `resume` | Resume automation on this page |
-| `inspect_page` | Open Chrome DevTools for this page |
-| `cookies` | List all cookies as JSON |
-| `set_cookie(name, value, domain, path: "/")` | Set a cookie |
-| `clear_cookies` | Clear all cookies |
 
 For the full workflow authoring guide, see [Writing Workflows](../guides/writing-workflows.md).

@@ -181,7 +181,23 @@ Circular invocation (`a → b → a`) raises immediately.
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 
-For the full list of PageProxy methods including `pause`, `resume`, and cookie management, see the [Command Reference](../reference/commands.md#pageproxy-methods).
+For HITL pause/resume and direct cookie management inside a workflow, use `client` — the raw daemon client available in every step block:
+
+```ruby
+step "handle challenge" do
+  res = client.goto("main", url)
+  if res[:challenge]
+    client.pause("main")
+    loop { break unless client.snapshot("main", format: "html")[:challenge]; sleep 3 }
+  end
+end
+
+step "restore session" do
+  client.import_cookies("main", ".browserctl/sessions/app.json")
+end
+```
+
+For the complete `client` API, see the [Command Reference](../reference/commands.md).
 
 ---
 

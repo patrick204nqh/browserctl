@@ -53,6 +53,8 @@ Look things up without reading linearly.
 
 | | |
 |---|---|
-| [vs. agent-browser](vs-agent-browser.md) | How browserctl differs from Vercel's agent-browser |
+| [Product Story](../PRODUCT.md) | What browserctl is, who it's for, and what makes it different |
+| [vs. agent-browser](vs-agent-browser.md) | Technical comparison with Vercel's agent-browser |
 | [Vision & Roadmap](../VISION.md) | Philosophy, principles, and where the project is going |
+| [Standardization Plan](standardization-plan.md) | Architecture debts, refactoring roadmap, and v1.0 plan |
 | [Architecture](architecture/README.md) | C4 diagrams and architecture decision records |
