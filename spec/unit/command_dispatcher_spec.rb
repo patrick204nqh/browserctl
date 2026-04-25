@@ -450,5 +450,25 @@ RSpec.describe Browserctl::CommandDispatcher do
         expect(res[:error]).to match(/no page named 'ghost'/)
       end
     end
+
+    describe "store / fetch commands" do
+      it "stores and retrieves a value" do
+        dispatcher.dispatch({ cmd: "store", key: "token", value: "abc123" })
+        result = dispatcher.dispatch({ cmd: "fetch", key: "token" })
+        expect(result).to eq({ ok: true, value: "abc123" })
+      end
+
+      it "returns an error for a missing key" do
+        result = dispatcher.dispatch({ cmd: "fetch", key: "missing" })
+        expect(result[:error]).to match(/key 'missing' not found/)
+        expect(result[:code]).to eq("key_not_found")
+      end
+
+      it "overwrites an existing key" do
+        dispatcher.dispatch({ cmd: "store", key: "x", value: "first" })
+        dispatcher.dispatch({ cmd: "store", key: "x", value: "second" })
+        expect(dispatcher.dispatch({ cmd: "fetch", key: "x" })[:value]).to eq("second")
+      end
+    end
   end
 end

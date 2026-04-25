@@ -16,15 +16,20 @@ module Browserctl
     def initialize(params, client)
       @params = params
       @client = client
-      @_store = {}
     end
 
     def store(key, value)
-      @_store[key] = value
+      res = @client.store(key.to_s, value)
+      raise WorkflowError, res[:error] if res[:error]
+
+      value
     end
 
     def fetch(key)
-      @_store.fetch(key) { raise KeyError, "no value stored for key #{key.inspect}" }
+      res = @client.fetch(key.to_s)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res[:value]
     end
 
     def method_missing(name, *args)

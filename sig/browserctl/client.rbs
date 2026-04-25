@@ -18,5 +18,7 @@ module Browserctl
     def pause: (String name) -> Hash[Symbol, untyped]
     def resume: (String name) -> Hash[Symbol, untyped]
     def inspect_page: (String name) -> Hash[Symbol, untyped]
+    def store: (String key, untyped value) -> Hash[Symbol, untyped]
+    def fetch: (String key) -> Hash[Symbol, untyped]
   end
 end

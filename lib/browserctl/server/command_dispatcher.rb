@@ -28,17 +28,21 @@ module Browserctl
       "cookies" => :cmd_cookies,
       "set_cookie" => :cmd_set_cookie,
       "clear_cookies" => :cmd_clear_cookies,
-      "import_cookies" => :cmd_import_cookies
+      "import_cookies" => :cmd_import_cookies,
+      "store"          => :cmd_store,
+      "fetch"          => :cmd_fetch
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_ROOTS = [SCREENSHOT_DIR, File.expand_path(".")].freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
     def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
-      @pages = pages
+      @pages            = pages
       @browser          = browser
       @snapshot_builder = snapshot_builder
       @global_mutex     = global_mutex
+      @kv_store         = {}
+      @kv_mutex         = Mutex.new
     end
 
     def dispatch(req)
@@ -288,6 +292,17 @@ module Browserctl
     def cmd_shutdown(_req)
       Process.kill("INT", Process.pid)
       { ok: true }
+    end
+
+    def cmd_store(req)
+      @kv_mutex.synchronize { @kv_store[req[:key].to_s] = req[:value] }
+      { ok: true }
+    end
+
+    def cmd_fetch(req)
+      key = req[:key].to_s
+      found = @kv_mutex.synchronize { @kv_store.key?(key) ? { ok: true, value: @kv_store[key] } : nil }
+      found || { error: "key '#{key}' not found", code: "key_not_found" }
     end
 
     def with_page(name)

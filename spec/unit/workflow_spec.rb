@@ -167,32 +167,34 @@ RSpec.describe Browserctl::WorkflowContext do
   describe "#store and #fetch" do
     subject(:ctx) { described_class.new({}, client) }
 
-    it "stores and retrieves a value by key" do
-      ctx.store(:code, "abc123")
+    it "delegates store to the wire client" do
+      allow(client).to receive(:store).with("code", "abc123").and_return({ ok: true })
+      expect(ctx.store(:code, "abc123")).to eq("abc123")
+    end
+
+    it "delegates fetch to the wire client and returns the value" do
+      allow(client).to receive(:fetch).with("code").and_return({ ok: true, value: "abc123" })
       expect(ctx.fetch(:code)).to eq("abc123")
     end
 
-    it "allows overwriting a stored value" do
-      ctx.store(:x, 1)
-      ctx.store(:x, 2)
-      expect(ctx.fetch(:x)).to eq(2)
+    it "raises WorkflowError when fetch returns an error" do
+      allow(client).to receive(:fetch).with("missing")
+                                      .and_return({ error: "key 'missing' not found", code: "key_not_found" })
+      expect { ctx.fetch(:missing) }.to raise_error(Browserctl::WorkflowError, /missing/)
     end
 
-    it "raises KeyError for a missing key" do
-      expect { ctx.fetch(:missing) }.to raise_error(KeyError, /missing/)
+    it "raises WorkflowError when store returns an error" do
+      allow(client).to receive(:store).and_return({ error: "store failed" })
+      expect { ctx.store(:x, 1) }.to raise_error(Browserctl::WorkflowError, /store failed/)
     end
 
     it "store keys do not conflict with param names" do
       ctx_with_param = described_class.new({ email: "a@b.com" }, client)
+      allow(client).to receive(:store).with("email", "override").and_return({ ok: true })
+      allow(client).to receive(:fetch).with("email").and_return({ ok: true, value: "override" })
       ctx_with_param.store(:email, "override")
       expect(ctx_with_param.fetch(:email)).to eq("override")
       expect(ctx_with_param.email).to eq("a@b.com")
-    end
-
-    it "does not persist values across separate context instances" do
-      ctx.store(:val, 42)
-      fresh_ctx = described_class.new({}, client)
-      expect { fresh_ctx.fetch(:val) }.to raise_error(KeyError)
     end
   end
 
