@@ -77,10 +77,10 @@ namespace :demo do
     File.write(concat, "#{lines.join("\n")}\n")
     palette = "#{frames_dir}/palette.png"
     palettegen = "scale=1280:-1:flags=lanczos,palettegen=max_colors=256:stats_mode=full"
-    sh "ffmpeg -y -f concat -safe 0 -i #{concat} -vf #{palettegen} #{palette}"
+    sh "ffmpeg -y -f concat -safe 0 -i #{concat} -vf #{palettegen} -update 1 #{palette}"
     paletteuse = "scale=1280:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=floyd_steinberg"
     gif_out = "#{ASSETS_OUT}/browser_demo.gif"
-    sh "ffmpeg -y -f concat -safe 0 -i #{concat} -i #{palette} -lavfi #{paletteuse} -loop 0 #{gif_out}"
+    sh "ffmpeg -y -f concat -safe 0 -i #{concat} -i #{palette} -lavfi \"#{paletteuse}\" -loop 0 #{gif_out}"
   ensure
     rm_rf frames_dir
   end
