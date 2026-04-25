@@ -59,17 +59,20 @@ namespace :demo do
 
     with_daemon(headed: ENV["HEADED"] == "1") do
       sh "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
-      sleep 1
+      sleep 2
       sh "bundle exec browserctl shot main --out #{frames_dir}/01_login.png"
 
-      sh "bundle exec browserctl snap main > /dev/null"
-      sh "bundle exec browserctl fill main --ref e1 --value tomsmith"
-      sh "bundle exec browserctl fill main --ref e2 --value SuperSecretPassword!"
-      sh "bundle exec browserctl shot main --out #{frames_dir}/02_filled.png"
+      sh "bundle exec browserctl fill main '#username' tomsmith"
+      sleep 1
+      sh "bundle exec browserctl shot main --out #{frames_dir}/02_username.png"
 
-      sh "bundle exec browserctl click main --ref e3"
-      sleep 2
-      sh "bundle exec browserctl shot main --out #{frames_dir}/03_secure.png"
+      sh "bundle exec browserctl fill main '#password' 'SuperSecretPassword!'"
+      sleep 1
+      sh "bundle exec browserctl shot main --out #{frames_dir}/03_filled.png"
+
+      sh "bundle exec browserctl click main 'button[type=\"submit\"]'"
+      sleep 3
+      sh "bundle exec browserctl shot main --out #{frames_dir}/04_secure.png"
     end
 
     concat = "#{frames_dir}/concat.txt"

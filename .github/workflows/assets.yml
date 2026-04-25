@@ -52,7 +52,7 @@ jobs:
       - name: Record terminal GIF
         run: bundle exec rake demo:terminal
 
-      - name: Open PR with updated assets
+      - name: Open or update assets PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -65,12 +65,22 @@ jobs:
             echo "No asset changes — skipping PR."
             exit 0
           fi
-          BRANCH="chore/update-demo-assets-$(date +%Y%m%d%H%M%S)"
-          git checkout -b "$BRANCH"
-          git commit -m "chore: update demo assets"
-          git push origin "$BRANCH"
-          gh pr create \
-            --title "chore: update demo assets" \
-            --body "Automated update of demo screenshots and GIFs." \
-            --base main \
-            --head "$BRANCH"
+          BRANCH="chore/update-demo-assets"
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --json number --jq '.[0].number')
+          if [ -n "$EXISTING_PR" ]; then
+            git fetch origin "$BRANCH" || true
+            git checkout -B "$BRANCH" origin/"$BRANCH" 2>/dev/null || git checkout -b "$BRANCH"
+            git add docs/assets/
+            git commit -m "chore: update demo assets"
+            git push origin "$BRANCH" --force-with-lease
+            echo "Updated existing PR #${EXISTING_PR}."
+          else
+            git checkout -b "$BRANCH"
+            git commit -m "chore: update demo assets"
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "chore: update demo assets" \
+              --body "Automated update of demo screenshots and GIFs." \
+              --base main \
+              --head "$BRANCH"
+          fi
