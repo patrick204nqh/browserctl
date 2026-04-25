@@ -48,7 +48,7 @@ Confirm it's running:
 
 ```bash
 browserctl ping
-# → pong
+# → {"ok":true,"pid":12345,"protocol_version":"1"}
 ```
 
 ---

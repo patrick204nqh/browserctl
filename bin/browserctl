@@ -27,6 +27,7 @@ require "browserctl/commands/init"
 require "browserctl/commands/inspect"
 require "browserctl/commands/export_cookies"
 require "browserctl/commands/import_cookies"
+require "browserctl/commands/status"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -79,6 +80,7 @@ def usage
 
     Daemon commands:
       ping                   Check if browserd is alive
+      status                 Show daemon status, PID, and open pages
       shutdown               Stop browserd
 
     Options:
@@ -165,6 +167,7 @@ else
   when "export-cookies" then Browserctl::Commands::ExportCookies.run(client, args)
   when "import-cookies" then Browserctl::Commands::ImportCookies.run(client, args)
   when "ping"     then print_result(client.ping)
+  when "status"   then Browserctl::Commands::Status.run(client)
   when "shutdown" then print_result(client.shutdown)
   else
     abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."

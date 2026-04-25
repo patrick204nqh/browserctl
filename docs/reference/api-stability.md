@@ -39,7 +39,7 @@ What is Extension:
 - `WorkflowContext` and `WorkflowDefinition` internals
 - `Browserctl::Runner` public methods
 - `Browserctl::Recording`
-- `Browserctl.socket_path`, `Browserctl.pid_path`
+- `Browserctl.socket_path`, `Browserctl.pid_path`, `Browserctl.log_path`
 
 ---
 
@@ -108,7 +108,7 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `ping` | — | — | `ok`, `pid` |
+| `ping` | — | — | `ok`, `pid`, `protocol_version` |
 | `shutdown` | — | — | `ok` |
 
 ---

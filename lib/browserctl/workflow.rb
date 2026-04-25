@@ -41,6 +41,20 @@ module Browserctl
       PageProxy.new(name.to_s, @client)
     end
 
+    def open_page(page_name, url: nil)
+      res = @client.open_page(page_name.to_s, url: url)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res
+    end
+
+    def close_page(page_name)
+      res = @client.close_page(page_name.to_s)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res
+    end
+
     def invoke(workflow_name, **override_params)
       name = workflow_name.to_s
       guard_circular!(name)
@@ -86,6 +100,7 @@ module Browserctl
     def click(sel)       = unwrap @client.click(@name, sel)
     def snapshot(**) = unwrap @client.snapshot(@name, **)
     def screenshot(**) = unwrap @client.screenshot(@name, **)
+    def watch(sel, timeout: 30)    = unwrap @client.watch(@name, sel, timeout: timeout)
     def wait_for(sel, timeout: 10) = unwrap @client.wait_for(@name, sel, timeout: timeout)
     def url              = @client.url(@name)[:url]
     def evaluate(expr)   = @client.evaluate(@name, expr)[:result]

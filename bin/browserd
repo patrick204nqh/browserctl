@@ -16,7 +16,13 @@ opts = Optimist.options do
   opt :name,      "Daemon instance name for multi-agent use", default: nil,    short: "-n", type: :string
 end
 
-Browserctl.logger = Browserctl.build_logger(opts[:log_level])
+if opts[:name] && opts[:name] !~ /\A[a-zA-Z0-9_-]{1,64}\z/
+  abort "Invalid daemon name #{opts[:name].inspect} — use only letters, digits, _ or -"
+end
+
+log_path = Browserctl.log_path(opts[:name])
+$stderr.puts "browserd starting — log: #{log_path}"
+Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
 Browserctl::Server.new(
   headless: !opts[:headed],
   socket_path: Browserctl.socket_path(opts[:name]),

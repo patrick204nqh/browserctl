@@ -26,6 +26,8 @@ module Browserctl
         def run_start(args)
           Optimist.options(args) { banner "Usage: browserctl record start <name>" }
           name = args.shift or abort "usage: browserctl record start <name>"
+          abort "Invalid recording name #{name.inspect} — use only letters, digits, _ or -" \
+            unless name =~ /\A[a-zA-Z0-9_-]{1,64}\z/
           Recording.start(name)
           puts "Recording started: #{name}"
           puts "Run browser commands, then: browserctl record stop"

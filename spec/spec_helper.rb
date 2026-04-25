@@ -55,6 +55,12 @@ end
 RSpec.configure do |config|
   config.include BrowserctlHelpers
 
+  config.before(:each, :integration) do
+    chrome_bins = %w[chromium-browser google-chrome chromium chrome]
+    available = chrome_bins.any? { |b| system("which #{b}", out: File::NULL, err: File::NULL) }
+    skip "Chrome not available — install chromium or google-chrome to run integration tests" unless available
+  end
+
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end
