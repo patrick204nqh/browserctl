@@ -45,6 +45,9 @@ jobs:
       - name: Capture screenshots
         run: bundle exec rake demo:screenshots
 
+      - name: Record browser GIF
+        run: bundle exec rake demo:browser_gif
+
       - name: Record terminal GIF
         run: bundle exec rake demo:terminal
 

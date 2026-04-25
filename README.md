@@ -26,24 +26,25 @@ browserctl shutdown
 
 ## Demo
 
-The recording below shows a complete login flow: daemon starts, page opens, the AI-readable snapshot is printed, credentials are filled using ref IDs (no CSS selectors), the form submits, and the resulting URL proves the session persisted — all from the command line, fully automated.
+**Terminal** — CLI commands, live output, session persistence proof:
 
 <p align="center">
-  <img src="docs/assets/terminal.gif" alt="browserctl login demo" width="820"/>
+  <img src="docs/assets/terminal.gif" alt="browserctl terminal demo" width="820"/>
 </p>
 
-After the terminal sequence completes, the browser is on the `/secure` page. The screenshot below is taken by `browserctl shot` — it is the live browser state at that moment, not a mock:
+**Browser** — what the browser sees as those commands run:
 
 <p align="center">
-  <img src="docs/assets/demo_login.png" alt="browser screenshot after login" width="820"/>
+  <img src="docs/assets/browser_demo.gif" alt="browserctl browser demo" width="820"/>
 </p>
 
 > Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. To regenerate locally:
 >
 > ```bash
-> rake demo              # full pipeline: terminal GIF + browser screenshot
-> rake demo:screenshots  # screenshots only (no VHS required)
-> rake demo:terminal     # re-record the terminal GIF only
+> rake demo               # full pipeline: screenshots + browser GIF + terminal GIF
+> rake demo:screenshots   # smoke test screenshots only
+> rake demo:browser_gif   # browser animation only  (requires: ffmpeg)
+> rake demo:terminal      # terminal GIF only        (requires: vhs)
 > ```
 
 ---

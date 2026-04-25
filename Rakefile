@@ -52,14 +52,63 @@ namespace :demo do
     sh "vhs demo/login.tape"
   end
 
+  desc "Capture browser frames and stitch into an animated GIF  (requires: ffmpeg)"
+  task :browser_gif do
+    frames_dir = "#{ASSETS_OUT}/.frames"
+    mkdir_p frames_dir
+
+    with_daemon(headed: ENV["HEADED"] == "1") do
+      sh "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
+      sleep 1
+      sh "bundle exec browserctl shot main --out #{frames_dir}/01_login.png"
+
+      sh "bundle exec browserctl snap main > /dev/null"
+      sh "bundle exec browserctl fill main --ref e1 --value tomsmith"
+      sh "bundle exec browserctl fill main --ref e2 --value SuperSecretPassword!"
+      sh "bundle exec browserctl shot main --out #{frames_dir}/02_filled.png"
+
+      sh "bundle exec browserctl click main --ref e3"
+      sleep 2
+      sh "bundle exec browserctl shot main --out #{frames_dir}/03_secure.png"
+    end
+
+    concat = "#{frames_dir}/concat.txt"
+    lines = Dir["#{frames_dir}/*.png"].map { |f| "file '#{File.expand_path(f)}'\nduration 2" }
+    File.write(concat, "#{lines.join("\n")}\n")
+    sh "ffmpeg -y -f concat -safe 0 -i #{concat} -vf scale=1280:-1:flags=lanczos -loop 0 #{ASSETS_OUT}/browser_demo.gif"
+  ensure
+    rm_rf frames_dir
+  end
+
+  # ---------------------------------------------------------------------------
+  # Future browser recording options — not yet implemented
+  #
+  # Option 1 — ffmpeg screen capture (headed browser + Xvfb in CI):
+  #   Start browserd --headed, launch ffmpeg -f x11grab (Linux) or
+  #   -f avfoundation (macOS) to record the browser window while CLI commands
+  #   run, then convert the resulting .mp4 to GIF.
+  #   Pro: continuous motion video. Con: needs Xvfb in CI, platform-specific
+  #   capture flags, and window positioning to frame the browser correctly.
+  #
+  # Option 2 — Playwright CDP attachment + Page.startScreencast:
+  #   After `browserctl open`, run `browserctl inspect <page>` to get the CDP
+  #   port (@browser.process.port is already exposed via devtools.rb).
+  #   Connect Playwright with connectOverCDP("ws://127.0.0.1:<port>"), send
+  #   Page.startScreencast to receive JPEG frames, stitch into GIF.
+  #   Pro: records only the browser viewport, no display dependency.
+  #   Con: connectOverCDP doesn't support recordVideo; requires raw CDP
+  #   screencast events and a frame stitcher.
+  # ---------------------------------------------------------------------------
+
   desc "Remove generated demo assets"
   task :clean do
     rm_f Dir["#{ASSETS_OUT}/terminal.{gif,webp}"]
+    rm_f "#{ASSETS_OUT}/browser_demo.gif"
     puts "Demo assets cleaned."
   end
 
-  desc "Full pipeline: all screenshots + terminal recording"
-  task all: %i[screenshots terminal]
+  desc "Full pipeline: all screenshots + browser GIF + terminal recording"
+  task all: %i[screenshots browser_gif terminal]
 end
 
 desc "Run full demo pipeline  (alias for demo:all)"

@@ -34,6 +34,7 @@ Metrics/BlockLength:
   Exclude:
     - "spec/**/*"
     - "examples/**/*"
+    - "Rakefile"
 
 Naming/PredicateMethod:
   AllowedMethods:
