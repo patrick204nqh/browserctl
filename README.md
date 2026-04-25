@@ -41,9 +41,9 @@ After the terminal sequence completes, the browser is on the `/secure` page. The
 > Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. To regenerate locally:
 >
 > ```bash
-> make demo          # full pipeline: terminal GIF + browser screenshot
-> make demo-browser  # browser screenshot only (no VHS required)
-> make demo-terminal # re-record the terminal GIF only
+> rake demo              # full pipeline: terminal GIF + browser screenshot
+> rake demo:screenshots  # screenshots only (no VHS required)
+> rake demo:terminal     # re-record the terminal GIF only
 > ```
 
 ---

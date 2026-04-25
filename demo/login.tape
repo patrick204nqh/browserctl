@@ -24,25 +24,25 @@ Enter
 Sleep 300ms
 
 # ---------- start the daemon ----------
-Type "browserd &"
+Type "bundle exec browserd &"
 Sleep 400ms
 Enter
 Sleep 4s
 
 # poll until the daemon answers — max ~8 s
-Type "until browserctl ping 2>/dev/null; do sleep 0.5; done && echo 'daemon ready'"
+Type "until bundle exec browserctl ping 2>/dev/null; do sleep 0.5; done && echo 'daemon ready'"
 Sleep 400ms
 Enter
 Sleep 5s
 
 # ---------- open the login page ----------
-Type "browserctl open main --url https://the-internet.herokuapp.com/login"
+Type "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
 Sleep 400ms
 Enter
 Sleep 4s
 
 # ---------- snapshot: AI sees the page as structured elements ----------
-Type "browserctl snap main"
+Type "bundle exec browserctl snap main"
 Sleep 400ms
 Enter
 Sleep 4s
@@ -51,17 +51,17 @@ Sleep 4s
 Type "# fill credentials using ref IDs — no selectors needed"
 Sleep 500ms
 Enter
-Type "browserctl fill main --ref e1 --value tomsmith"
+Type "bundle exec browserctl fill main --ref e1 --value tomsmith"
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "browserctl fill main --ref e2 --value SuperSecretPassword!"
+Type "bundle exec browserctl fill main --ref e2 --value SuperSecretPassword!"
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "browserctl click main --ref e3"
+Type "bundle exec browserctl click main --ref e3"
 Sleep 400ms
 Enter
 Sleep 4s
@@ -70,19 +70,19 @@ Sleep 4s
 Type "# session persisted — browser is on the secure page"
 Sleep 500ms
 Enter
-Type "browserctl url main"
+Type "bundle exec browserctl url main"
 Sleep 400ms
 Enter
 Sleep 2s
 
 # ---------- screenshot the logged-in state ----------
-Type "browserctl shot main --out docs/assets/demo_login.png"
+Type "bundle exec browserctl shot main --out docs/assets/demo_login.png"
 Sleep 400ms
 Enter
 Sleep 3s
 
 # ---------- tear down ----------
-Type "browserctl shutdown"
+Type "bundle exec browserctl shutdown"
 Sleep 400ms
 Enter
 Sleep 2s

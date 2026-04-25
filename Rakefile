@@ -16,10 +16,12 @@ def with_daemon(headed: false)
   flags = headed ? "--headed" : ""
   pid   = spawn("bundle exec browserd #{flags}".strip)
 
-  30.times do
-    break if system("bundle exec browserctl ping", out: File::NULL, err: File::NULL)
+  ready = 30.times.any? do
+    break true if system("bundle exec browserctl ping", out: File::NULL, err: File::NULL)
     sleep 0.5
+    false
   end
+  abort "browserd did not start within 15 s" unless ready
 
   yield
 ensure
