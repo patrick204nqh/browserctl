@@ -21,8 +21,8 @@ Benchmark.bm(20) do |x|
     ITERATIONS.times { client.ping }
   end
 
-  x.report("snapshot (ai):") do
-    ITERATIONS.times { client.snapshot(PAGE_NAME, format: "ai") }
+  x.report("snapshot (elements):") do
+    ITERATIONS.times { client.snapshot(PAGE_NAME, format: "elements") }
   end
 
   x.report("snapshot (html):") do
@@ -30,7 +30,7 @@ Benchmark.bm(20) do |x|
   end
 
   x.report("snapshot (diff):") do
-    ITERATIONS.times { client.snapshot(PAGE_NAME, format: "ai", diff: true) }
+    ITERATIONS.times { client.snapshot(PAGE_NAME, format: "elements", diff: true) }
   end
 end
 

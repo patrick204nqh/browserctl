@@ -118,7 +118,7 @@ RSpec.describe "browserd daemon", :integration do
       encoded = "data:text/html;base64,#{[html].pack('m0')}"
       @client.goto("snap", encoded)
 
-      res = @client.snapshot("snap", format: "ai")
+      res = @client.snapshot("snap", format: "elements")
       expect(res[:ok]).to be true
       expect(res[:snapshot]).to be_an(Array)
       expect(res[:snapshot].first).to include(:ref, :tag, :selector)

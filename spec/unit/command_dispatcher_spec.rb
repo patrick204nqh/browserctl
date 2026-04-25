@@ -79,7 +79,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
     before do
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
     end
 
     it "resolves ref to selector for click" do
@@ -115,24 +115,24 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "returns full snapshot on first call with diff: true (no previous)" do
       allow(page).to receive(:body).and_return(html_v1)
-      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements", diff: true })
       expect(res[:snapshot].length).to eq 1
     end
 
     it "returns only new/changed elements on subsequent diff call" do
       allow(page).to receive(:body).and_return(html_v1)
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
 
       allow(page).to receive(:body).and_return(html_v2)
-      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements", diff: true })
       expect(res[:snapshot].length).to eq 1
       expect(res[:snapshot].first[:selector]).to include("#b")
     end
 
     it "returns empty array when nothing changed" do
       allow(page).to receive(:body).and_return(html_v1)
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
-      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai", diff: true })
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements", diff: true })
       expect(res[:snapshot]).to be_empty
     end
   end
@@ -239,8 +239,8 @@ RSpec.describe Browserctl::CommandDispatcher do
       let(:cf_html) { '<html><body class="cf-challenge-running">Just a moment...</body></html>' }
       let(:page)    { instance_double("Ferrum::Page", body: cf_html, current_url: "https://example.com") }
 
-      it "includes challenge: true in ai snapshot response" do
-        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      it "includes challenge: true in elements snapshot response" do
+        res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
         expect(res[:challenge]).to be true
       end
 
@@ -374,13 +374,13 @@ RSpec.describe Browserctl::CommandDispatcher do
     subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
 
     it "stores ref registry after ai snapshot" do
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
       expect(pages["main"].ref_registry).to be_a(Hash)
       expect(pages["main"].ref_registry).not_to be_empty
     end
 
     it "stores previous snapshot after ai snapshot" do
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
       expect(pages["main"].prev_snapshot).to be_an(Array)
     end
 
@@ -394,7 +394,7 @@ RSpec.describe Browserctl::CommandDispatcher do
       page2 = instance_double("Ferrum::Page", body: "<html><body><button>Go</button></body></html>", current_url: "https://example.com")
       allow(page2).to receive(:close)
       pages["temp"] = Browserctl::PageSession.new(page2)
-      dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "ai" })
+      dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "elements" })
       expect(pages["temp"].ref_registry).not_to be_empty
 
       dispatcher.dispatch({ cmd: "close_page", name: "temp" })
@@ -402,14 +402,14 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "includes a nonce in every snapshot response" do
-      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
       expect(result[:nonce]).to be_a(String)
       expect(result[:nonce].length).to eq(16)
     end
 
     it "returns a different nonce on each call" do
-      r1 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
-      r2 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      r1 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
+      r2 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
       expect(r1[:nonce]).not_to eq(r2[:nonce])
     end
 
