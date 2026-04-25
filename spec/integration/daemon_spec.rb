@@ -113,7 +113,7 @@ RSpec.describe "browserd daemon", :integration do
       nil
     end
 
-    it "returns ai snapshot as array of element hashes" do
+    it "returns elements snapshot as array of element hashes" do
       html = "<html><body><a href='/'>Home</a><button>Click</button></body></html>"
       encoded = "data:text/html;base64,#{[html].pack('m0')}"
       @client.goto("snap", encoded)
