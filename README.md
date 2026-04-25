@@ -2,11 +2,19 @@
   <img src=".github/logo.svg" width="96" height="96" alt="browserctl logo"/>
 </p>
 
-# browserctl
+<h1 align="center">browserctl</h1>
 
-[![CI](https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml/badge.svg)](https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml)
-[![Gem Version](https://badge.fury.io/rb/browserctl.svg)](https://badge.fury.io/rb/browserctl)
-[![Downloads](https://img.shields.io/gem/dt/browserctl)](https://rubygems.org/gems/browserctl)
+<p align="center">
+  A persistent browser daemon for AI agents and iterative dev workflows — the session stays alive between commands.
+</p>
+
+<p align="center">
+  <a href="https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml"><img src="https://github.com/patrick204nqh/browserctl/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://badge.fury.io/rb/browserctl"><img src="https://badge.fury.io/rb/browserctl.svg" alt="Gem Version"/></a>
+  <a href="https://rubygems.org/gems/browserctl"><img src="https://img.shields.io/gem/dt/browserctl" alt="Downloads"/></a>
+</p>
+
+---
 
 Every browser automation tool restarts the browser when your script ends. That means re-authenticating, re-navigating, re-loading state — on every run. browserctl doesn't restart. The session stays alive between commands, so you pick up exactly where you left off.
 
@@ -19,24 +27,28 @@ browserctl click login --ref e2
 browserctl shutdown
 ```
 
-![browserctl capturing a login flow](docs/assets/the_internet_login.png)
-<p align="center"><sub>Login flow captured with <code>browserctl shot</code></sub></p>
-
 ---
 
-## Demo
+## See it in action
 
-**Terminal** — CLI commands, live output, session persistence proof:
+<table align="center"><tr>
+<td align="center" width="50%">
 
-<p align="center">
-  <img src="docs/assets/terminal.gif" alt="browserctl terminal demo" width="820"/>
-</p>
+**Terminal**<br/>
+<sub>CLI commands, live output, session persistence proof</sub>
 
-**Browser** — what the browser sees as those commands run:
+<img src="docs/assets/terminal.webp" alt="browserctl terminal demo"/>
 
-<p align="center">
-  <img src="docs/assets/browser_demo.gif" alt="browserctl browser demo" width="820"/>
-</p>
+</td>
+<td align="center" width="50%">
+
+**Browser**<br/>
+<sub>What the browser sees as those commands run</sub>
+
+<img src="docs/assets/browser_demo.gif" alt="browserctl browser demo"/>
+
+</td>
+</tr></table>
 
 > Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. To regenerate locally:
 >
@@ -46,6 +58,38 @@ browserctl shutdown
 > rake demo:browser_gif   # browser animation only  (requires: ffmpeg)
 > rake demo:terminal      # terminal GIF only        (requires: vhs)
 > ```
+
+---
+
+## Quick Start
+
+```bash
+# 1. Install
+gem install browserctl
+
+# 2. Start the daemon
+browserd &
+
+# 3. Open a named page
+browserctl open main --url https://the-internet.herokuapp.com/login
+
+# 4. Snapshot the page — get AI-friendly JSON with ref IDs
+browserctl snap main
+
+# 5. Interact using refs
+browserctl fill  main --ref e1 --value tomsmith
+browserctl fill  main --ref e2 --value SuperSecretPassword!
+browserctl click main --ref e3
+
+# 6. Observe
+browserctl url  main
+browserctl snap main --diff   # only what changed
+
+# 7. Done
+browserctl shutdown
+```
+
+→ [Full Getting Started guide](docs/getting-started.md)
 
 ---
 
@@ -79,14 +123,9 @@ Most automation tools are stateless — every script spins up a fresh browser an
 
 ---
 
-## Requirements
-
-- Ruby >= 3.3
-- Chrome or Chromium on your `PATH`
-
----
-
 ## Installation
+
+**Requirements:** Ruby >= 3.3 · Chrome or Chromium on your `PATH`
 
 ```bash
 gem install browserctl
@@ -104,14 +143,14 @@ gem "browserctl"
 
 browserctl ships as a Claude Code plugin. Install it once and Claude automatically knows how to use the daemon, ref-based interaction, HITL patterns, and workflow authoring.
 
-**Install (interactive)**
+**Interactive install**
 
 ```
 /plugin marketplace add patrick204nqh/browserctl
 /plugin install browserctl@browserctl
 ```
 
-**Install (project settings** — commit `.claude/settings.json` to share with your team)
+**Project settings** — commit `.claude/settings.json` to share with your team:
 
 ```json
 {
@@ -127,35 +166,6 @@ browserctl ships as a Claude Code plugin. Install it once and Claude automatical
 ```
 
 Once installed, Claude Code loads the `browserctl` skill automatically — no `/invoke` needed.
-
----
-
-## Quick Start
-
-```bash
-# 1. Start the daemon
-browserd &
-
-# 2. Open a named page
-browserctl open main --url https://the-internet.herokuapp.com/login
-
-# 3. Snapshot the page — get AI-friendly JSON with ref IDs
-browserctl snap main
-
-# 4. Interact using refs
-browserctl fill  main --ref e1 --value tomsmith
-browserctl fill  main --ref e2 --value SuperSecretPassword!
-browserctl click main --ref e3
-
-# 5. Observe
-browserctl url  main
-browserctl snap main --diff   # only what changed
-
-# 6. Done
-browserctl shutdown
-```
-
-→ [Full Getting Started guide](docs/getting-started.md)
 
 ---
 
