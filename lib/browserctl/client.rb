@@ -74,10 +74,10 @@ module Browserctl
 
     # Takes a DOM snapshot. Returns `challenge: true` when Cloudflare is detected.
     # @param name [String] logical page name
-    # @param format [String] "ai" (token-efficient JSON) or "html" (raw HTML)
+    # @param format [String] "elements" (interactable elements JSON) or "html" (raw HTML)
     # @param diff [Boolean] return only elements changed since last snapshot
     # @return [Hash] `{ ok: true, snapshot:, challenge: }` or `{ ok: true, html:, challenge: }` or `{ error: }`
-    def snapshot(name, format: "ai", diff: false)
+    def snapshot(name, format: "elements", diff: false)
       call("snapshot", name: name, format: format, diff: diff)
     end
 
