@@ -23,29 +23,29 @@ module Browserctl
     include Handlers::DaemonControl
 
     COMMAND_MAP = {
-      "open_page"      => :cmd_open_page,
-      "close_page"     => :cmd_close_page,
-      "list_pages"     => :cmd_list_pages,
-      "goto"           => :cmd_goto,
-      "snapshot"       => :cmd_snapshot,
-      "evaluate"       => :cmd_evaluate,
-      "fill"           => :cmd_fill,
-      "click"          => :cmd_click,
-      "screenshot"     => :cmd_screenshot,
-      "wait_for"       => :cmd_wait_for,
-      "watch"          => :cmd_watch,
-      "url"            => :cmd_url,
-      "ping"           => :cmd_ping,
-      "shutdown"       => :cmd_shutdown,
-      "pause"          => :cmd_pause,
-      "resume"         => :cmd_resume,
-      "inspect"        => :cmd_inspect,
-      "cookies"        => :cmd_cookies,
-      "set_cookie"     => :cmd_set_cookie,
-      "clear_cookies"  => :cmd_clear_cookies,
+      "open_page" => :cmd_open_page,
+      "close_page" => :cmd_close_page,
+      "list_pages" => :cmd_list_pages,
+      "goto" => :cmd_goto,
+      "snapshot" => :cmd_snapshot,
+      "evaluate" => :cmd_evaluate,
+      "fill" => :cmd_fill,
+      "click" => :cmd_click,
+      "screenshot" => :cmd_screenshot,
+      "wait_for" => :cmd_wait_for,
+      "watch" => :cmd_watch,
+      "url" => :cmd_url,
+      "ping" => :cmd_ping,
+      "shutdown" => :cmd_shutdown,
+      "pause" => :cmd_pause,
+      "resume" => :cmd_resume,
+      "inspect" => :cmd_inspect,
+      "cookies" => :cmd_cookies,
+      "set_cookie" => :cmd_set_cookie,
+      "clear_cookies" => :cmd_clear_cookies,
       "import_cookies" => :cmd_import_cookies,
-      "store"          => :cmd_store,
-      "fetch"          => :cmd_fetch
+      "store" => :cmd_store,
+      "fetch" => :cmd_fetch
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
@@ -61,6 +61,10 @@ module Browserctl
       @kv_mutex         = Mutex.new
     end
 
+    # Dispatches a parsed request to the appropriate handler.
+    # Returns `{ error: String, code: String }` for unknown commands.
+    # @param req [Hash{Symbol => Object}] parsed request; must include `:cmd`
+    # @return [Hash{Symbol => Object}] response; always includes `:ok` or `:error`
     def dispatch(req)
       handler = COMMAND_MAP[req[:cmd]]
       if handler

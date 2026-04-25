@@ -4,6 +4,10 @@ require "uri"
 
 module Browserctl
   module Policy
+    # Returns true if the URL is permitted by the domain policy.
+    # When BROWSERCTL_ALLOWED_DOMAINS is unset, all URLs are allowed.
+    # @param url [String] the URL to check
+    # @return [Boolean]
     def self.allowed_navigation?(url)
       domains = allowed_domains
       return true if domains.empty?

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module Browserctl
+  # Base error class for all browserctl daemon errors.
+  # Subclasses carry a machine-readable `code` that appears in wire responses.
+  # @attr_reader code [String] machine-readable error code
   class Error < StandardError
     def self.default_code = "error"
 
