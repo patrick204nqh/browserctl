@@ -16,9 +16,7 @@ module Browserctl
           nonce     = SecureRandom.hex(8)
           challenge = Detectors.cloudflare?(session.page)
 
-          unless format == "ai"
-            return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce }
-          end
+          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "ai"
 
           snapshot = @snapshot_builder.call(session.page)
           registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
@@ -83,7 +81,9 @@ module Browserctl
           loop do
             found = page.at_css(selector)
             break { ok: true } if found
-            break { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" } if Time.now >= deadline
+            if Time.now >= deadline
+              break { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" }
+            end
 
             sleep 0.2
           end
