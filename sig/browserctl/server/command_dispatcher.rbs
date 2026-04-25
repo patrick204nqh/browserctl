@@ -1,0 +1,11 @@
+module Browserctl
+  class CommandDispatcher
+    COMMAND_MAP: Hash[String, Symbol]
+    SCREENSHOT_DIR: String
+    SCREENSHOT_ROOTS: Array[String]
+    SCREENSHOT_EXTS: Array[String]
+
+    def initialize: (Hash[String, PageSession] pages, untyped browser, ?SnapshotBuilder snapshot_builder, ?global_mutex: Mutex) -> void
+    def dispatch: (Hash[Symbol, untyped] req) -> Hash[Symbol, untyped]
+  end
+end

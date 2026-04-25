@@ -1,0 +1,10 @@
+module Browserctl
+  class Recording
+    def self.start: (String name) -> String
+    def self.stop: () -> String
+    def self.active: () -> String?
+    def self.append: (String cmd, **untyped params) -> void
+    def self.generate_workflow: (String name, ?output_path: String?) -> String
+    def self.path: () -> String
+  end
+end

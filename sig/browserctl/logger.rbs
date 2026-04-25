@@ -1,0 +1,3 @@
+module Browserctl
+  def self.build_logger: (String level_name, ?log_path: String?) -> untyped
+end

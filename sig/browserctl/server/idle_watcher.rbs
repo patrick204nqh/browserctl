@@ -1,0 +1,6 @@
+module Browserctl
+  class IdleWatcher
+    def initialize: (^() -> Time last_used_fn) -> void
+    def watch: (untyped server) -> void
+  end
+end
