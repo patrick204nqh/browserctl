@@ -53,7 +53,7 @@ module Browserctl
         return send(handler, req)
       end
 
-      if (plugin = Browserctl::PLUGIN_COMMANDS[req[:cmd]])
+      if (plugin = Browserctl.lookup_plugin_command(req[:cmd]))
         Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
         session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
         return plugin.call(session, req)

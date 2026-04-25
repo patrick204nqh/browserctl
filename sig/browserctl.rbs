@@ -1,12 +1,14 @@
 module Browserctl
   BROWSERCTL_DIR: String
   IDLE_TTL: Integer
-  REGISTRY: Hash[String, WorkflowDefinition]
-  PLUGIN_COMMANDS: Hash[String, Proc]
 
   def self.socket_path: (?String? name) -> String
   def self.pid_path: (?String? name) -> String
   def self.register_command: (String | Symbol name) { (PageSession?, Hash[Symbol, untyped]) -> Hash[Symbol, untyped] } -> void
+  def self.lookup_plugin_command: (String name) -> (Proc | nil)
+  def self.plugin_commands_snapshot: () -> Hash[String, Proc]
   def self.workflow: (String name) { () -> void } -> void
+  def self.lookup_workflow: (String name) -> (WorkflowDefinition | nil)
+  def self.registry_snapshot: () -> Hash[String, WorkflowDefinition]
   def self.logger: () -> Logger
 end

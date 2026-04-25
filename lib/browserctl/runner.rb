@@ -27,7 +27,7 @@ module Browserctl
     # @return [Array<Hash>] array of `{ name:, desc: }` hashes
     def list_workflows
       load_all_workflows
-      REGISTRY.map { |name, defn| { name: name, desc: defn.description } }
+      Browserctl.registry_snapshot.map { |name, defn| { name: name, desc: defn.description } }
     end
 
     # Returns detailed information about a workflow.
@@ -67,15 +67,15 @@ module Browserctl
     end
 
     def fetch_workflow(name)
-      return REGISTRY[name.to_s] if REGISTRY.key?(name.to_s)
+      return Browserctl.lookup_workflow(name.to_s) if Browserctl.lookup_workflow(name.to_s)
 
       validate_name!(name)
       load_workflow_file(name)
-      REGISTRY[name.to_s] || raise("workflow '#{name}' not found")
+      Browserctl.lookup_workflow(name.to_s) || raise("workflow '#{name}' not found")
     end
 
     def load_workflow_file(name)
-      return if REGISTRY.key?(name.to_s)
+      return if Browserctl.lookup_workflow(name.to_s)
 
       path = workflow_path(name)
       load path if path

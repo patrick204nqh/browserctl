@@ -286,7 +286,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
-    after { Browserctl::PLUGIN_COMMANDS.clear }
+    after { Browserctl.instance_variable_set(:@plugin_commands, {}) }
 
     it "dispatches a registered plugin command" do
       Browserctl.register_command(:test_echo) do |_session, req|

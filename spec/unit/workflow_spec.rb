@@ -105,8 +105,8 @@ RSpec.describe Browserctl::WorkflowDefinition do
 end
 
 RSpec.describe "compose" do
-  before { Browserctl::REGISTRY.clear }
-  after  { Browserctl::REGISTRY.clear }
+  before { Browserctl.instance_variable_set(:@registry, {}) }
+  after  { Browserctl.instance_variable_set(:@registry, {}) }
 
   it "inlines steps from another workflow" do
     Browserctl.workflow "shared" do
@@ -118,7 +118,7 @@ RSpec.describe "compose" do
       step("own step") { nil }
     end
 
-    defn = Browserctl::REGISTRY["main"]
+    defn = Browserctl.lookup_workflow("main")
     expect(defn.steps.map(&:label)).to eq(["shared step", "own step"])
   end
 
@@ -140,7 +140,7 @@ RSpec.describe "compose" do
       step("b") { order << :b }
     end
     client = double("client", ping: { ok: true })
-    Browserctl::REGISTRY["extended"].call({}, client)
+    Browserctl.lookup_workflow("extended").call({}, client)
     expect(order).to eq(%i[a b])
   end
 
@@ -156,7 +156,7 @@ RSpec.describe "compose" do
       compose "second"
       step("own") { nil }
     end
-    labels = Browserctl::REGISTRY["combined"].steps.map(&:label)
+    labels = Browserctl.lookup_workflow("combined").steps.map(&:label)
     expect(labels).to eq(%w[f1 f2 own])
   end
 end
@@ -210,10 +210,12 @@ RSpec.describe Browserctl::WorkflowContext do
 
   describe "#invoke circular detection" do
     it "raises WorkflowError on circular invocation" do
-      Browserctl::REGISTRY["loop_a"] = instance_double(
-        Browserctl::WorkflowDefinition,
-        call: nil
-      )
+      Browserctl.instance_variable_get(:@registry_mutex).synchronize do
+        Browserctl.instance_variable_get(:@registry)["loop_a"] = instance_double(
+          Browserctl::WorkflowDefinition,
+          call: nil
+        )
+      end
 
       ctx = described_class.new({}, client)
       ctx.instance_variable_set(:@invoke_stack, ["loop_a"])
