@@ -108,9 +108,9 @@ case cmd
 when "run"
   name = args.shift or abort "usage: browserctl run <workflow_name|file.rb> [--key value ...]"
   if File.exist?(name)
-    before = Browserctl::REGISTRY.keys.dup
+    before = Browserctl.registry_snapshot.keys
     load File.expand_path(name)
-    name = (Browserctl::REGISTRY.keys - before).first || File.basename(name, ".rb")
+    name = (Browserctl.registry_snapshot.keys - before).first || File.basename(name, ".rb")
   end
   params_file_idx = args.index("--params")
   file_params = {}
