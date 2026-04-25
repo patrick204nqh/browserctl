@@ -13,10 +13,12 @@ module Browserctl
         end
 
         def take_snapshot(session, format, diff)
+          format = "elements" if format == "ai"
+
           nonce     = SecureRandom.hex(8)
           challenge = Detectors.cloudflare?(session.page)
 
-          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "ai"
+          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "elements"
 
           snapshot = @snapshot_builder.call(session.page)
           registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }

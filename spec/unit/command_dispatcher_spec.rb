@@ -204,6 +204,33 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
+  describe "snapshot format values" do
+    let(:html) { '<html><body><input name="q"><button>Search</button></body></html>' }
+    let(:page) { instance_double("Ferrum::Page", body: html, current_url: "https://example.com") }
+    let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+
+    it 'returns elements snapshot for format: "elements"' do
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
+      expect(res[:ok]).to be true
+      expect(res[:snapshot]).to be_an(Array)
+      expect(res[:snapshot].first).to include(:ref, :tag, :selector)
+    end
+
+    it 'accepts legacy format: "ai" via shim and returns elements snapshot' do
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      expect(res[:ok]).to be true
+      expect(res[:snapshot]).to be_an(Array)
+    end
+
+    it 'returns html for format: "html"' do
+      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+      expect(res[:ok]).to be true
+      expect(res[:html]).to include("<html>")
+      expect(res).not_to have_key(:snapshot)
+    end
+  end
+
   describe "Cloudflare challenge detection" do
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
