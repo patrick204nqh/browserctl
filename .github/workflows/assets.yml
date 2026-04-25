@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -51,7 +52,7 @@ jobs:
       - name: Record terminal GIF
         run: bundle exec rake demo:terminal
 
-      - name: Commit assets
+      - name: Open PR with updated assets
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -60,5 +61,16 @@ jobs:
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
           git add docs/assets/
-          git diff --staged --quiet || git commit -m "chore: update demo assets [skip ci]"
-          git push
+          if git diff --staged --quiet; then
+            echo "No asset changes — skipping PR."
+            exit 0
+          fi
+          BRANCH="chore/update-demo-assets-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BRANCH"
+          git commit -m "chore: update demo assets"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "chore: update demo assets" \
+            --body "Automated update of demo screenshots and GIFs." \
+            --base main \
+            --head "$BRANCH"
