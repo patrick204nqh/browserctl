@@ -19,7 +19,15 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
       - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - uses: ./.github/actions/setup-ruby
 
@@ -41,9 +49,13 @@ jobs:
         run: bundle exec browserctl shutdown || true
 
       - name: Commit screenshots
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          APP_SLUG=$(gh api /app --jq '.slug')
+          APP_ID="${{ secrets.APP_ID }}"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
           git add docs/screenshots/
           git diff --staged --quiet || git commit -m "chore: update smoke test screenshots [skip ci]"
           git push

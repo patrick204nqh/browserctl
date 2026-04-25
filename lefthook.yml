@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    rubocop:
+      glob: "**/*.rb"
+      run: bundle exec rubocop --autocorrect-all {staged_files}
+
+pre-push:
+  commands:
+    rspec:
+      run: bundle exec rspec
