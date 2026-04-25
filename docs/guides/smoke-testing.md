@@ -28,7 +28,7 @@ Expected output for each (example shown for login):
   [ok]   capture screenshot
 ```
 
-Each example saves a screenshot to `docs/screenshots/` on completion. Screenshots are regenerated automatically by the [Update Screenshots](../../.github/workflows/screenshots.yml) workflow when examples change, and can also be triggered manually from the Actions tab.
+Each example saves a screenshot to `docs/assets/` on completion. Screenshots are regenerated automatically by the [Update Demo Assets](../../.github/workflows/assets.yml) workflow when examples change, and can also be triggered manually from the Actions tab.
 
 ---
 
@@ -50,7 +50,7 @@ Navigates to the login page, fills in the public test credentials, submits the f
   [ok]   capture screenshot
 ```
 
-![login smoke test](../screenshots/the_internet_login.png)
+![login smoke test](../assets/the_internet_login.png)
 
 ---
 
@@ -68,7 +68,7 @@ Reads the initial checkbox states (`[false, true]`), toggles the first checkbox,
   [ok]   capture screenshot
 ```
 
-![checkboxes smoke test](../screenshots/the_internet_checkboxes.png)
+![checkboxes smoke test](../assets/the_internet_checkboxes.png)
 
 ---
 
@@ -88,7 +88,7 @@ Asserts the default dropdown has no selection, then selects Option 1 and Option 
   [ok]   capture screenshot
 ```
 
-![dropdown smoke test](../screenshots/the_internet_dropdown.png)
+![dropdown smoke test](../assets/the_internet_dropdown.png)
 
 ---
 
@@ -108,7 +108,7 @@ This example demonstrates the `wait_for` command — useful any time a page rend
   [ok]   capture screenshot
 ```
 
-![dynamic loading smoke test](../screenshots/the_internet_dynamic_loading.png)
+![dynamic loading smoke test](../assets/the_internet_dynamic_loading.png)
 
 ---
 
@@ -126,7 +126,7 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
   [ok]   capture screenshot
 ```
 
-![add/remove elements smoke test](../screenshots/the_internet_add_remove_elements.png)
+![add/remove elements smoke test](../assets/the_internet_add_remove_elements.png)
 
 ---
 
