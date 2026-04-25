@@ -24,7 +24,7 @@ All commands require `browserd` to be running unless noted.
 | `fill <page> --ref <id> --value <v>` | Fill an input field by snapshot ref |
 | `click <page> <selector>` | Click an element by CSS selector |
 | `click <page> --ref <id>` | Click an element by snapshot ref |
-| `snap <page> [--format ai\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
+| `snap <page> [--format elements\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
 | `watch <page> <selector> [--timeout N]` | Poll until selector appears (default timeout: 30s) |
 | `shot <page> [--out PATH] [--full]` | Take a screenshot |
 | `url <page>` | Print current URL |

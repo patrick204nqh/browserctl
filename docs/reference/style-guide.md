@@ -37,7 +37,7 @@ Short-form aliases are allowed **and intentional** — document them explicitly,
 | `close` | `close_page` | concise alias |
 | `pages` | `list_pages` | concise alias |
 | `goto` | `goto` | — |
-| `snap` | `snapshot` | short-form alias; `--format ai` is the default |
+| `snap` | `snapshot` | short-form alias; `--format elements` is the default |
 | `shot` | `screenshot` | short-form alias |
 | `fill` | `fill` | — |
 | `click` | `click` | — |
