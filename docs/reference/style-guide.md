@@ -52,6 +52,7 @@ Short-form aliases are allowed **and intentional** — document them explicitly,
 | `export-cookies` | client-side | hyphen ✓ |
 | `import-cookies` | `import_cookies` | hyphen ✓ |
 | `ping` | `ping` | — |
+| `status` | client-side | reads `ping` + `list_pages` + `url` per page |
 | `shutdown` | `shutdown` | — |
 
 **Rule:** multi-word CLI commands are always hyphenated. Underscores are forbidden in CLI command names.

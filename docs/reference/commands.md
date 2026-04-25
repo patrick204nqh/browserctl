@@ -47,8 +47,23 @@ All commands require `browserd` to be running unless noted.
 
 | Command | Description |
 |---|---|
-| `ping` | Check if `browserd` is alive |
+| `ping` | Check if `browserd` is alive — returns `{ ok: true, pid: N, protocol_version: "1" }` |
+| `status` | Show daemon status, PID, and all open pages with their current URLs |
 | `shutdown` | Stop `browserd` |
+
+`browserctl status` response:
+
+```json
+{ "daemon": "online", "pid": 12345, "protocol_version": "1", "pages": [
+  { "name": "main", "url": "https://app.example.com/dashboard" }
+]}
+```
+
+When the daemon is not running:
+
+```json
+{ "daemon": "offline", "error": "browserd is not running — start it with: browserd" }
+```
 
 ---
 
@@ -69,6 +84,24 @@ All commands require `browserd` to be running unless noted.
 | `--headed` | headless | Start with a visible browser window |
 | `--name <id>` | `default` | Name this daemon instance (for multi-agent isolation) |
 | `--log-level <level>` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+
+`browserd` always writes logs to `~/.browserctl/browserd.log` (or `~/.browserctl/<name>.log` for a named instance) in addition to stderr. The log path is printed to stderr on startup so it's visible even when backgrounding with `&`:
+
+```
+browserd starting — log: /Users/you/.browserctl/browserd.log
+```
+
+To follow live log output:
+
+```bash
+tail -f ~/.browserctl/browserd.log
+```
+
+If a daemon is already running when `browserd` starts, it aborts with a clear message rather than clobbering the live session:
+
+```
+browserd already running (PID 12345). Use 'browserctl shutdown' first.
+```
 
 ---
 
@@ -122,6 +155,8 @@ Use `--ref <id>` with `fill` and `click` to interact without writing selectors. 
 | `step "label" { }` | Add a step — runs in order, halts workflow on failure |
 | `step "label", retry_count: N, timeout: S { }` | Step with retry and/or timeout |
 | `compose "workflow"` | Inline all steps from another workflow at this point |
+| `open_page(page_name, url: nil)` | Open a named page, optionally navigating to a URL |
+| `close_page(page_name)` | Close a named page |
 | `page(:name)` | Return a `PageProxy` for the named page |
 | `invoke "workflow", **overrides` | Call another workflow by name (runs as a unit, not inlined) |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
@@ -139,10 +174,13 @@ Methods available on `page(:name)` inside a workflow:
 | `goto(url)` | Navigate to URL |
 | `fill(selector, value)` | Fill an input by CSS selector |
 | `click(selector)` | Click an element by CSS selector |
-| `wait_for(selector, timeout: 10)` | Wait up to N seconds for selector to appear |
+| `watch(selector, timeout: 30)` | Poll until selector appears (default 30s) — use for async content |
+| `wait_for(selector, timeout: 10)` | Wait up to N seconds for selector to appear (short-form gate, default 10s) |
 | `url` | Return the current page URL |
 | `evaluate(expression)` | Evaluate a JS expression and return the result |
 | `snapshot(**opts)` | Return a DOM snapshot (same as `browserctl snap`) |
 | `screenshot(**opts)` | Take a screenshot (same as `browserctl shot`) |
+
+Prefer `watch` for async content that may take several seconds to appear; use `wait_for` as a quick gate for DOM already expected to be present.
 
 For the full workflow authoring guide, see [Writing Workflows](../guides/writing-workflows.md).

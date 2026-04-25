@@ -21,6 +21,7 @@ module Browserctl
     end
 
     def run
+      guard_already_running!
       write_pid
       server, idle = setup_server
       serve(server)
@@ -63,8 +64,22 @@ module Browserctl
       FileUtils.rm_f(@socket_path)
       server = UNIXServer.new(@socket_path)
       File.chmod(0o600, @socket_path)
-      Browserctl.logger.info "listening on #{@socket_path}"
+      Browserctl.logger.info "daemon ready — listening on #{@socket_path}"
       server
+    end
+
+    def guard_already_running!
+      return unless File.exist?(@pid_path)
+
+      pid = File.read(@pid_path).strip.to_i
+      return unless pid.positive?
+
+      Process.kill(0, pid)
+      abort "browserd already running (PID #{pid}). Use 'browserctl shutdown' first."
+    rescue Errno::ESRCH
+      # Dead process — stale PID file, safe to continue
+    rescue Errno::EPERM
+      abort "browserd (PID #{pid}) is running as a different user. Remove #{@pid_path} manually if stale."
     end
 
     def serve(server)

@@ -108,6 +108,32 @@ This is useful in two situations:
 
 ---
 
+## Refs and recording
+
+When you record a session with `browserctl record start <name>`, each command is captured and later replayed as a workflow. Selector-based interactions (`fill login input[name=email] value`) replay perfectly — the selector is stable.
+
+Ref-based interactions (`fill login --ref e1 --value me@example.com`) cannot replay by ref, because refs are assigned fresh on each snapshot and are not stable across sessions.
+
+browserctl handles this transparently: ref-based interactions are captured as commented-out TODO stubs in the generated workflow:
+
+```ruby
+# TODO: ref-based fill on "login" (ref: e1) — replace with a stable CSS selector
+# step "TODO: ref-based fill on login (ref: e1)" do
+#   page(:login).fill("YOUR_SELECTOR_HERE", params[:fill_value])
+# end
+```
+
+When `record stop` detects any ref-based interactions in the recording, it prints a warning:
+
+```
+Warning: 2 ref-based interaction(s) were captured but cannot be replayed by ref.
+Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors.
+```
+
+The easiest fix: take the `selector` value from the snapshot JSON for that ref and paste it into the generated step.
+
+---
+
 ## HTML format
 
 When a model needs to understand page structure rather than interact with specific elements, pass `--format html`:

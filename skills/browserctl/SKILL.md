@@ -21,6 +21,13 @@ browserd --headed  # shows the browser window
 
 Check it's alive: `browserctl ping`
 
+Logs are written to `~/.browserctl/browserd.log` — the path is printed on startup. Tail it when debugging: `tail -f ~/.browserctl/browserd.log`
+
+If a daemon is already running, `browserd` aborts rather than clobbering the live session:
+```
+browserd already running (PID 12345). Use 'browserctl shutdown' first.
+```
+
 ## Core workflow
 
 1. Open a named page (name describes purpose, e.g. `login`, `checkout`)
@@ -71,15 +78,16 @@ browserctl inspect login           # open Chrome DevTools URL for a named page
 
 # Cookies
 browserctl cookies login                                          # list all cookies as JSON
-browserctl set_cookie login cf_clearance "xyz..." ".example.com" # set a cookie (path defaults to /)
-browserctl clear_cookies login                                    # clear all cookies
+browserctl set-cookie login cf_clearance "xyz..." ".example.com" # set a cookie (path defaults to /)
+browserctl clear-cookies login                                    # clear all cookies
 
 # Page management
 browserctl pages
 browserctl close login
 
 # Daemon
-browserctl ping
+browserctl ping      # → { ok: true, pid: N, protocol_version: "1" }
+browserctl status    # → { daemon: "online", pid: N, protocol_version: "1", pages: [{name:, url:}] }
 browserctl shutdown
 
 # Named daemon (multi-agent isolation)
@@ -148,7 +156,7 @@ Write a minimal `.rb` file anywhere and run it by path — no search-path setup 
 # /tmp/probe_login.rb
 Browserctl.workflow "probe_login" do
   step "open" do
-    page(:main).goto("https://app.example.com/login")
+    open_page(:main, url: "https://app.example.com/login")
   end
   step "login" do
     page(:main).fill("input[name=email]", "me@example.com")
@@ -156,7 +164,7 @@ Browserctl.workflow "probe_login" do
     page(:main).click("button[type=submit]")
   end
   step "verify" do
-    page(:main).wait_for("[data-test=dashboard]", timeout: 10)
+    page(:main).watch("[data-test=dashboard]", timeout: 10)
     assert page(:main).url.include?("/dashboard")
   end
 end
@@ -179,7 +187,7 @@ Browserctl.workflow "smoke_login" do
   param :base_url, default: "https://app.example.com"
 
   step "open page" do
-    page(:login).goto("#{base_url}/login")
+    open_page(:login, url: "#{base_url}/login")
   end
 
   step "fill form" do
@@ -189,7 +197,7 @@ Browserctl.workflow "smoke_login" do
   end
 
   step "verify" do
-    page(:login).wait_for("[data-test=dashboard]")
+    page(:login).watch("[data-test=dashboard]")
     assert page(:login).url.include?("/dashboard")
   end
 end
@@ -225,7 +233,7 @@ browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
 
 # 4. Restore in a new session (skips re-solving)
 browserctl open main
-browserctl set_cookie main cf_clearance "xyz..." ".example.com"
+browserctl set-cookie main cf_clearance "xyz..." ".example.com"
 browserctl goto main https://protected.example.com
 ```
 
@@ -246,9 +254,43 @@ browserctl goto main https://protected.example.com
 - **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `set_cookie` to avoid re-solving in future sessions.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
+## Recording and refs
+
+`browserctl record start <name>` captures a live session. Selector-based interactions replay perfectly. Ref-based interactions (`--ref eN`) cannot replay by ref — they are captured as commented-out TODO stubs in the generated workflow:
+
+```ruby
+# TODO: ref-based fill on "login" (ref: e1) — replace with a stable CSS selector
+# step "..." do
+#   page(:login).fill("YOUR_SELECTOR_HERE", ...)
+# end
+```
+
+`record stop` prints a warning if any were found. Fix them by replacing the selector with the value from the snapshot JSON for that ref.
+
+## Workflow DSL — page lifecycle
+
+Use `open_page` and `close_page` for page lifecycle inside steps — do not call `client` directly:
+
+```ruby
+step "open tabs" do
+  open_page(:login, url: "https://app.example.com/login")
+  open_page(:inbox)                                        # open without navigating
+end
+
+step "close when done" do
+  close_page(:login)
+end
+```
+
+`page(:name)` — returns a `PageProxy` for commands on an already-open page.
+`watch(selector, timeout: 30)` — poll for async content (preferred over `wait_for` for dynamic pages).
+`wait_for(selector, timeout: 10)` — short synchronisation gate for content already expected to be present.
+
 ## Troubleshooting
 
-- `browserd is not running` → run `browserd &` first
-- `no page named 'X'` → run `browserctl pages` to see what's open, then `browserctl open X`
+- `browserd is not running` → run `browserd &` first; check `~/.browserctl/browserd.log` for startup errors
+- `browserd already running (PID N)` → run `browserctl shutdown` then restart
+- `no page named 'X'` → run `browserctl status` to see what's open, then `browserctl open X`
 - Selector not found → use `snap --format ai` to get valid selectors
 - Stale page → `browserctl goto <page> <url>` to reload
+- Debug live → `tail -f ~/.browserctl/browserd.log`

@@ -41,8 +41,11 @@ module Browserctl
       name = active
       return unless name
       return unless RECORDABLE.include?(cmd.to_s)
-      # ref-based interactions have no replayable selector — skip them
-      return if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
+
+      if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
+        record_ref_interaction(name, cmd.to_s, attrs)
+        return
+      end
 
       attrs = prepare_attrs(cmd.to_s, attrs)
 
@@ -58,6 +61,13 @@ module Browserctl
       lines = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
+
+      ref_count = lines.count { |l| l[:cmd] == "_ref_interaction" }
+      if ref_count.positive?
+        warn "Warning: #{ref_count} ref-based interaction(s) were captured but cannot be replayed by ref."
+        warn "Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors."
+      end
+
       ruby
     ensure
       FileUtils.rm_f(log) if log
@@ -68,6 +78,13 @@ module Browserctl
 
       def log_path(name)
         File.join(RECORDINGS_DIR, "#{name}.jsonl")
+      end
+
+      def record_ref_interaction(recording_name, cmd, attrs)
+        entry = { cmd: "_ref_interaction", action: cmd, ref: attrs[:ref], name: attrs[:name] }
+        File.open(log_path(recording_name), "a") do |f|
+          f.puts JSON.generate(entry)
+        end
       end
 
       def build_workflow_ruby(name, commands)
@@ -85,6 +102,17 @@ module Browserctl
 
       def build_step(cmd)
         label, body = step_parts(cmd)
+
+        if body.nil?
+          page_sym = cmd[:name].to_s.gsub(/[^a-zA-Z0-9_]/, "_")
+          action   = cmd[:action].to_s.gsub(/[^a-z_]/, "")
+          return "# TODO: ref-based #{action} on #{cmd[:name].inspect} (ref: #{cmd[:ref].inspect}) — " \
+                 "replace with a stable CSS selector\n" \
+                 "# step #{label.inspect} do\n" \
+                 "#   page(:#{page_sym}).#{action}(\"YOUR_SELECTOR_HERE\")\n" \
+                 "# end"
+        end
+
         url = cmd[:url].to_s
         if url.include?("[REDACTED]")
           "# NOTE: sensitive query params were redacted during recording\nstep #{label.inspect} do\n  #{body}\nend"
@@ -94,24 +122,32 @@ module Browserctl
       end
 
       def step_parts(cmd)
+        return ref_interaction_parts(cmd) if cmd[:cmd] == "_ref_interaction"
+        return selector_parts(cmd) if %w[fill click].include?(cmd[:cmd])
+
         page = cmd[:name]
         case cmd[:cmd]
-        when "open_page"
-          ["open #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
-        when "goto"
-          ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "open_page"  then ["open #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "goto"       then ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "screenshot" then ["screenshot #{page}", "page(:#{page}).screenshot"]
+        when "evaluate"   then ["eval on #{page}", "page(:#{page}).evaluate(#{cmd[:expression].inspect})"]
+        else ["#{cmd[:cmd]} on #{page}", "# unrecognised command: #{cmd.inspect}"]
+        end
+      end
+
+      def ref_interaction_parts(cmd)
+        ["TODO: ref-based #{cmd[:action]} on #{cmd[:name]} (ref: #{cmd[:ref]})", nil]
+      end
+
+      def selector_parts(cmd)
+        page = cmd[:name]
+        case cmd[:cmd]
         when "fill"
           ["fill #{cmd[:selector]} on #{page}",
            "page(:#{page}).fill(#{cmd[:selector].inspect}, params[:fill_value])"]
         when "click"
           ["click #{cmd[:selector]} on #{page}",
            "page(:#{page}).click(#{cmd[:selector].inspect})"]
-        when "screenshot"
-          ["screenshot #{page}", "page(:#{page}).screenshot"]
-        when "evaluate"
-          ["eval on #{page}", "page(:#{page}).evaluate(#{cmd[:expression].inspect})"]
-        else
-          ["#{cmd[:cmd]} on #{page}", "# unrecognised command: #{cmd.inspect}"]
         end
       end
 

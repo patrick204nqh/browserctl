@@ -22,7 +22,7 @@ Browserctl.workflow "hello" do
   desc "Open a page and print its URL"
 
   step "open page" do
-    page(:main).goto("https://example.com")
+    open_page(:main, url: "https://example.com")
   end
 
   step "print url" do
@@ -144,12 +144,32 @@ assert page(:main).url.include?("/dashboard"), "expected redirect to dashboard"
 assert count == 3, "expected 3 items, got #{count}"
 ```
 
-### `page(:name)`
+### `open_page` and `close_page`
 
-Returns a `PageProxy` for a named browser page. The page must have been opened (via `browserctl open` or `page(:name).goto`) before calling other methods on it.
+Open or close a named browser page from within a workflow step. Use these instead of reaching into `client` directly for page lifecycle.
 
 ```ruby
-page(:login).goto("https://app.example.com/login")
+step "open login page" do
+  open_page(:login, url: "https://app.example.com/login")
+end
+
+step "open dashboard in parallel" do
+  open_page(:dashboard)
+  page(:dashboard).goto("#{base_url}/dashboard")
+end
+
+step "close login tab when done" do
+  close_page(:login)
+end
+```
+
+`open_page` without a `url:` creates the page but does not navigate. Navigate separately with `page(:name).goto(url)` or pass `url:` directly.
+
+### `page(:name)`
+
+Returns a `PageProxy` for a named browser page. The page must already be open (via `open_page` or `browserctl open`) before calling methods on it.
+
+```ruby
 page(:login).fill("input[name=email]", email)
 page(:login).click("button[type=submit]")
 ```
@@ -173,13 +193,16 @@ Circular invocation (`a → b → a`) raises immediately.
 | `goto(url)` | Navigate the page to a URL |
 | `fill(selector, value)` | Fill an input field |
 | `click(selector)` | Click an element |
-| `wait_for(selector, timeout: 10)` | Wait up to N seconds for an element to appear |
+| `watch(selector, timeout: 30)` | Poll until selector appears (default 30s) — for async content |
+| `wait_for(selector, timeout: 10)` | Wait up to N seconds for an element to appear (short-form gate, default 10s) |
 | `url` | Return the current page URL as a string |
 | `evaluate(expression)` | Evaluate a JS expression and return the result |
 | `snapshot(**opts)` | Return a DOM snapshot (same as `browserctl snap`) |
 | `screenshot(**opts)` | Take a screenshot (same as `browserctl shot`) |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
+
+Use `watch` for async content that may take seconds to load (API responses, animations, page transitions). Use `wait_for` as a quick synchronisation gate when the element is already expected to be present.
 
 For HITL pause/resume and direct cookie management inside a workflow, use `client` — the raw daemon client available in every step block:
 
@@ -213,7 +236,7 @@ Browserctl.workflow "smoke_login" do
   param :base_url, default: "https://app.example.com"
 
   step "open login page" do
-    page(:main).goto("#{base_url}/login")
+    open_page(:main, url: "#{base_url}/login")
   end
 
   step "submit credentials" do
@@ -223,7 +246,7 @@ Browserctl.workflow "smoke_login" do
   end
 
   step "verify dashboard" do
-    page(:main).wait_for("[data-test=dashboard]", timeout: 10)
+    page(:main).watch("[data-test=dashboard]", timeout: 10)
     assert page(:main).url.include?("/dashboard"), "redirect to dashboard failed"
   end
 
@@ -284,7 +307,7 @@ end
 ```ruby
 step "wait for results" do
   page(:main).click("button#search")
-  page(:main).wait_for(".results-list", timeout: 15)
+  page(:main).watch(".results-list", timeout: 15)
   count = page(:main).evaluate("document.querySelectorAll('.result-item').length")
   assert count > 0, "no results returned"
 end
