@@ -144,7 +144,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "rejects paths outside the allowed screenshot directory" do
       res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
-                                  path: "/tmp/../Users/nqhuy25/.ssh/authorized_keys" })
+                                  path: "/tmp/outside.png" })
       expect(res[:error]).to match(/outside allowed directory/)
     end
 
@@ -155,7 +155,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "rejects a path outside the allowed directories" do
-      result = dispatcher.dispatch({ cmd: "screenshot", name: "main", path: "/etc/passwd" })
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main", path: "/etc/evil.png" })
       expect(result[:error]).to match(/outside allowed directory/)
     end
 

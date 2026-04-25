@@ -49,18 +49,37 @@ module Browserctl
         end
 
         def safe_screenshot_path(requested, page_name)
-          if requested
-            expanded = File.expand_path(requested)
-            allowed  = SCREENSHOT_ROOTS.any? { |d| expanded.start_with?("#{d}/") || expanded.start_with?(d) }
-            return { error: "path outside allowed directory (#{SCREENSHOT_DIR} or project directory)" } unless allowed
-            return { error: "invalid extension — use .png, .jpg, or .jpeg" } \
-              unless SCREENSHOT_EXTS.include?(File.extname(expanded).downcase)
+          return default_screenshot_path(page_name) unless requested
 
-            expanded
-          else
-            name_safe = page_name.to_s.gsub(/[^a-zA-Z0-9_-]/, "_")
-            File.join(SCREENSHOT_DIR, "browserctl_shot_#{name_safe}_#{Time.now.to_i}.png")
+          expanded = File.expand_path(requested)
+          return { error: "invalid extension — use .png, .jpg, or .jpeg" } unless valid_screenshot_ext?(expanded)
+          return { error: "path outside allowed directory (#{SCREENSHOT_DIR} or project directory)" } \
+            unless within_screenshot_roots?(expanded)
+
+          File.join(resolve_dir(File.dirname(expanded)), File.basename(expanded))
+        end
+
+        def valid_screenshot_ext?(path)
+          SCREENSHOT_EXTS.include?(File.extname(path).downcase)
+        end
+
+        def within_screenshot_roots?(path)
+          dir = resolve_dir(File.dirname(path))
+          SCREENSHOT_ROOTS.any? do |root|
+            real_root = resolve_dir(root)
+            dir.start_with?("#{real_root}/") || dir == real_root
           end
+        end
+
+        def resolve_dir(dir)
+          File.realpath(dir)
+        rescue Errno::ENOENT
+          dir
+        end
+
+        def default_screenshot_path(page_name)
+          name_safe = page_name.to_s.gsub(/[^a-zA-Z0-9_-]/, "_")
+          File.join(SCREENSHOT_DIR, "browserctl_shot_#{name_safe}_#{Time.now.to_i}.png")
         end
 
         def cmd_wait_for(req)

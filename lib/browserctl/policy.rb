@@ -27,7 +27,8 @@ module Browserctl
     def self.host_matches?(host, domains)
       return false unless host
 
-      domains.any? { |d| host == d || host.end_with?(".#{d}") }
+      normalised = host.downcase
+      domains.any? { |d| normalised == d.downcase || normalised.end_with?(".#{d.downcase}") }
     end
 
     private_class_method :allowed_domains, :host_matches?

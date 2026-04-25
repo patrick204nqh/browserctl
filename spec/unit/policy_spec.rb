@@ -36,6 +36,18 @@ RSpec.describe Browserctl::Policy do
       it "blocks a URL that only prefix-matches (not a real subdomain)" do
         expect(described_class.allowed_navigation?("https://notexample.com/")).to be false
       end
+
+      it "allows uppercase domain (case-insensitive match)" do
+        expect(described_class.allowed_navigation?("https://EXAMPLE.COM/page")).to be true
+      end
+
+      it "allows mixed-case subdomain" do
+        expect(described_class.allowed_navigation?("https://App.Example.Com/login")).to be true
+      end
+
+      it "blocks uppercase unlisted domain" do
+        expect(described_class.allowed_navigation?("https://EVIL.COM/phish")).to be false
+      end
     end
 
     context "when URL is invalid" do

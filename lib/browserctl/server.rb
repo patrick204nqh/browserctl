@@ -62,8 +62,9 @@ module Browserctl
 
     def setup_socket
       FileUtils.rm_f(@socket_path)
+      old_umask = File.umask(0o177)
       server = UNIXServer.new(@socket_path)
-      File.chmod(0o600, @socket_path)
+      File.umask(old_umask)
       Browserctl.logger.info "daemon ready — listening on #{@socket_path}"
       server
     end
