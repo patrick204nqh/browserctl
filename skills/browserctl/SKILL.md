@@ -80,6 +80,8 @@ browserctl inspect login           # open Chrome DevTools URL for a named page
 browserctl cookies login                                          # list all cookies as JSON
 browserctl set-cookie login cf_clearance "xyz..." ".example.com" # set a cookie (path defaults to /)
 browserctl clear-cookies login                                    # clear all cookies
+browserctl export-cookies login .browserctl/sessions/app.json    # export to file
+browserctl import-cookies login .browserctl/sessions/app.json    # import from file
 
 # Page management
 browserctl pages
@@ -244,14 +246,14 @@ browserctl goto main https://protected.example.com
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
 - **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
 - **Use `snap --format ai`** for any page you haven't seen before — it gives valid selectors and ref IDs without reading raw HTML.
-- **Use `--ref` for interactions** — after a `snap`, prefer `--ref eN` over CSS selectors. Refs don't break when the DOM is refactored.
+- **Use `--ref` for interactions** — after a `snap`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snap` call — re-snap if you need fresh refs after page changes.
 - **Use `snap --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
 - **Use `watch`** when you need to wait for an element that appears asynchronously — more efficient than polling `snap`.
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
 - **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snap <page>`.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
-- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `set_cookie` to avoid re-solving in future sessions.
+- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `set-cookie` to avoid re-solving in future sessions.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Recording and refs
