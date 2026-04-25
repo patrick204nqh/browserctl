@@ -3,6 +3,7 @@
 require_relative "snapshot_builder"
 require_relative "page_session"
 require_relative "../detectors"
+require_relative "../policy"
 
 module Browserctl
   class CommandDispatcher
@@ -33,8 +34,8 @@ module Browserctl
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_ROOTS = [SCREENSHOT_DIR, File.expand_path(".")].freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
-def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
-      @pages            = pages
+    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
+      @pages = pages
       @browser          = browser
       @snapshot_builder = snapshot_builder
       @global_mutex     = global_mutex
@@ -77,6 +78,10 @@ def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mu
     end
 
     def cmd_goto(req)
+      unless Policy.allowed_navigation?(req[:url].to_s)
+        return { error: "navigation to '#{req[:url]}' blocked by domain policy", code: "domain_not_allowed" }
+      end
+
       with_page(req[:name]) do |session|
         session.page.go_to(req[:url])
         { ok: true, url: session.page.current_url, challenge: Detectors.cloudflare?(session.page) }
