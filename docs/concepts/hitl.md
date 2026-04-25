@@ -67,16 +67,7 @@ Cloudflare is just the first detector. The detection layer is designed to grow â
 
 The philosophy is: **surface the signal, let the workflow decide.** browserctl doesn't try to auto-solve challenges (fragile, constantly broken by vendor updates, often illegal). It identifies that the situation requires attention and hands it off cleanly.
 
-Custom detectors can be registered via the plugin system:
-
-```ruby
-Browserctl.register_detector(:my_detector) do |page_body, url|
-  # return true if this page needs human intervention
-  page_body.include?("verify-human-challenge")
-end
-```
-
-When any registered detector fires, the `challenge` field in the response is `true`.
+A `register_detector` plugin API is planned for v0.6 â€” third-party detectors will be registerable without modifying the core. For now, additional detection logic can be added via the plugin system using `register_command`.
 
 ---
 
@@ -90,7 +81,7 @@ browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
 
 # in a new session:
 browserctl open main
-browserctl set_cookie main cf_clearance "xyz..." ".example.com"
+browserctl set-cookie main cf_clearance "xyz..." ".example.com"
 browserctl goto main https://example.com   # passes without a challenge
 ```
 

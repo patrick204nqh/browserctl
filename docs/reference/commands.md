@@ -4,6 +4,14 @@ All commands require `browserd` to be running unless noted.
 
 ---
 
+## Setup commands
+
+| Command | Description |
+|---|---|
+| `init` | Scaffold `.browserctl/` in the current project (does not require `browserd`) |
+
+---
+
 ## Browser commands
 
 | Command | Description |
@@ -25,8 +33,8 @@ All commands require `browserd` to be running unless noted.
 | `resume <page>` | Resume automation after manual action |
 | `inspect <page>` | Open Chrome DevTools for a named page |
 | `cookies <page>` | List all cookies as JSON |
-| `set_cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
-| `clear_cookies <page>` | Clear all cookies for a page |
+| `set-cookie <page> <name> <value> <domain>` | Set a cookie (path defaults to `/`) |
+| `clear-cookies <page>` | Clear all cookies for a page |
 | `export-cookies <page> <path>` | Export all cookies to a JSON file |
 | `import-cookies <page> <path>` | Import cookies from a JSON file |
 | `record start <name>` | Begin recording commands as a replayable workflow |
@@ -48,7 +56,7 @@ All commands require `browserd` to be running unless noted.
 
 | Command | Description |
 |---|---|
-| `run <name\|file.rb> [--key value ...]` | Run a named workflow or workflow file |
+| `run <name\|file.rb> [--params file] [--key value ...]` | Run a named workflow or workflow file |
 | `workflows` | List available workflows |
 | `describe <name>` | Show workflow params and steps |
 
@@ -113,11 +121,12 @@ Use `--ref <id>` with `fill` and `click` to interact without writing selectors. 
 | `param :name, required:, secret:, default:` | Declare an input parameter |
 | `step "label" { }` | Add a step — runs in order, halts workflow on failure |
 | `step "label", retry_count: N, timeout: S { }` | Step with retry and/or timeout |
+| `compose "workflow"` | Inline all steps from another workflow at this point |
 | `page(:name)` | Return a `PageProxy` for the named page |
-| `invoke "workflow", **overrides` | Call another workflow by name |
+| `invoke "workflow", **overrides` | Call another workflow by name (runs as a unit, not inlined) |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
-| `store :key, value` | Store a value in workflow-scoped state |
-| `fetch :key` | Retrieve a previously stored value |
+| `store :key, value` | Store a value for use in later steps (within this run only) |
+| `fetch :key` | Retrieve a value stored by an earlier step |
 
 ---
 

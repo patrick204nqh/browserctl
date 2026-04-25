@@ -146,15 +146,17 @@ CLI command names and their flags. See [style-guide.md](style-guide.md) for the 
 
 ## Planned additions in v0.5 (still Fixed once added)
 
-These do not exist yet. They are reserved — do not use these names in plugins.
+These wire commands do not exist yet — they are reserved names. Do not use them in plugins.
 
-| Command | Purpose |
-|---------|---------|
-| `store` | Cross-step key/value store (currently WorkflowContext-only) |
-| `fetch` | Read from cross-step store |
+`store` and `fetch` already work today as workflow DSL methods (`WorkflowContext#store` / `#fetch`) for passing values between steps. The v0.5 work is promoting them to first-class wire protocol commands so non-Ruby clients can use them too.
+
+| Wire command | Current status | Purpose |
+|---|---|---|
+| `store` | DSL only (`WorkflowContext`) | Set a named value in daemon-scoped state |
+| `fetch` | DSL only (`WorkflowContext`) | Get a named value from daemon-scoped state |
 
 ---
 
 ## Protocol versioning
 
-The `ping` response will include `protocol_version: "1"` starting in v0.5. Future incompatible protocol changes increment this number. Clients can check this field to negotiate capabilities.
+The `ping` response includes `protocol_version: "1"` (shipped in v0.4). Future incompatible protocol changes increment this number. Clients can check this field to negotiate capabilities.

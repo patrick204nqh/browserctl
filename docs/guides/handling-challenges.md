@@ -101,7 +101,7 @@ Restore it in a new session:
 
 ```bash
 browserctl open main
-browserctl set_cookie main cf_clearance "xyz..." ".example.com"
+browserctl set-cookie main cf_clearance "xyz..." ".example.com"
 browserctl goto main https://example.com   # no challenge
 ```
 

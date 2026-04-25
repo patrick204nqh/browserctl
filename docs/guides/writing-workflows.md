@@ -58,7 +58,7 @@ param :base_url, default: "https://app.example.com"
 | Option | Default | Behaviour |
 |---|---|---|
 | `required: true` | false | Raises if not supplied at runtime |
-| `secret: true` | false | Reserved for masking in future output |
+| `secret: true` | false | Value is never written to session recordings |
 | `default:` | nil | Used when the caller omits the param |
 
 Pass params at runtime with `--key value` flags:

@@ -4,7 +4,7 @@ This guide gets you from zero to a working browser session in about five minutes
 
 ## Prerequisites
 
-- Ruby >= 3.2
+- Ruby >= 3.3
 - Chrome or Chromium on your `PATH`
 
 Check:
