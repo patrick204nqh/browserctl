@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     rubocop:
-      glob: "**/*.rb"
+      glob: "{**/*.rb,Rakefile,Brewfile}"
       run: bundle exec rubocop --autocorrect-all {staged_files}
     rbs-validate:
       glob: "**/*.rbs"

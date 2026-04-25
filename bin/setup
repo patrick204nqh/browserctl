@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Installing dependencies..."
+if [[ "$(uname)" == "Darwin" ]] && command -v brew &>/dev/null; then
+  echo "==> Installing Homebrew dependencies (Brewfile)..."
+  brew bundle --no-upgrade
+fi
+
+echo "==> Installing gem dependencies..."
 bundle install
 
 echo "==> Checking for Chrome/Chromium..."
 if ! command -v google-chrome &>/dev/null && ! command -v chromium-browser &>/dev/null && ! command -v chromium &>/dev/null; then
   echo "WARNING: Chrome/Chromium not found on PATH."
-  echo "         Install it before running browserctl."
-  echo "         macOS:  brew install --cask google-chrome"
+  echo "         macOS:  brew bundle  (includes google-chrome)"
   echo "         Ubuntu: sudo apt-get install -y chromium-browser"
 fi
 

@@ -1,0 +1,64 @@
+name: Update Demo Assets
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "examples/**"
+      - "demo/**"
+
+concurrency:
+  group: assets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assets:
+    name: Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: ./.github/actions/setup-ruby
+
+      - name: Install VHS
+        run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://repo.charm.sh/apt/gpg.key \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" \
+            | sudo tee /etc/apt/sources.list.d/charm.list
+          sudo apt-get update -q
+          sudo apt-get install -y vhs ttyd ffmpeg
+
+      - name: Capture screenshots
+        run: bundle exec rake demo:screenshots
+
+      - name: Record browser GIF
+        run: bundle exec rake demo:browser_gif
+
+      - name: Record terminal GIF
+        run: bundle exec rake demo:terminal
+
+      - name: Commit assets
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          APP_SLUG=$(gh api /app --jq '.slug')
+          APP_ID="${{ secrets.APP_ID }}"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git add docs/assets/
+          git diff --staged --quiet || git commit -m "chore: update demo assets [skip ci]"
+          git push
