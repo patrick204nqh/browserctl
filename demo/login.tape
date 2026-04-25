@@ -9,10 +9,10 @@ Output docs/assets/terminal.webp
 
 # ---------- terminal appearance ----------
 Set Theme      "Catppuccin Mocha"
-Set FontSize   14
-Set FontFamily "JetBrains Mono"
-Set Width      900
-Set Height     520
+Set FontSize   12
+Set FontFamily "Fira Code"
+Set Width      1100
+Set Height     550
 Set Shell      "bash"
 Set TypingSpeed 60ms
 Set PlaybackSpeed 1

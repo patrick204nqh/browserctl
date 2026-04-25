@@ -41,7 +41,7 @@ jobs:
           echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" \
             | sudo tee /etc/apt/sources.list.d/charm.list
           sudo apt-get update -q
-          sudo apt-get install -y vhs ttyd ffmpeg
+          sudo apt-get install -y vhs ttyd ffmpeg fonts-firacode
 
       - name: Capture screenshots
         run: bundle exec rake demo:screenshots
