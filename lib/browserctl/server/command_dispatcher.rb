@@ -2,6 +2,7 @@
 
 require_relative "snapshot_builder"
 require_relative "page_session"
+require_relative "../detectors"
 
 module Browserctl
   class CommandDispatcher
@@ -32,14 +33,7 @@ module Browserctl
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
     SCREENSHOT_ROOTS = [SCREENSHOT_DIR, File.expand_path(".")].freeze
     SCREENSHOT_EXTS = %w[.png .jpg .jpeg].freeze
-    CLOUDFLARE_SIGNALS = [
-      "cf-challenge-running",
-      "cf_chl_opt",
-      "__cf_chl_f_tk",
-      "Just a moment..."
-    ].freeze
-
-    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
+def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
       @pages            = pages
       @browser          = browser
       @snapshot_builder = snapshot_builder
@@ -85,7 +79,7 @@ module Browserctl
     def cmd_goto(req)
       with_page(req[:name]) do |session|
         session.page.go_to(req[:url])
-        { ok: true, url: session.page.current_url, challenge: cloudflare_challenge?(session.page) }
+        { ok: true, url: session.page.current_url, challenge: Detectors.cloudflare?(session.page) }
       end
     end
 
@@ -94,7 +88,7 @@ module Browserctl
     end
 
     def take_snapshot(session, format, diff)
-      challenge = cloudflare_challenge?(session.page)
+      challenge = Detectors.cloudflare?(session.page)
 
       return { ok: true, html: session.page.body, challenge: challenge } unless format == "ai"
 
@@ -299,13 +293,6 @@ module Browserctl
         session.pause_cv.wait(session.mutex) while session.paused?
         yield session
       end
-    end
-
-    def cloudflare_challenge?(page)
-      url  = page.current_url.to_s
-      body = page.body.to_s
-      url.include?("challenge-platform") ||
-        CLOUDFLARE_SIGNALS.any? { |sig| body.include?(sig) }
     end
 
     def resolve_selector_from(session, req)

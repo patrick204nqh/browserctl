@@ -1,0 +1,6 @@
+module Browserctl
+  module Detectors
+    CLOUDFLARE_SIGNALS: Array[String]
+    def self.cloudflare?: (untyped page) -> bool
+  end
+end
