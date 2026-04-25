@@ -150,6 +150,9 @@ The daemon shuts itself down after 30 minutes of inactivity.
 | [Concepts](docs/concepts/) | Sessions, snapshots, human-in-the-loop |
 | [Guides](docs/guides/) | Writing workflows, handling challenges, smoke testing |
 | [Command Reference](docs/reference/commands.md) | Every command and flag |
+| [API Stability](docs/reference/api-stability.md) | Wire protocol contract and stability zones |
+| [Product](docs/product.md) | What browserctl is and who it's for |
+| [Vision & Roadmap](docs/vision.md) | Philosophy and release roadmap |
 | [vs. agent-browser](docs/vs-agent-browser.md) | How browserctl differs from Vercel's agent-browser |
 
 ---

@@ -284,7 +284,7 @@ module Browserctl
       { ok: true, paused: false }
     end
 
-    def cmd_ping(_req) = { ok: true, pid: Process.pid }
+    def cmd_ping(_req) = { ok: true, pid: Process.pid, protocol_version: "1" }
 
     def cmd_shutdown(_req)
       Process.kill("INT", Process.pid)

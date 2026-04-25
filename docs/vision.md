@@ -85,17 +85,25 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] YAML frontmatter on `skills/browserctl/SKILL.md` — follow the Claude skill standard
 - [x] Install instructions in README (`/plugin marketplace add` + `/plugin install`)
 - [x] Homebrew formula — `brew install patrick204nqh/tap/browserctl`
-- [ ] RBS type signatures for all public API
-- [ ] YARD documentation
+- [x] CLI: rename `set_cookie` / `clear_cookies` → `set-cookie` / `clear-cookies` (hyphen rule)
+- [x] `ping` response: add `protocol_version: "1"` as baseline for future negotiation
+- [x] Split `pause_resume.rb` → `pause.rb` + `resume.rb` (one-command-per-file rule)
 
-### v0.5 — Architecture & Hardening
-**Goal:** A codebase that contributors can navigate and a daemon that operators can trust.
+### v0.5 — Architecture & Protocol Lock
+**Goal:** A codebase that contributors can navigate, a daemon that operators can trust, and a wire protocol that external tools can depend on. The Fixed zone is sealed at this milestone — no wire command names or response fields change without a major version bump after this point.
 
+- [ ] API stability zones — `docs/reference/api-stability.md` sealing the Fixed zone contract _(drafted)_
+- [ ] Style guide — `docs/reference/style-guide.md` codifying naming conventions per layer _(drafted)_
+- [ ] RBS type signatures for all public API — documents the Stable zone contract
+- [ ] YARD documentation — inline reference for SDK consumers
 - [ ] `Browserctl::Error` hierarchy — typed error codes surfaced in daemon JSON responses
 - [ ] Extract `Browserctl::Detectors` module — challenge detection isolated from dispatch logic
 - [ ] Split `CommandDispatcher` into per-concern handler files
 - [ ] Thread-safe plugin registry — replace mutable constants with mutex-protected accessors
+- [ ] Promote `store` / `fetch` to wire protocol — currently WorkflowContext-only; must be Fixed before the lock
 - [ ] Security audit: socket permissions, workflow param sanitisation, screenshot path boundaries
+- [ ] Snapshot content boundaries — nonce-delimited `snap` output to prevent prompt injection from adversarial pages
+- [ ] Domain/action policy support — `BROWSERCTL_ALLOWED_DOMAINS` env var (or config) to gate navigation to approved origins
 - [ ] Compatibility matrix: Ruby 3.2–3.x, Chrome 120+
 - [ ] Benchmarks: snapshot latency, command throughput
 
@@ -121,7 +129,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v1.0 — Production-Ready
 **Goal:** Ship it when it's ready. No checklist owns this milestone — it will be cut when the project is stable enough to warrant a compatibility promise and a deprecation policy.
 
-What "ready" means: the public API is settled, the security audit is closed, the architecture has absorbed real usage feedback, and breaking it would be a considered decision, not an accident.
+What "ready" means: the Fixed and Stable zones carry an explicit compatibility promise — breaking them is a considered decision with a migration path, not an accident. The security audit is closed. The architecture has absorbed real usage feedback from agents and developers in the wild.
 
 ---
 

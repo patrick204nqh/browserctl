@@ -9,7 +9,9 @@ Both projects exist to solve the same root problem: AI agents need stateful, per
 ## What they share
 
 - Persistent browser sessions that survive across agent turns (no cold-start on every command)
-- An agent-friendly API surface that exposes browser actions as structured tool calls
+- Unix domain socket transport with a JSON-RPC command protocol
+- Chrome DevTools Protocol (CDP) as the browser control layer (no Playwright dependency)
+- Semantic ref-based interaction — elements are addressed by a stable ID from the snapshot, not a fragile CSS selector
 - Multi-session support for running parallel agent instances
 - Session recording (shipped in browserctl v0.2; on agent-browser's roadmap)
 
@@ -19,9 +21,9 @@ Both projects exist to solve the same root problem: AI agents need stateful, per
 
 ### 1. Local-only, by design
 
-agent-browser targets cloud-hosted browser sessions on Vercel infrastructure. browserctl runs as a local Unix daemon — a background process on your machine, reachable over a Unix socket. There is no cloud layer, no remote endpoint, no SaaS dependency. The browser is yours.
+agent-browser runs locally by default but also integrates with cloud browser providers (Browserless, Browserbase, AWS AgentCore). browserctl has no cloud integration path — the daemon runs on your machine, period.
 
-This is a deliberate constraint, not a gap. A local daemon means:
+This is a deliberate constraint, not a gap. A strictly local daemon means:
 - Zero network latency between your agent and the browser
 - No third-party access to your session cookies, credentials, or page content
 - Works offline, behind a VPN, or inside a private network
@@ -41,7 +43,9 @@ browserctl pause main   # hand control to human
 browserctl resume main  # agent continues
 ```
 
-### 3. Extensible HITL detection
+agent-browser has no equivalent pause/resume primitive.
+
+### 3. Blocker detection surfaced explicitly
 
 Knowing *when* to pause is as important as being able to pause. browserctl ships with built-in detection for known blockers:
 
@@ -55,28 +59,46 @@ The detection layer is designed to grow. The same pattern that detects Cloudflar
 
 Rather than hardcoding responses to each blocker, browserctl surfaces the signal and lets the agent (or the workflow) decide: pause and wait, retry, or abort.
 
-### 4. Claude Code-native
+agent-browser does not surface blocker signals in its responses.
 
-agent-browser is framework-agnostic — it works with LangChain, LlamaIndex, the Vercel AI SDK, and others. That breadth comes at the cost of depth.
+### 4. Workflow layer — composable, replayable Ruby DSL
 
-browserctl ships as an installable Claude Code plugin:
+agent-browser is a command-per-call tool. browserctl adds a workflow layer on top: multi-step workflows defined in Ruby, with `compose` for reuse, `retry_count:` and `timeout:` per step, typed `param:` declarations, and secret-safe recording.
 
+The `record` command captures a live session as a replayable workflow file. Reproduce a bug once, hand the script to a colleague.
+
+```ruby
+Browserctl.workflow :checkout_smoke do
+  param :email, required: true
+  param :password, required: true, secret: true
+
+  step "login" do
+    page(:main).goto("https://shop.example.com/login")
+    snap = page(:main).snapshot
+    page(:main).fill(snap.ref(:email_field), email)
+    page(:main).fill(snap.ref(:password_field), password)
+    page(:main).click(snap.ref(:submit))
+  end
+end
 ```
-/plugin marketplace add patrick204nqh/browserctl
-```
 
-Once installed, the `browserctl` skill is available directly in Claude's tool use loop — no configuration, no API keys, no wrapper code. The integration is not an afterthought; it is the primary distribution channel.
+agent-browser has no workflow layer.
 
-### 5. Ref-based interaction (no fragile selectors)
+---
 
-agent-browser uses standard Playwright selectors and screenshots. browserctl uses a different model: `snap` returns a compact token-efficient JSON snapshot where every interactive element has a stable `ref` ID. Subsequent commands use the ref, not a CSS selector:
+## Where agent-browser is ahead
 
-```
-browserctl snap login-page           # → { ref: "e3", tag: "input", ... }
-browserctl fill login-page --ref e3 --value "user@example.com"
-```
+### Command breadth
 
-Refs survive DOM mutations that would break a selector. They also carry no positional assumptions, which matters when the page layout changes between agent turns.
+agent-browser ships 100+ commands covering network interception, HAR recording, Web Vitals metrics, PDF export, React component profiling, and a `chat` command for natural-language browser control. browserctl covers ~20 commands. This gap is intentional in the short term — browserctl prioritises depth (HITL, detection, workflows) over breadth — but it is a real difference for teams that need network-level observability or performance metrics today.
+
+### Prompt injection safety
+
+agent-browser wraps `snapshot` output in nonce-delimited content boundaries, preventing a malicious page from embedding fake agent commands in the DOM and having them executed. browserctl snapshots carry no such boundary marker. This matters when running agents against untrusted or adversarial pages.
+
+### Live viewport streaming
+
+agent-browser provides a WebSocket-based dashboard with a live browser viewport, useful for pair-browsing and debugging agent sessions in real time. browserctl has no live preview — inspection is via `browserctl inspect` which opens Chrome DevTools, not a streaming view.
 
 ---
 
@@ -84,12 +106,15 @@ Refs survive DOM mutations that would break a selector. They also carry no posit
 
 | | browserctl | agent-browser |
 |---|---|---|
-| **Runtime** | Ruby / Ferrum / CDP | TypeScript / Playwright |
-| **Transport** | Unix socket (JSON-RPC) | WebSocket / HTTP |
-| **Deployment** | Local-only daemon | Cloud-first (Vercel) |
-| **HITL** | First-class — pause/resume primitive | Not a primary feature |
-| **Blocker detection** | Built-in (Cloudflare), extensible | Not built-in |
-| **Integration** | Claude Code plugin | MCP / framework-agnostic |
-| **Interaction model** | Ref-based (token-efficient JSON) | Selectors + screenshots |
+| **Runtime** | Ruby / Ferrum / CDP | Rust native binary / CDP |
+| **Transport** | Unix socket (JSON-RPC) | Unix socket (JSON-RPC) |
+| **Deployment** | Local-only daemon | Local daemon + optional cloud providers |
+| **Interaction model** | Ref-based (token-efficient JSON snapshot) | Ref-based (accessibility tree) |
+| **HITL** | First-class — `pause`/`resume` primitive | Not implemented |
+| **Blocker detection** | Built-in (Cloudflare), extensible | Not surfaced |
+| **Workflow layer** | Ruby DSL, compose, record, replay | None |
+| **Prompt injection safety** | Not yet | Content boundaries (nonce-wrapped output) |
+| **Command surface** | ~20 commands | 100+ commands |
+| **Live preview** | DevTools via `inspect` | WebSocket viewport streaming |
 
 browserctl is not trying to be the browser-for-every-framework. It is the browser for agents that work alongside humans, run on your machine, and need to handle the web as it actually is — not as a clean, bot-friendly surface.

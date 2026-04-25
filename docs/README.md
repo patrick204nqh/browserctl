@@ -46,15 +46,23 @@ Look things up without reading linearly.
 | | |
 |---|---|
 | [Commands](reference/commands.md) | Every CLI command, flag, snapshot format, and PageProxy method |
+| [API Stability](reference/api-stability.md) | Fixed / Stable / Extension zones, wire protocol contract |
+| [Style Guide](reference/style-guide.md) | Naming conventions per layer — wire, CLI, SDK |
 
 ---
 
-## Context
+## Architecture
 
 | | |
 |---|---|
-| [Product Story](../PRODUCT.md) | What browserctl is, who it's for, and what makes it different |
+| [Diagrams & ADRs](architecture/README.md) | C4 diagrams and architecture decision records |
+
+---
+
+## Project
+
+| | |
+|---|---|
+| [Product](product.md) | What browserctl is, who it's for, and what makes it different |
+| [Vision & Roadmap](vision.md) | Philosophy, principles, and where the project is going |
 | [vs. agent-browser](vs-agent-browser.md) | Technical comparison with Vercel's agent-browser |
-| [Vision & Roadmap](../VISION.md) | Philosophy, principles, and where the project is going |
-| [Standardization Plan](standardization-plan.md) | Architecture debts, refactoring roadmap, and v1.0 plan |
-| [Architecture](architecture/README.md) | C4 diagrams and architecture decision records |
