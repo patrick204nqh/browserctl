@@ -10,6 +10,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/patrick204nqh/browserctl/compare/v0.3.1...v0.4.0) (2026-04-25)
+
+
+### Features
+
+* add Claude Code plugin support with installation instructions and plugin metadata ([b568ed2](https://github.com/patrick204nqh/browserctl/commit/b568ed29015d77bc521e4484aada1054b73362e6))
+* add PRODUCT and standardization plan documentation; update VISION, README, and command references ([5594b52](https://github.com/patrick204nqh/browserctl/commit/5594b520f65d19f6c0c022e7944f9a560044549f))
+* allow .browserctl/screenshots/ as project-scoped screenshot directory ([b6914f4](https://github.com/patrick204nqh/browserctl/commit/b6914f42ead76865b8c6e8e8c0e0f88516cb53e3))
+* browserctl v0.4 hardening (security, cookie I/O, store/fetch, params file) ([#15](https://github.com/patrick204nqh/browserctl/issues/15)) ([c702661](https://github.com/patrick204nqh/browserctl/commit/c702661196e0784179afdbd824e6064c1db047bc))
+* DX improvements, doc refresh, and hardening ([#16](https://github.com/patrick204nqh/browserctl/issues/16)) ([6e32e00](https://github.com/patrick204nqh/browserctl/commit/6e32e0038abfa28be9e92ec94f9a7642e29803c4))
+
+
+### Bug Fixes
+
+* add enabledPlugins section to settings.json for browserctl plugin activation ([924dbee](https://github.com/patrick204nqh/browserctl/commit/924dbeef9c86ea2c2486d4d93118045acc042833))
+* add marketplace.json and correct plugin metadata ([5cfc1d6](https://github.com/patrick204nqh/browserctl/commit/5cfc1d621bc162fb200150c71ad4f5b62b4bdcc7))
+* allow any path within daemon CWD for screenshots, not just .browserctl/screenshots ([817a492](https://github.com/patrick204nqh/browserctl/commit/817a49211e991493b6018b663fc198c4a0ff3742))
+* save login screenshot to ~/.browserctl/screenshots/ instead of docs/ path ([246688e](https://github.com/patrick204nqh/browserctl/commit/246688e5c586d2028b90c178994d0eb7f1e9c626))
+* update marketplace.json to set strict mode to true for browserctl plugin ([99db2ad](https://github.com/patrick204nqh/browserctl/commit/99db2ada2aae08f8bceb78658e15a267246df973))
+* use screenshot_path param in all examples; CI passes docs/screenshots/ explicitly ([64e073d](https://github.com/patrick204nqh/browserctl/commit/64e073d74979d869560d814b9a986c001b400238))
+
 ## [0.3.1](https://github.com/patrick204nqh/browserctl/compare/v0.3.0...v0.3.1) (2026-04-20)
 
 
