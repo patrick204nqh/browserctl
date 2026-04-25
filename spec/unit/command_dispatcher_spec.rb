@@ -217,12 +217,6 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(res[:snapshot].first).to include(:ref, :tag, :selector)
     end
 
-    it 'accepts legacy format: "ai" via shim and returns elements snapshot' do
-      res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
-      expect(res[:ok]).to be true
-      expect(res[:snapshot]).to be_an(Array)
-    end
-
     it 'returns html for format: "html"' do
       res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
       expect(res[:ok]).to be true

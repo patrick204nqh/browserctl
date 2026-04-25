@@ -79,8 +79,6 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 
 `snapshot` with `format: "elements"` (default) returns `snapshot` field — a JSON array of interactable elements with ref IDs. With `format: "html"` returns `html` field. Both include `challenge` and `nonce`.
 
-`format: "ai"` is accepted as a deprecated alias for `"elements"` and will be removed in v0.6.
-
 `nonce` is a server-generated hex string (16 chars) unique per response. It is present in every `snapshot` response regardless of `format`. Consumers can use it to delimit page-provided content — the page cannot forge or predict the value.
 
 `wait_for` and `watch` both poll for a selector but are distinct wire commands: `wait_for` returns bare `ok` and is used as a programmatic blocking gate (default 10s); `watch` echoes back `selector` in its response and is designed for observational/interactive use (default 30s).

@@ -13,8 +13,6 @@ module Browserctl
         end
 
         def take_snapshot(session, format, diff)
-          format = "elements" if format == "ai"
-
           nonce     = SecureRandom.hex(8)
           challenge = Detectors.cloudflare?(session.page)
 
