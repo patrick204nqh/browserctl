@@ -3,30 +3,36 @@
 ASSETS_OUT = "docs/assets"
 
 EXAMPLES = {
-  "examples/the_internet/login.rb"               => "#{ASSETS_OUT}/the_internet_login.png",
-  "examples/the_internet/checkboxes.rb"          => "#{ASSETS_OUT}/the_internet_checkboxes.png",
-  "examples/the_internet/dropdown.rb"            => "#{ASSETS_OUT}/the_internet_dropdown.png",
-  "examples/the_internet/dynamic_loading.rb"     => "#{ASSETS_OUT}/the_internet_dynamic_loading.png",
-  "examples/the_internet/add_remove_elements.rb" => "#{ASSETS_OUT}/the_internet_add_remove_elements.png",
+  "examples/the_internet/login.rb" => "#{ASSETS_OUT}/the_internet_login.png",
+  "examples/the_internet/checkboxes.rb" => "#{ASSETS_OUT}/the_internet_checkboxes.png",
+  "examples/the_internet/dropdown.rb" => "#{ASSETS_OUT}/the_internet_dropdown.png",
+  "examples/the_internet/dynamic_loading.rb" => "#{ASSETS_OUT}/the_internet_dynamic_loading.png",
+  "examples/the_internet/add_remove_elements.rb" => "#{ASSETS_OUT}/the_internet_add_remove_elements.png"
 }.freeze
 
-def with_daemon(headed: false)
-  system("bundle exec browserctl shutdown", out: File::NULL, err: File::NULL) rescue nil
+def shutdown_daemon
+  system("bundle exec browserctl shutdown", out: File::NULL, err: File::NULL)
+rescue StandardError
+  nil
+end
 
-  flags = headed ? "--headed" : ""
-  pid   = spawn("bundle exec browserd #{flags}".strip)
-
-  ready = 30.times.any? do
+def daemon_ready?
+  30.times.any? do
     break true if system("bundle exec browserctl ping", out: File::NULL, err: File::NULL)
+
     sleep 0.5
     false
   end
-  abort "browserd did not start within 15 s" unless ready
+end
 
+def with_daemon(headed: false)
+  shutdown_daemon
+  pid = spawn("bundle exec browserd#{' --headed' if headed}")
+  abort "browserd did not start within 15 s" unless daemon_ready?
   yield
 ensure
-  system("bundle exec browserctl shutdown", out: File::NULL, err: File::NULL) rescue nil
-  Process.wait(pid) rescue nil
+  shutdown_daemon
+  Process.detach(pid) if pid
 end
 
 namespace :demo do

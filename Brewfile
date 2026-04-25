@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Run `brew bundle` to install all dependencies.
 
 # Git hooks
