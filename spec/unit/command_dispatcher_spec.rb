@@ -154,6 +154,23 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(res[:error]).to match(/invalid extension/)
     end
 
+    it "rejects a path outside the allowed directories" do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main", path: "/etc/passwd" })
+      expect(result[:error]).to match(/outside allowed directory/)
+    end
+
+    it "rejects a path with an invalid extension" do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                     path: File.join(Dir.home, ".browserctl/screenshots/evil.sh") })
+      expect(result[:error]).to match(/invalid extension/)
+    end
+
+    it "rejects a path traversal attempt via .." do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                     path: File.join(Dir.home, ".browserctl/screenshots/../../../etc/crontab.png") })
+      expect(result[:error]).to match(/outside allowed directory/)
+    end
+
     it "accepts a valid path inside the allowed directory" do
       allowed = File.expand_path("~/.browserctl/screenshots/test.png")
       FileUtils.mkdir_p(File.dirname(allowed))
