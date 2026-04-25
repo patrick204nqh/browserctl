@@ -20,7 +20,7 @@ C4Component
 
   Rel(cli, server, "Connects to", "Unix socket / JSON-RPC")
   Rel(server, dispatcher, "Delegates each request")
-  Rel(dispatcher, snapshot, "Calls for snapshot/ai commands")
+  Rel(dispatcher, snapshot, "Calls for snapshot/elements commands")
   Rel(dispatcher, ferrum, "Calls for goto/fill/click/etc")
   Rel(server, idle, "Spawns; updates on each command")
   Rel(idle, server, "Signals shutdown on timeout")

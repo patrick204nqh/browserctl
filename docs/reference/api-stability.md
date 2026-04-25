@@ -72,12 +72,12 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `snapshot` | `name` | `format` (`"ai"`\|`"html"`), `diff` | `ok`, `snapshot` or `html`, `challenge`, `nonce` |
+| `snapshot` | `name` | `format` (`"elements"`\|`"html"`), `diff` | `ok`, `snapshot` or `html`, `challenge`, `nonce` |
 | `screenshot` | `name` | `path`, `full` | `ok`, `path` |
 | `wait_for` | `name`, `selector` | `timeout` (default 10s) | `ok` |
 | `watch` | `name`, `selector` | `timeout` (default 30s) | `ok`, `selector` |
 
-`snapshot` with `format: "ai"` (default) returns `snapshot` field. With `format: "html"` returns `html` field. Both include `challenge` and `nonce`.
+`snapshot` with `format: "elements"` (default) returns `snapshot` field — a JSON array of interactable elements with ref IDs. With `format: "html"` returns `html` field. Both include `challenge` and `nonce`.
 
 `nonce` is a server-generated hex string (16 chars) unique per response. It is present in every `snapshot` response regardless of `format`. Consumers can use it to delimit page-provided content — the page cannot forge or predict the value.
 

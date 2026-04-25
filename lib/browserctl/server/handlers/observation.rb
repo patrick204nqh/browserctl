@@ -16,7 +16,7 @@ module Browserctl
           nonce     = SecureRandom.hex(8)
           challenge = Detectors.cloudflare?(session.page)
 
-          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "ai"
+          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "elements"
 
           snapshot = @snapshot_builder.call(session.page)
           registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }

@@ -32,7 +32,7 @@ browserd already running (PID 12345). Use 'browserctl shutdown' first.
 
 1. Open a named page (name describes purpose, e.g. `login`, `checkout`)
 2. Navigate, fill, click using discrete commands
-3. Use `snap` with `--format ai` when you don't know the layout
+3. Use `snap` when you don't know the layout — `--format elements` is the default
 4. When a sequence stabilises, save it as a workflow
 
 ## Commands
@@ -53,7 +53,7 @@ browserctl fill  login --ref e1 --value user@example.com
 browserctl click login --ref e2
 
 # Observation
-browserctl snap login                   # AI-friendly DOM (use this first for unknown layouts)
+browserctl snap login                   # interactable elements JSON (use this first for unknown layouts)
 browserctl snap login --diff            # only elements changed since last snap
 browserctl snap login --format html     # raw HTML
 browserctl shot login                   # screenshot → /tmp/
@@ -97,9 +97,9 @@ browserd --name session-abc &
 browserctl --daemon session-abc open main --url https://app.example.com
 ```
 
-## AI snapshot format
+## Snapshot format (elements)
 
-`snap --format ai` returns a JSON array of interactable elements:
+`snap` (default) returns a JSON array of interactable elements:
 
 ```json
 [
@@ -245,7 +245,7 @@ browserctl goto main https://protected.example.com
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
 - **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
-- **Use `snap --format ai`** for any page you haven't seen before — it gives valid selectors and ref IDs without reading raw HTML.
+- **Use `snap`** for any page you haven't seen before — the default `elements` format gives valid selectors and ref IDs without reading raw HTML.
 - **Use `--ref` for interactions** — after a `snap`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snap` call — re-snap if you need fresh refs after page changes.
 - **Use `snap --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
 - **Use `watch`** when you need to wait for an element that appears asynchronously — more efficient than polling `snap`.
@@ -293,6 +293,6 @@ end
 - `browserd is not running` → run `browserd &` first; check `~/.browserctl/browserd.log` for startup errors
 - `browserd already running (PID N)` → run `browserctl shutdown` then restart
 - `no page named 'X'` → run `browserctl status` to see what's open, then `browserctl open X`
-- Selector not found → use `snap --format ai` to get valid selectors
+- Selector not found → use `snap` to get valid selectors (elements format is the default)
 - Stale page → `browserctl goto <page> <url>` to reload
 - Debug live → `tail -f ~/.browserctl/browserd.log`

@@ -113,12 +113,12 @@ RSpec.describe "browserd daemon", :integration do
       nil
     end
 
-    it "returns ai snapshot as array of element hashes" do
+    it "returns elements snapshot as array of element hashes" do
       html = "<html><body><a href='/'>Home</a><button>Click</button></body></html>"
       encoded = "data:text/html;base64,#{[html].pack('m0')}"
       @client.goto("snap", encoded)
 
-      res = @client.snapshot("snap", format: "ai")
+      res = @client.snapshot("snap", format: "elements")
       expect(res[:ok]).to be true
       expect(res[:snapshot]).to be_an(Array)
       expect(res[:snapshot].first).to include(:ref, :tag, :selector)

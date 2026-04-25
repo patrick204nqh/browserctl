@@ -55,7 +55,7 @@ Browserctl.workflow "cloudflare_hitl" do
 
   step "wait for content and snapshot" do
     page(:main).wait_for(selector, timeout: 15)
-    result = page(:main).snapshot(format: "ai")
+    result = page(:main).snapshot(format: "elements")
     $stdout.puts "  Snapshot: #{result[:snapshot]&.length || 0} elements captured"
   end
 
