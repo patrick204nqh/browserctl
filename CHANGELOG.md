@@ -10,6 +10,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/patrick204nqh/browserctl/compare/v0.4.0...v0.5.0) (2026-04-25)
+
+
+### Features
+
+* add cookie export/import commands and refine interaction guidance ([1dc8b2c](https://github.com/patrick204nqh/browserctl/commit/1dc8b2c4c744a5f0930c28d3bcf93fd017c368b1))
+* rename snapshot format 'ai' to 'elements' ([#22](https://github.com/patrick204nqh/browserctl/issues/22)) ([9fde6af](https://github.com/patrick204nqh/browserctl/commit/9fde6afb9e53b9556c84b4c24987777a5c266adf))
+* v0.5 architecture & protocol lock ([#20](https://github.com/patrick204nqh/browserctl/issues/20)) ([1224f2f](https://github.com/patrick204nqh/browserctl/commit/1224f2fe2fb05119053831e7901b286fe93ad4fc))
+
+
+### Bug Fixes
+
+* add rake as development dependency ([13902d8](https://github.com/patrick204nqh/browserctl/commit/13902d81fdb986c6ca754fcb16ce61ee850e27ce))
+* improve browser GIF quality and fix terminal font rendering ([17afdb2](https://github.com/patrick204nqh/browserctl/commit/17afdb210916d8ebdabd237130da1fc534cdbd3e))
+* open PR for demo assets instead of pushing directly to main ([f051316](https://github.com/patrick204nqh/browserctl/commit/f051316962d308419c08f60550cfb9910b148f14))
+* quote filtergraph and add -update 1 for palette in browser GIF pipeline ([053d074](https://github.com/patrick204nqh/browserctl/commit/053d074b5fdd3e0ea6fc51589593d72d5f7fcd74))
+* replace undefined REGISTRY constant with Browserctl.registry_snapshot ([d19a6bf](https://github.com/patrick204nqh/browserctl/commit/d19a6bf7ded8a5211f5b2a75511a9532f94e3845))
+* update README for improved clarity and add Quick Start section ([881d914](https://github.com/patrick204nqh/browserctl/commit/881d914c2bf46625ee4ff5c1ca8ef21b462c533d))
+* use app-slug output instead of gh api /app in assets workflow ([ae6a0f8](https://github.com/patrick204nqh/browserctl/commit/ae6a0f80ba2b66c76d681b1f258de5d72bc34c72))
+* use CSS selectors for browser GIF and add full login flow frames ([717b86b](https://github.com/patrick204nqh/browserctl/commit/717b86befa9af6bab1823f984668ebdc29f2d7f8))
+
 ## [0.4.0](https://github.com/patrick204nqh/browserctl/compare/v0.3.1...v0.4.0) (2026-04-25)
 
 
