@@ -63,7 +63,7 @@ module Browserctl
       File.write(output_path, ruby) if output_path
 
       ref_count = lines.count { |l| l[:cmd] == "_ref_interaction" }
-      if ref_count > 0
+      if ref_count.positive?
         warn "Warning: #{ref_count} ref-based interaction(s) were captured but cannot be replayed by ref."
         warn "Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors."
       end
@@ -122,26 +122,32 @@ module Browserctl
       end
 
       def step_parts(cmd)
+        return ref_interaction_parts(cmd) if cmd[:cmd] == "_ref_interaction"
+        return selector_parts(cmd) if %w[fill click].include?(cmd[:cmd])
+
         page = cmd[:name]
         case cmd[:cmd]
-        when "open_page"
-          ["open #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
-        when "goto"
-          ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "open_page"  then ["open #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "goto"       then ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "screenshot" then ["screenshot #{page}", "page(:#{page}).screenshot"]
+        when "evaluate"   then ["eval on #{page}", "page(:#{page}).evaluate(#{cmd[:expression].inspect})"]
+        else ["#{cmd[:cmd]} on #{page}", "# unrecognised command: #{cmd.inspect}"]
+        end
+      end
+
+      def ref_interaction_parts(cmd)
+        ["TODO: ref-based #{cmd[:action]} on #{cmd[:name]} (ref: #{cmd[:ref]})", nil]
+      end
+
+      def selector_parts(cmd)
+        page = cmd[:name]
+        case cmd[:cmd]
         when "fill"
           ["fill #{cmd[:selector]} on #{page}",
            "page(:#{page}).fill(#{cmd[:selector].inspect}, params[:fill_value])"]
         when "click"
           ["click #{cmd[:selector]} on #{page}",
            "page(:#{page}).click(#{cmd[:selector].inspect})"]
-        when "screenshot"
-          ["screenshot #{page}", "page(:#{page}).screenshot"]
-        when "evaluate"
-          ["eval on #{page}", "page(:#{page}).evaluate(#{cmd[:expression].inspect})"]
-        when "_ref_interaction"
-          ["TODO: ref-based #{cmd[:action]} on #{page} (ref: #{cmd[:ref]})", nil]
-        else
-          ["#{cmd[:cmd]} on #{page}", "# unrecognised command: #{cmd.inspect}"]
         end
       end
 

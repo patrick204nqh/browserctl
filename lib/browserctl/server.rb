@@ -72,7 +72,7 @@ module Browserctl
       return unless File.exist?(@pid_path)
 
       pid = File.read(@pid_path).strip.to_i
-      return unless pid > 0
+      return unless pid.positive?
 
       Process.kill(0, pid)
       abort "browserd already running (PID #{pid}). Use 'browserctl shutdown' first."

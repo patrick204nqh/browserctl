@@ -21,7 +21,7 @@ if opts[:name] && opts[:name] !~ /\A[a-zA-Z0-9_-]{1,64}\z/
 end
 
 log_path = Browserctl.log_path(opts[:name])
-$stderr.puts "browserd starting — log: #{log_path}"
+warn "browserd starting — log: #{log_path}"
 Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
 Browserctl::Server.new(
   headless: !opts[:headed],
