@@ -16,7 +16,7 @@ Thank you for taking the time to contribute! This guide covers everything you ne
 
 ## Development Setup
 
-**Requirements:** Ruby >= 3.2, Chrome or Chromium on `PATH`
+**Requirements:** Ruby >= 3.3, Chrome or Chromium on `PATH`
 
 ```bash
 git clone https://github.com/patrick204nqh/browserctl

@@ -10,7 +10,7 @@ This guide gets you from zero to a working browser session in about five minutes
 Check:
 
 ```bash
-ruby --version    # should be 3.2+
+ruby --version    # should be 3.3+
 which chromium || which google-chrome || which chrome
 ```
 

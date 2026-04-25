@@ -20,6 +20,7 @@ wait_for    url           ping
 shutdown    pause         resume
 inspect     cookies       set_cookie
 clear_cookies             import_cookies
+store       fetch
 ```
 
 Never abbreviate on the wire (`snapshot`, not `snap`). The wire protocol is the Fixed zone — once locked, these names never change.
@@ -69,6 +70,7 @@ wait_for     watch        url
 pause        resume       inspect_page
 cookies      set_cookie   clear_cookies
 export_cookies            import_cookies
+store        fetch
 ping         shutdown
 ```
 
@@ -154,7 +156,6 @@ Module-level mutable state is forbidden. All constants are frozen.
 
 ```ruby
 COMMAND_MAP = { ... }.freeze   # ✓
-REGISTRY = {}                  # ✗ — mutable constant (flagged for v0.5)
 ```
 
-Plugin commands go through the `PLUGIN_COMMANDS` registry — not raw constant mutation.
+Shared registries (workflow definitions, plugin commands) use mutex-protected module-level accessors — not mutable constants. Use `Browserctl.register_command` / `Browserctl.lookup_plugin_command` and `Browserctl.workflow` / `Browserctl.lookup_workflow` rather than mutating a constant directly.

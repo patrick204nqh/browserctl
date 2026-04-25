@@ -131,7 +131,7 @@ step "enter code on target site" do
 end
 ```
 
-`fetch` raises `KeyError` with a descriptive message if the key was never stored. Stored values do not persist across separate `browserctl run` invocations.
+`fetch` raises `WorkflowError` with a descriptive message if the key was never stored. Values are stored in the daemon's KV store and persist for as long as the daemon is running — a later `browserctl run` that connects to the same daemon can read a value stored by an earlier run. Values are lost when the daemon stops.
 
 ---
 

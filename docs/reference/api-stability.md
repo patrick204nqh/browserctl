@@ -35,7 +35,8 @@ Can change between minor versions with a changelog entry. No deprecation window 
 What is Extension:
 - `Browserctl.workflow { }` DSL syntax
 - `Browserctl.register_command` plugin API
-- `REGISTRY`, `PLUGIN_COMMANDS` constants
+- `Browserctl.lookup_workflow`, `Browserctl.registry_snapshot` accessors
+- `Browserctl.lookup_plugin_command`, `Browserctl.plugin_commands_snapshot` accessors
 - `WorkflowContext` and `WorkflowDefinition` internals
 - `Browserctl::Runner` public methods
 - `Browserctl::Recording`
@@ -112,6 +113,10 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 |---------|----------------|----------------|-----------------|
 | `ping` | — | — | `ok`, `pid`, `protocol_version` |
 | `shutdown` | — | — | `ok` |
+| `store` | `key`, `value` | — | `ok` |
+| `fetch` | `key` | — | `ok`, `value` |
+
+`fetch` returns `{ error: "key '<key>' not found", code: "key_not_found" }` when the key has never been stored. Values are scoped to the daemon process — they persist across `browserctl run` invocations for as long as the daemon is running, and are lost when the daemon stops.
 
 ---
 
@@ -140,22 +145,8 @@ CLI command names and their flags. See [style-guide.md](style-guide.md) for the 
 | CLI cookie commands used underscores (`set_cookie`, `clear_cookies`) | ✅ Fixed — renamed to `set-cookie`, `clear-cookies` |
 | `ping` response lacked protocol version | ✅ Fixed — `protocol_version: "1"` added |
 | `pause_resume.rb` grouped two commands in one file | ✅ Fixed — split into `pause.rb` and `resume.rb` |
-| `REGISTRY` is a mutable constant | ⬜ v0.5 code item — thread-safe accessor |
 
 `watch` was audited and **retained** as a distinct wire command. It differs from `wait_for` in both its default timeout (30s vs 10s) and its response shape (`selector:` echo vs bare `ok:`). The distinction is intentional and both are Fixed.
-
----
-
-## Planned additions in v0.5 (still Fixed once added)
-
-These wire commands do not exist yet — they are reserved names. Do not use them in plugins.
-
-`store` and `fetch` already work today as workflow DSL methods (`WorkflowContext#store` / `#fetch`) for passing values between steps. The v0.5 work is promoting them to first-class wire protocol commands so non-Ruby clients can use them too.
-
-| Wire command | Current status | Purpose |
-|---|---|---|
-| `store` | DSL only (`WorkflowContext`) | Set a named value in daemon-scoped state |
-| `fetch` | DSL only (`WorkflowContext`) | Get a named value from daemon-scoped state |
 
 ---
 

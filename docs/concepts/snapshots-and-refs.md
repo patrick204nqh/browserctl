@@ -76,7 +76,7 @@ browserctl fill  login --ref e2 --value s3cr3t
 browserctl click login --ref e3
 ```
 
-Refs are stable within the session for as long as the page doesn't reload. They are not positional — `e3` doesn't mean "the third element." It means "the element that was assigned ref e3 in this snapshot."
+Refs are valid until the next `snap` call. Every snapshot assigns refs from scratch — `e1` in one snapshot is not guaranteed to refer to the same element as `e1` in the next. They are not positional — `e3` doesn't mean "the third element." It means "the element that was assigned ref e3 in this snapshot."
 
 An agent workflow looks like this:
 
