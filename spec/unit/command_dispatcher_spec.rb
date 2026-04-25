@@ -356,6 +356,24 @@ RSpec.describe Browserctl::CommandDispatcher do
       dispatcher.dispatch({ cmd: "close_page", name: "temp" })
       expect(pages.key?("temp")).to be false
     end
+
+    it "includes a nonce in every snapshot response" do
+      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      expect(result[:nonce]).to be_a(String)
+      expect(result[:nonce].length).to eq(16)
+    end
+
+    it "returns a different nonce on each call" do
+      r1 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      r2 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      expect(r1[:nonce]).not_to eq(r2[:nonce])
+    end
+
+    it "includes a nonce in html format responses too" do
+      allow(page).to receive(:body).and_return("<html></html>")
+      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+      expect(result[:nonce]).to be_a(String)
+    end
   end
 
   describe "#cmd_inspect" do
