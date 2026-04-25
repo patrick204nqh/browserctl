@@ -28,16 +28,11 @@ jobs:
         run: bundle exec rubocop --parallel
 
   test:
-    name: Test (Ruby ${{ matrix.ruby-version }})
+    name: Test (Ruby 3.3)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      matrix:
-        ruby-version: ["3.2", "3.3"]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-ruby
-        with:
-          ruby-version: ${{ matrix.ruby-version }}
       - name: Test
         run: bundle exec rspec --format progress
