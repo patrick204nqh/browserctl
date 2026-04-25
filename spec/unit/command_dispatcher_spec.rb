@@ -144,7 +144,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "rejects paths outside the allowed screenshot directory" do
       res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
-                                  path: "/tmp/../Users/nqhuy25/.ssh/authorized_keys" })
+                                  path: "/tmp/outside.png" })
       expect(res[:error]).to match(/outside allowed directory/)
     end
 
@@ -152,6 +152,23 @@ RSpec.describe Browserctl::CommandDispatcher do
       res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
                                   path: File.expand_path("~/.browserctl/screenshots/evil.rb") })
       expect(res[:error]).to match(/invalid extension/)
+    end
+
+    it "rejects a path outside the allowed directories" do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main", path: "/etc/evil.png" })
+      expect(result[:error]).to match(/outside allowed directory/)
+    end
+
+    it "rejects a path with an invalid extension" do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                     path: File.join(Dir.home, ".browserctl/screenshots/evil.sh") })
+      expect(result[:error]).to match(/invalid extension/)
+    end
+
+    it "rejects a path traversal attempt via .." do
+      result = dispatcher.dispatch({ cmd: "screenshot", name: "main",
+                                     path: File.join(Dir.home, ".browserctl/screenshots/../../../etc/crontab.png") })
+      expect(result[:error]).to match(/outside allowed directory/)
     end
 
     it "accepts a valid path inside the allowed directory" do
@@ -286,7 +303,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
 
-    after { Browserctl::PLUGIN_COMMANDS.clear }
+    after { Browserctl.instance_variable_set(:@plugin_commands, {}) }
 
     it "dispatches a registered plugin command" do
       Browserctl.register_command(:test_echo) do |_session, req|
@@ -355,6 +372,24 @@ RSpec.describe Browserctl::CommandDispatcher do
 
       dispatcher.dispatch({ cmd: "close_page", name: "temp" })
       expect(pages.key?("temp")).to be false
+    end
+
+    it "includes a nonce in every snapshot response" do
+      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      expect(result[:nonce]).to be_a(String)
+      expect(result[:nonce].length).to eq(16)
+    end
+
+    it "returns a different nonce on each call" do
+      r1 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      r2 = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "ai" })
+      expect(r1[:nonce]).not_to eq(r2[:nonce])
+    end
+
+    it "includes a nonce in html format responses too" do
+      allow(page).to receive(:body).and_return("<html></html>")
+      result = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "html" })
+      expect(result[:nonce]).to be_a(String)
     end
   end
 
@@ -448,6 +483,26 @@ RSpec.describe Browserctl::CommandDispatcher do
       it "returns error for unknown page" do
         res = dispatcher.dispatch({ cmd: "clear_cookies", name: "ghost" })
         expect(res[:error]).to match(/no page named 'ghost'/)
+      end
+    end
+
+    describe "store / fetch commands" do
+      it "stores and retrieves a value" do
+        dispatcher.dispatch({ cmd: "store", key: "token", value: "abc123" })
+        result = dispatcher.dispatch({ cmd: "fetch", key: "token" })
+        expect(result).to eq({ ok: true, value: "abc123" })
+      end
+
+      it "returns an error for a missing key" do
+        result = dispatcher.dispatch({ cmd: "fetch", key: "missing" })
+        expect(result[:error]).to match(/key 'missing' not found/)
+        expect(result[:code]).to eq("key_not_found")
+      end
+
+      it "overwrites an existing key" do
+        dispatcher.dispatch({ cmd: "store", key: "x", value: "first" })
+        dispatcher.dispatch({ cmd: "store", key: "x", value: "second" })
+        expect(dispatcher.dispatch({ cmd: "fetch", key: "x" })[:value]).to eq("second")
       end
     end
   end

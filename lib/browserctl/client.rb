@@ -131,6 +131,17 @@ module Browserctl
     # @return [Hash] `{ ok: true, devtools_url: }` or `{ error: }`
     def inspect_page(name)         = call("inspect", name: name)
 
+    # Stores a value in the daemon-scoped key-value store.
+    # @param key [String] storage key
+    # @param value [Object] value to store (must be JSON-serialisable)
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def store(key, value) = call("store", key: key, value: value)
+
+    # Retrieves a value from the daemon-scoped key-value store.
+    # @param key [String] storage key
+    # @return [Hash] `{ ok: true, value: }` or `{ error:, code: "key_not_found" }`
+    def fetch(key) = call("fetch", key: key)
+
     # Returns all cookies for a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true, cookies: [Hash] }` or `{ error: }`

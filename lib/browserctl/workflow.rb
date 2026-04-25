@@ -16,15 +16,20 @@ module Browserctl
     def initialize(params, client)
       @params = params
       @client = client
-      @_store = {}
     end
 
     def store(key, value)
-      @_store[key] = value
+      res = @client.store(key.to_s, value)
+      raise WorkflowError, res[:error] if res[:error]
+
+      value
     end
 
     def fetch(key)
-      @_store.fetch(key) { raise KeyError, "no value stored for key #{key.inspect}" }
+      res = @client.fetch(key.to_s)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res[:value]
     end
 
     def method_missing(name, *args)
@@ -137,7 +142,7 @@ module Browserctl
     end
 
     def compose(workflow_name)
-      source = REGISTRY[workflow_name.to_s]
+      source = Browserctl.lookup_workflow(workflow_name.to_s)
       raise WorkflowError, "workflow '#{workflow_name}' not found for composition" unless source
 
       @steps.concat(source.steps)
@@ -187,11 +192,20 @@ module Browserctl
     end
   end
 
-  REGISTRY = {} # rubocop:disable Style/MutableConstant
+  @registry_mutex = Mutex.new
+  @registry = {}
 
   def self.workflow(name, &)
     defn = WorkflowDefinition.new(name.to_s)
     defn.instance_exec(&)
-    REGISTRY[name.to_s] = defn
+    @registry_mutex.synchronize { @registry[name.to_s] = defn }
+  end
+
+  def self.lookup_workflow(name)
+    @registry_mutex.synchronize { @registry[name.to_s] }
+  end
+
+  def self.registry_snapshot
+    @registry_mutex.synchronize { @registry.dup }
   end
 end

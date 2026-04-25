@@ -1,0 +1,6 @@
+module Browserctl
+  class SnapshotBuilder
+    def initialize: () -> void
+    def call: (untyped page) -> Array[Hash[Symbol, untyped]]
+  end
+end

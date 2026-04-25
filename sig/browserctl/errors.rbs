@@ -1,0 +1,35 @@
+module Browserctl
+  class Error < StandardError
+    def self.default_code: () -> String
+    attr_reader code: String
+    def initialize: (?String? msg, ?code: String) -> void
+  end
+
+  class PageNotFound < Error
+    def self.default_code: () -> String
+  end
+
+  class SelectorNotFound < Error
+    def self.default_code: () -> String
+  end
+
+  class RefNotFound < Error
+    def self.default_code: () -> String
+  end
+
+  class PathNotAllowed < Error
+    def self.default_code: () -> String
+  end
+
+  class DomainNotAllowed < Error
+    def self.default_code: () -> String
+  end
+
+  class TimeoutError < Error
+    def self.default_code: () -> String
+  end
+
+  class KeyNotFound < Error
+    def self.default_code: () -> String
+  end
+end

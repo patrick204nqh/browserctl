@@ -79,7 +79,9 @@ RSpec.describe Browserctl::Runner do
       allow_any_instance_of(Browserctl::WorkflowDefinition).to receive(:call).and_return([])
       expect { runner.run_workflow("the_internet/login") }.not_to raise_error
     ensure
-      Browserctl::REGISTRY.delete("the_internet/login")
+      Browserctl.instance_variable_get(:@registry_mutex).synchronize do
+        Browserctl.instance_variable_get(:@registry).delete("the_internet/login")
+      end
     end
 
     it "raises for names with null bytes" do
