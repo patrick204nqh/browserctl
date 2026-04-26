@@ -103,6 +103,20 @@ RSpec.describe "browserd daemon", :integration do
       clicked = @client.evaluate("form", "document.getElementById('go').dataset.clicked")
       expect(clicked[:result]).to eq("1")
     end
+
+    it "replaces existing input value rather than appending" do
+      html = <<~HTML
+        <html><body>
+          <input id="name" type="text" value="existing">
+        </body></html>
+      HTML
+      encoded = "data:text/html;base64,#{[html].pack('m0')}"
+      @client.goto("form", encoded)
+
+      expect(@client.fill("form", "input#name", "replacement")[:ok]).to be true
+      val = @client.evaluate("form", "document.getElementById('name').value")
+      expect(val[:result]).to eq("replacement")
+    end
   end
 
   describe "snapshot" do
