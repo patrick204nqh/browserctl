@@ -48,6 +48,7 @@ module Browserctl
           return { error: "selector not found: #{selector}" } unless el
 
           el.focus
+          el.evaluate("this.select()")
           el.type(value)
           { ok: true }
         end

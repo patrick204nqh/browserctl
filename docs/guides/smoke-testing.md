@@ -1,6 +1,9 @@
-# Smoke Testing with the-internet.herokuapp.com
+# Smoke Testing with Practice Sites
 
-[the-internet.herokuapp.com](https://the-internet.herokuapp.com) is a publicly available test site purpose-built for browser automation practice. browserctl ships with ready-to-run examples covering its most common scenarios.
+browserctl ships with ready-to-run examples against two publicly available test sites purpose-built for browser automation practice.
+
+- **[the-internet.herokuapp.com](https://the-internet.herokuapp.com)** — a wide-ranging sandbox covering common UI patterns (login, checkboxes, dropdowns, dynamic loading, DOM mutation)
+- **[practicetestautomation.com](https://practicetestautomation.com)** — a focused site with a clean login sandbox and dedicated exception-reproduction scenarios
 
 ## Running the examples
 
@@ -8,12 +11,17 @@
 # Start the daemon with a visible browser window
 browserd --headed &
 
-# Run any example directly by file path
+# the-internet examples
 browserctl run examples/the_internet/login.rb
 browserctl run examples/the_internet/checkboxes.rb
 browserctl run examples/the_internet/dropdown.rb
 browserctl run examples/the_internet/dynamic_loading.rb
 browserctl run examples/the_internet/add_remove_elements.rb
+
+# practicetestautomation.com examples
+browserctl run examples/practice_test_automation/login.rb
+browserctl run examples/practice_test_automation/login_negative.rb
+browserctl run examples/practice_test_automation/exceptions.rb
 
 browserctl shutdown
 ```
@@ -130,6 +138,64 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
 
 ---
 
+---
+
+## practicetestautomation.com examples
+
+### `practice_test_automation/login.rb` — Login and Logout
+
+Covers: `fill`, `click`, `url`, `evaluate`
+
+Navigates to the login sandbox, fills in the public test credentials, submits the form, asserts the redirect to the success page and the heading text, then clicks the logout link and verifies the return to the login page.
+
+**Test credentials:** `student` / `Password123`
+
+```
+  [ok]   open login page
+  [ok]   fill and submit credentials
+  [ok]   verify successful login
+  [ok]   logout and verify
+```
+
+---
+
+### `practice_test_automation/login_negative.rb` — Invalid Credentials
+
+Covers: `fill`, `click`, `evaluate`
+
+Submits an invalid username (keeping the correct password) and asserts the "Your username is invalid!" error message, then submits an invalid password (keeping the correct username) and asserts the "Your password is invalid!" error message.
+
+Demonstrates negative-path testing: verifying that error states are correctly surfaced rather than silently failing.
+
+```
+  [ok]   open login page
+  [ok]   submit invalid username — expect username error
+  [ok]   submit invalid password — expect password error
+```
+
+---
+
+### `practice_test_automation/exceptions.rb` — Dynamic Elements and Disabled Fields
+
+Covers: `click`, `fill`, `evaluate`, `watch`
+
+Demonstrates three patterns that trip up naive automation scripts:
+
+1. **Disabled input (InvalidElementStateException avoidance)** — clicks the Edit button to enable a read-only field before filling it.
+2. **Dynamically added element (NoSuchElementException avoidance)** — clicks Add and uses `watch` to poll until row 2 appears after its 5-second server-side delay.
+3. **Confirmation message** — asserts the transient "Row 2 was added" text before it fades.
+
+```
+  [ok]   open test exceptions page
+  [ok]   enable row 1 input and edit it (InvalidElementStateException avoidance)
+  [ok]   click Add and wait for row 2 to appear (NoSuchElementException avoidance)
+  [ok]   verify confirmation message
+  [ok]   type into row 2 input and save
+  [ok]   remove row 2
+```
+
+---
+
 ## Patterns demonstrated
 
 | Pattern | Where it appears |
@@ -140,5 +206,7 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
 | Assert current URL | `login.rb` — `page(:main).url` |
 | Read DOM state via JS | `checkboxes.rb`, `dropdown.rb`, `add_remove_elements.rb` — `client.evaluate("main", expression)[:result]` |
 | Set DOM state via JS | `dropdown.rb` — `client.evaluate("main", "document.querySelector('select#dropdown').value = '1'")` |
-| Wait for async element | `dynamic_loading.rb` — `page(:main).wait_for(selector, timeout:)` |
+| Wait for async element (short) | `dynamic_loading.rb` — `page(:main).wait_for(selector, timeout:)` |
+| Poll for async element (long) | `exceptions.rb` — `page(:main).watch(selector, timeout:)` |
+| Negative-path assertion | `login_negative.rb` — assert error message text on failed login |
 | Assert with message | All examples — `assert condition, "message"` |

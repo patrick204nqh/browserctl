@@ -94,7 +94,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "resolves ref to selector for fill" do
-      el = double("el", focus: nil, type: nil)
+      el = double("el", focus: nil, evaluate: nil, type: nil)
       allow(page).to receive(:at_css).and_return(el)
       res = dispatcher.dispatch({ cmd: "fill", name: "main", ref: "e1", value: "test@example.com" })
       expect(res[:ok]).to be true
