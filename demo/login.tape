@@ -19,7 +19,7 @@ Set PlaybackSpeed 1
 # ---------- preamble ----------
 # Chain into one command so `clear` wipes the echoed text before gum renders.
 Hide
-Type "export PS1='❯ ' && clear && printf '\n\n\n'; gum style --foreground '#61afef' --bold '  browserctl'; gum style --foreground '#abb2bf' '  persistent browser sessions for AI agents and CI'"
+Type "export PS1='❯ ' && clear && printf '\n\n\n'; gum style --foreground '#61afef' --bold '  browserctl'; echo '  persistent browser sessions for AI agents and CI'"
 Enter
 Show
 Sleep 600ms
@@ -43,17 +43,17 @@ Enter
 Sleep 4s
 
 # ---------- fill & submit ----------
-Type "bundle exec browserctl fill main --ref e1 --value admin"
+Type "bundle exec browserctl fill main '[data-test=username-input]' admin"
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "bundle exec browserctl fill main --ref e2 --value admin"
+Type "bundle exec browserctl fill main '[data-test=password-input]' admin"
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "bundle exec browserctl click main --ref e3"
+Type "bundle exec browserctl click main '[data-test=login-button]'"
 Sleep 400ms
 Enter
 Sleep 4s
