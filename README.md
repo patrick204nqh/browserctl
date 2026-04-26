@@ -37,7 +37,7 @@ browserctl shutdown
 **Terminal**<br/>
 <sub>CLI commands, live output, session persistence proof</sub>
 
-<img src="docs/assets/terminal.webp" alt="browserctl terminal demo"/>
+<img src="docs/assets/terminal.gif" alt="browserctl terminal demo"/>
 
 </td>
 <td align="center" width="50%">
