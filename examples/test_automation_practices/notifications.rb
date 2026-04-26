@@ -15,6 +15,11 @@ Browserctl.workflow "test_automation_practices/notifications" do
 
   step "open notifications page" do
     client.open_page("main", url: "#{base_url}/#/notifications")
+    # Dismiss any notifications the app shows on load so counts start at zero
+    client.evaluate("main", <<~JS)
+      document.querySelectorAll('[data-test^="close-notification-"]').forEach(b => b.click())
+    JS
+    sleep 0.3
   end
 
   step "trigger success notification and verify" do
