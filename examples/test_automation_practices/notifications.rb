@@ -15,11 +15,19 @@ Browserctl.workflow "test_automation_practices/notifications" do
 
   step "open notifications page" do
     client.open_page("main", url: "#{base_url}/#/notifications")
-    # Dismiss any notifications the app shows on load so counts start at zero
+    # Wait for the container to render before touching anything
+    page(:main).wait_for("[data-test='notification-container']", timeout: 5)
+    # Dismiss any notifications the app shows on load
     client.evaluate("main", <<~JS)
       document.querySelectorAll('[data-test^="close-notification-"]').forEach(b => b.click())
     JS
-    sleep 0.3
+    # Poll until clear so counts start at zero before the test steps begin
+    deadline = Time.now + 5
+    loop do
+      break if client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result].zero? || Time.now > deadline
+
+      sleep 0.2
+    end
   end
 
   step "trigger success notification and verify" do
