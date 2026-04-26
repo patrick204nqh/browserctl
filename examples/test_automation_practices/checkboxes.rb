@@ -10,10 +10,10 @@ Browserctl.workflow "test_automation_practices/checkboxes" do
     client.open_page("main", url: "#{base_url}/#/checkboxes")
   end
 
-  step "read initial state — all unchecked" do
+  step "read initial state — checkbox 2 pre-checked" do
     js = "[1,2,3].map(i => document.querySelector(`[data-test=\"checkbox-checkbox${i}\"]`)?.checked)"
     states = client.evaluate("main", js)[:result]
-    assert states.none?, "expected all unchecked initially, got: #{states.inspect}"
+    assert states == [false, true, false], "expected initial state [false, true, false], got: #{states.inspect}"
   end
 
   step "toggle checkbox 1 on" do
