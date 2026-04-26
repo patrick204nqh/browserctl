@@ -26,117 +26,16 @@ browserctl run examples/practice_test_automation/exceptions.rb
 browserctl shutdown
 ```
 
-Expected output for each (example shown for login):
+Expected output for the login example:
 
 ```
   [ok]   open login page
   [ok]   fill and submit credentials
-  [ok]   verify secure area
+  [ok]   verify successful login
   [ok]   logout and verify
-  [ok]   capture screenshot
 ```
 
 Each example saves a screenshot to `docs/assets/` on completion. Screenshots are regenerated automatically by the [Update Demo Assets](../../.github/workflows/assets.yml) workflow when examples change, and can also be triggered manually from the Actions tab.
-
----
-
-## Examples
-
-### `the_internet/login.rb` — Form Authentication
-
-Covers: `fill`, `click`, `url`, `evaluate`
-
-Navigates to the login page, fills in the public test credentials, submits the form, asserts the redirect to `/secure` and the success flash message, then logs out and verifies the logout flash.
-
-**Test credentials:** `tomsmith` / `SuperSecretPassword!`
-
-```
-  [ok]   open login page
-  [ok]   fill and submit credentials
-  [ok]   verify secure area
-  [ok]   logout and verify
-  [ok]   capture screenshot
-```
-
-![login smoke test](../assets/the_internet_login.png)
-
----
-
-### `the_internet/checkboxes.rb` — Checkboxes
-
-Covers: `evaluate`, `click`
-
-Reads the initial checkbox states (`[false, true]`), toggles the first checkbox, and asserts both are now checked.
-
-```
-  [ok]   open checkboxes page
-  [ok]   read initial state
-  [ok]   toggle first checkbox on
-  [ok]   verify both checkboxes are now checked
-  [ok]   capture screenshot
-```
-
-![checkboxes smoke test](../assets/the_internet_checkboxes.png)
-
----
-
-### `the_internet/dropdown.rb` — Dropdown Select
-
-Covers: `evaluate`
-
-Asserts the default dropdown has no selection, then selects Option 1 and Option 2 in sequence via JavaScript, verifying the selected text after each change.
-
-> **Note:** browserctl has no native `select` command. Use `evaluate` to set `select.value` directly — this is the recommended pattern for dropdown interaction.
-
-```
-  [ok]   open dropdown page
-  [ok]   assert default is unselected
-  [ok]   select Option 1
-  [ok]   select Option 2
-  [ok]   capture screenshot
-```
-
-![dropdown smoke test](../assets/the_internet_dropdown.png)
-
----
-
-### `the_internet/dynamic_loading.rb` — Dynamic Loading
-
-Covers: `click`, `wait_for`, `evaluate`
-
-Verifies the finish element is hidden before clicking Start, then clicks the Start button and waits up to 10 seconds for `#finish h4` to appear, asserting its text is `"Hello World!"`.
-
-This example demonstrates the `wait_for` command — useful any time a page renders content asynchronously.
-
-```
-  [ok]   open dynamic loading page
-  [ok]   assert finish text is hidden before start
-  [ok]   click Start and wait for content
-  [ok]   assert finish text is correct
-  [ok]   capture screenshot
-```
-
-![dynamic loading smoke test](../assets/the_internet_dynamic_loading.png)
-
----
-
-### `the_internet/add_remove_elements.rb` — Add/Remove Elements
-
-Covers: `click`, `evaluate`
-
-Clicks "Add Element" three times, asserts three delete buttons are present, removes them one by one, and asserts the list is empty at the end.
-
-```
-  [ok]   open add/remove elements page
-  [ok]   add three elements
-  [ok]   remove one element
-  [ok]   remove all remaining elements
-  [ok]   capture screenshot
-```
-
-![add/remove elements smoke test](../assets/the_internet_add_remove_elements.png)
-
----
 
 ---
 
@@ -157,6 +56,8 @@ Navigates to the login sandbox, fills in the public test credentials, submits th
   [ok]   logout and verify
 ```
 
+![login smoke test](../assets/practice_test_automation_login.png)
+
 ---
 
 ### `practice_test_automation/login_negative.rb` — Invalid Credentials
@@ -172,6 +73,8 @@ Demonstrates negative-path testing: verifying that error states are correctly su
   [ok]   submit invalid username — expect username error
   [ok]   submit invalid password — expect password error
 ```
+
+![login negative smoke test](../assets/practice_test_automation_login_negative.png)
 
 ---
 
@@ -192,6 +95,96 @@ Demonstrates three patterns that trip up naive automation scripts:
   [ok]   verify confirmation message
   [ok]   type into row 2 input and save
   [ok]   remove row 2
+```
+
+![exceptions smoke test](../assets/practice_test_automation_exceptions.png)
+
+---
+
+## the-internet.herokuapp.com examples
+
+### `the_internet/login.rb` — Form Authentication
+
+Covers: `fill`, `click`, `url`, `evaluate`
+
+Navigates to the login page, fills in the public test credentials, submits the form, asserts the redirect to `/secure` and the success flash message, then logs out and verifies the logout flash.
+
+**Test credentials:** `tomsmith` / `SuperSecretPassword!`
+
+```
+  [ok]   open login page
+  [ok]   fill and submit credentials
+  [ok]   verify secure area
+  [ok]   logout and verify
+  [ok]   capture screenshot
+```
+
+---
+
+### `the_internet/checkboxes.rb` — Checkboxes
+
+Covers: `evaluate`, `click`
+
+Reads the initial checkbox states (`[false, true]`), toggles the first checkbox, and asserts both are now checked.
+
+```
+  [ok]   open checkboxes page
+  [ok]   read initial state
+  [ok]   toggle first checkbox on
+  [ok]   verify both checkboxes are now checked
+  [ok]   capture screenshot
+```
+
+---
+
+### `the_internet/dropdown.rb` — Dropdown Select
+
+Covers: `evaluate`
+
+Asserts the default dropdown has no selection, then selects Option 1 and Option 2 in sequence via JavaScript, verifying the selected text after each change.
+
+> **Note:** browserctl has no native `select` command. Use `evaluate` to set `select.value` directly — this is the recommended pattern for dropdown interaction.
+
+```
+  [ok]   open dropdown page
+  [ok]   assert default is unselected
+  [ok]   select Option 1
+  [ok]   select Option 2
+  [ok]   capture screenshot
+```
+
+---
+
+### `the_internet/dynamic_loading.rb` — Dynamic Loading
+
+Covers: `click`, `wait_for`, `evaluate`
+
+Verifies the finish element is hidden before clicking Start, then clicks the Start button and waits up to 10 seconds for `#finish h4` to appear, asserting its text is `"Hello World!"`.
+
+This example demonstrates the `wait_for` command — useful any time a page renders content asynchronously.
+
+```
+  [ok]   open dynamic loading page
+  [ok]   assert finish text is hidden before start
+  [ok]   click Start and wait for content
+  [ok]   assert finish text is correct
+  [ok]   capture screenshot
+```
+
+---
+
+### `the_internet/add_remove_elements.rb` — Add/Remove Elements
+
+Covers: `click`, `evaluate`
+
+Clicks "Add Element" three times, asserts three delete buttons are present, removes them one by one, and asserts the list is empty at the end.
+
+```
+  [ok]   open add/remove elements page
+  [ok]   add three elements
+  [ok]   remove one element
+  [ok]   remove all remaining elements
+  [ok]   capture screenshot
 ```
 
 ---

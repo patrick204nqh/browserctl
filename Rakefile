@@ -3,11 +3,9 @@
 ASSETS_OUT = "docs/assets"
 
 EXAMPLES = {
-  "examples/the_internet/login.rb" => "#{ASSETS_OUT}/the_internet_login.png",
-  "examples/the_internet/checkboxes.rb" => "#{ASSETS_OUT}/the_internet_checkboxes.png",
-  "examples/the_internet/dropdown.rb" => "#{ASSETS_OUT}/the_internet_dropdown.png",
-  "examples/the_internet/dynamic_loading.rb" => "#{ASSETS_OUT}/the_internet_dynamic_loading.png",
-  "examples/the_internet/add_remove_elements.rb" => "#{ASSETS_OUT}/the_internet_add_remove_elements.png"
+  "examples/practice_test_automation/login.rb" => "#{ASSETS_OUT}/practice_test_automation_login.png",
+  "examples/practice_test_automation/login_negative.rb" => "#{ASSETS_OUT}/practice_test_automation_login_negative.png",
+  "examples/practice_test_automation/exceptions.rb" => "#{ASSETS_OUT}/practice_test_automation_exceptions.png"
 }.freeze
 
 def shutdown_daemon
@@ -58,19 +56,19 @@ namespace :demo do
     mkdir_p frames_dir
 
     with_daemon(headed: ENV["HEADED"] == "1") do
-      sh "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
+      sh "bundle exec browserctl open main --url https://practicetestautomation.com/practice-test-login/"
       sleep 2
       sh "bundle exec browserctl shot main --out #{frames_dir}/01_login.png"
 
-      sh "bundle exec browserctl fill main '#username' tomsmith"
+      sh "bundle exec browserctl fill main '#username' student"
       sleep 1
       sh "bundle exec browserctl shot main --out #{frames_dir}/02_username.png"
 
-      sh "bundle exec browserctl fill main '#password' 'SuperSecretPassword!'"
+      sh "bundle exec browserctl fill main '#password' Password123"
       sleep 1
       sh "bundle exec browserctl shot main --out #{frames_dir}/03_filled.png"
 
-      sh "bundle exec browserctl click main 'button[type=\"submit\"]'"
+      sh "bundle exec browserctl click main 'button#submit'"
       sleep 3
       sh "bundle exec browserctl shot main --out #{frames_dir}/04_secure.png"
     end

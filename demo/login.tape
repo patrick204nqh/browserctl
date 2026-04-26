@@ -36,7 +36,7 @@ Enter
 Sleep 5s
 
 # ---------- open the login page ----------
-Type "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
+Type "bundle exec browserctl open main --url https://practicetestautomation.com/practice-test-login/"
 Sleep 400ms
 Enter
 Sleep 4s
@@ -51,12 +51,12 @@ Sleep 4s
 Type "# fill credentials using ref IDs — no selectors needed"
 Sleep 500ms
 Enter
-Type "bundle exec browserctl fill main --ref e1 --value tomsmith"
+Type "bundle exec browserctl fill main --ref e1 --value student"
 Sleep 400ms
 Enter
 Sleep 2s
 
-Type "bundle exec browserctl fill main --ref e2 --value SuperSecretPassword!"
+Type "bundle exec browserctl fill main --ref e2 --value Password123"
 Sleep 400ms
 Enter
 Sleep 2s
@@ -66,8 +66,8 @@ Sleep 400ms
 Enter
 Sleep 4s
 
-# ---------- prove session persisted: URL shows /secure ----------
-Type "# session persisted — browser is on the secure page"
+# ---------- prove session persisted: URL shows logged-in-successfully ----------
+Type "# session persisted — browser is on the success page"
 Sleep 500ms
 Enter
 Type "bundle exec browserctl url main"
