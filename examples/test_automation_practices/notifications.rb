@@ -3,8 +3,9 @@
 Browserctl.workflow "test_automation_practices/notifications" do
   desc "Notifications: trigger success, error, and info toasts — assert each appears then dismiss"
 
-  param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
+  param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
+  param :screenshot_path,
+        default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
 
   step "open notifications page" do
     client.open_page("main", url: "#{base_url}/#/notifications")
@@ -31,6 +32,7 @@ Browserctl.workflow "test_automation_practices/notifications" do
         "document.querySelectorAll('[data-test^=\"notification-\"]').length"
       )[:result]
       break if remaining.zero? || Time.now > deadline
+
       sleep 0.2
     end
     assert remaining.zero?, "expected no notifications after dismiss, got: #{remaining}"
