@@ -7,56 +7,51 @@ NOTIFICATION_ITEMS_JS = <<~JS
 JS
 
 Browserctl.workflow "test_automation_practices/notifications" do
-  desc "Notifications: trigger success, error, and info toasts — assert each appears then dismiss"
+  desc "Notifications: trigger success, error, and info toasts — verify count increases on each trigger"
 
   param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
         default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
 
-  step "open notifications page" do
+  step "open notifications page and record baseline" do
     client.open_page("main", url: "#{base_url}/#/notifications")
-    # Wait for the container to render before touching anything
     page(:main).wait_for("[data-test='notification-container']", timeout: 5)
-    # Dismiss any notifications the app shows on load
-    client.evaluate("main", <<~JS)
-      document.querySelectorAll('[data-test^="close-notification-"]').forEach(b => b.click())
-    JS
-    # Poll until clear so counts start at zero before the test steps begin
-    deadline = Time.now + 5
-    loop do
-      break if client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result].zero? || Time.now > deadline
-
-      sleep 0.2
-    end
+    # Let any delayed on-load notifications finish appearing before we snapshot the baseline
+    sleep 1
+    store(:baseline, client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result])
   end
 
-  step "trigger success notification and verify" do
+  step "trigger success notification and verify count increased by 1" do
+    base = fetch(:baseline)
     page(:main).click("[data-test='add-success']")
     page(:main).wait_for("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
     count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
-    assert count == 1, "expected 1 notification, got: #{count}"
+    assert count == base + 1, "expected #{base + 1} notifications after success, got: #{count}"
   end
 
-  step "dismiss notification and verify none remain" do
-    # Use evaluate to click the close button — more reliable than CSS prefix selectors
+  step "dismiss one notification and verify count returns to baseline" do
+    base = fetch(:baseline)
     client.evaluate("main", "document.querySelector('[data-test^=\"close-notification-\"]')?.click()")
     deadline = Time.now + 5
     remaining = nil
     loop do
       remaining = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
-      break if remaining.zero? || Time.now > deadline
+      break if remaining <= base || Time.now > deadline
 
       sleep 0.2
     end
-    assert remaining.zero?, "expected no notifications after dismiss, got: #{remaining}"
+    assert remaining <= base, "expected count back to #{base} after dismiss, got: #{remaining}"
+    # Re-snapshot baseline in case on-load notifications auto-dismissed during this step
+    store(:baseline, remaining)
   end
 
-  step "trigger error and info notifications together" do
+  step "trigger error and info notifications and verify count increased by 2" do
+    base = fetch(:baseline)
     page(:main).click("[data-test='add-error']")
     page(:main).click("[data-test='add-info']")
     page(:main).wait_for("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
     count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
-    assert count == 2, "expected 2 notifications (error + info), got: #{count}"
+    assert count == base + 2, "expected #{base + 2} notifications (error + info), got: #{count}"
     page(:main).screenshot(path: screenshot_path)
   end
 end
