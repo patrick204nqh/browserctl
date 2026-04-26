@@ -56,7 +56,10 @@ module Browserctl
           el = page.at_css(selector)
           return { error: "selector not found: #{selector}" } unless el
 
-          el.click
+          # Use the DOM native click() so JS-only event listeners fire.
+          # CDP mouse simulation (el.click) dispatches events at screen coordinates
+          # and misses handlers on elements with no form submit chain.
+          el.evaluate("this.click()")
           { ok: true }
         end
 
