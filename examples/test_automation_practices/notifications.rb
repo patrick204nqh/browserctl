@@ -2,7 +2,7 @@
 
 # Individual notification items have data-test="notification-{id}".
 # The wrapper has data-test="notification-container" — excluded from counts below.
-NOTIFICATION_ITEMS_JS = <<~JS.freeze
+NOTIFICATION_ITEMS_JS = <<~JS
   document.querySelectorAll('[data-test^="notification-"]:not([data-test="notification-container"])').length
 JS
 
