@@ -71,14 +71,14 @@ gem install browserctl
 browserd &
 
 # 3. Open a named page
-browserctl open main --url https://the-internet.herokuapp.com/login
+browserctl open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
 
 # 4. Snapshot the page — get AI-friendly JSON with ref IDs
 browserctl snap main
 
 # 5. Interact using refs
-browserctl fill  main --ref e1 --value tomsmith
-browserctl fill  main --ref e2 --value SuperSecretPassword!
+browserctl fill  main --ref e1 --value admin
+browserctl fill  main --ref e2 --value admin
 browserctl click main --ref e3
 
 # 6. Observe
