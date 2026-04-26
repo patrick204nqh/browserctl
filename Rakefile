@@ -50,7 +50,7 @@ namespace :demo do
     end
   end
 
-  desc "Record terminal GIF with VHS  (requires: brew install vhs)"
+  desc "Record terminal GIF with VHS  (requires: brew install vhs gum)"
   task :terminal do
     mkdir_p ASSETS_OUT
     sh "vhs demo/login.tape"
@@ -114,7 +114,7 @@ namespace :demo do
 
   desc "Remove generated demo assets"
   task :clean do
-    rm_f Dir["#{ASSETS_OUT}/terminal.{gif,webp}"]
+    rm_f "#{ASSETS_OUT}/terminal.gif"
     rm_f "#{ASSETS_OUT}/browser_demo.gif"
     puts "Demo assets cleaned."
   end

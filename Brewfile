@@ -7,6 +7,7 @@ brew "lefthook"
 
 # Terminal recording for demo assets
 brew "vhs"
+brew "gum"
 
 # Browser required by browserd
 cask "google-chrome"
