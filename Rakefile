@@ -2,12 +2,16 @@
 
 ASSETS_OUT = "docs/assets"
 
+TAP_BASE = "examples/test_automation_practices"
+TAP_OUT  = "test_automation_practices"
+
 EXAMPLES = {
-  "examples/the_internet/login.rb" => "#{ASSETS_OUT}/the_internet_login.png",
-  "examples/the_internet/checkboxes.rb" => "#{ASSETS_OUT}/the_internet_checkboxes.png",
-  "examples/the_internet/dropdown.rb" => "#{ASSETS_OUT}/the_internet_dropdown.png",
-  "examples/the_internet/dynamic_loading.rb" => "#{ASSETS_OUT}/the_internet_dynamic_loading.png",
-  "examples/the_internet/add_remove_elements.rb" => "#{ASSETS_OUT}/the_internet_add_remove_elements.png"
+  "#{TAP_BASE}/login.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_login.png",
+  "#{TAP_BASE}/login_negative.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_login_negative.png",
+  "#{TAP_BASE}/dynamic_elements.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_dynamic_elements.png",
+  "#{TAP_BASE}/checkboxes.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_checkboxes.png",
+  "#{TAP_BASE}/notifications.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_notifications.png",
+  "#{TAP_BASE}/key_press.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_key_press.png"
 }.freeze
 
 def shutdown_daemon
@@ -58,21 +62,21 @@ namespace :demo do
     mkdir_p frames_dir
 
     with_daemon(headed: ENV["HEADED"] == "1") do
-      sh "bundle exec browserctl open main --url https://the-internet.herokuapp.com/login"
+      sh "bundle exec browserctl open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth"
       sleep 2
       sh "bundle exec browserctl shot main --out #{frames_dir}/01_login.png"
 
-      sh "bundle exec browserctl fill main '#username' tomsmith"
+      sh "bundle exec browserctl fill main '[data-test=username-input]' admin"
       sleep 1
       sh "bundle exec browserctl shot main --out #{frames_dir}/02_username.png"
 
-      sh "bundle exec browserctl fill main '#password' 'SuperSecretPassword!'"
+      sh "bundle exec browserctl fill main '[data-test=password-input]' admin"
       sleep 1
       sh "bundle exec browserctl shot main --out #{frames_dir}/03_filled.png"
 
-      sh "bundle exec browserctl click main 'button[type=\"submit\"]'"
+      sh "bundle exec browserctl click main '[data-test=login-button]'"
       sleep 3
-      sh "bundle exec browserctl shot main --out #{frames_dir}/04_secure.png"
+      sh "bundle exec browserctl shot main --out #{frames_dir}/04_success.png"
     end
 
     concat = "#{frames_dir}/concat.txt"

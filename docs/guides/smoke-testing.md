@@ -3,7 +3,7 @@
 browserctl ships with ready-to-run examples against two publicly available test sites purpose-built for browser automation practice.
 
 - **[the-internet.herokuapp.com](https://the-internet.herokuapp.com)** — a wide-ranging sandbox covering common UI patterns (login, checkboxes, dropdowns, dynamic loading, DOM mutation)
-- **[practicetestautomation.com](https://practicetestautomation.com)** — a focused site with a clean login sandbox and dedicated exception-reproduction scenarios
+- **[test-automation-practices](https://moatazeldebsy.github.io/test-automation-practices)** — a self-contained React SPA with 20+ purpose-built test scenarios: auth flows, dynamic content, notifications, checkboxes, keyboard input, and more
 
 ## Running the examples
 
@@ -18,29 +18,139 @@ browserctl run examples/the_internet/dropdown.rb
 browserctl run examples/the_internet/dynamic_loading.rb
 browserctl run examples/the_internet/add_remove_elements.rb
 
-# practicetestautomation.com examples
-browserctl run examples/practice_test_automation/login.rb
-browserctl run examples/practice_test_automation/login_negative.rb
-browserctl run examples/practice_test_automation/exceptions.rb
+# test-automation-practices examples
+browserctl run examples/test_automation_practices/login.rb
+browserctl run examples/test_automation_practices/login_negative.rb
+browserctl run examples/test_automation_practices/dynamic_elements.rb
+browserctl run examples/test_automation_practices/checkboxes.rb
+browserctl run examples/test_automation_practices/notifications.rb
+browserctl run examples/test_automation_practices/key_press.rb
 
 browserctl shutdown
 ```
 
-Expected output for each (example shown for login):
+Expected output for the login example:
 
 ```
   [ok]   open login page
   [ok]   fill and submit credentials
-  [ok]   verify secure area
+  [ok]   verify successful login
   [ok]   logout and verify
-  [ok]   capture screenshot
 ```
 
 Each example saves a screenshot to `docs/assets/` on completion. Screenshots are regenerated automatically by the [Update Demo Assets](../../.github/workflows/assets.yml) workflow when examples change, and can also be triggered manually from the Actions tab.
 
 ---
 
-## Examples
+## test-automation-practices examples
+
+Target: `https://moatazeldebsy.github.io/test-automation-practices` — a self-hosted React SPA that can also be run locally with `npm run dev`. All interactive elements carry `data-test` attributes for stable targeting.
+
+### `test_automation_practices/login.rb` — Login and Logout
+
+Covers: `fill`, `click`, `wait_for`, `evaluate`
+
+Fills the public test credentials into the auth form, submits, waits for the success element to appear, then clicks logout and verifies the login button reappears.
+
+**Test credentials:** `admin` / `admin`
+
+```
+  [ok]   open auth page
+  [ok]   fill and submit credentials
+  [ok]   verify successful login
+  [ok]   logout and verify form reappears
+```
+
+![login smoke test](../assets/test_automation_practices_login.png)
+
+---
+
+### `test_automation_practices/login_negative.rb` — Invalid Credentials
+
+Covers: `fill`, `click`, `wait_for`, `evaluate`
+
+Submits wrong credentials and asserts the error element appears while no success element is present. Demonstrates negative-path testing.
+
+```
+  [ok]   open auth page
+  [ok]   submit wrong credentials
+  [ok]   verify error is shown and success is absent
+```
+
+![login negative smoke test](../assets/test_automation_practices_login_negative.png)
+
+---
+
+### `test_automation_practices/dynamic_elements.rb` — Dynamic Content Loading
+
+Covers: `click`, `watch`, `wait_for`, `evaluate`
+
+Asserts no dynamic items exist before triggering a reload, clicks the reload button, uses `watch` to poll until items appear after a built-in network delay, then toggles hidden content on and verifies it renders.
+
+```
+  [ok]   open dynamic elements page
+  [ok]   assert no dynamic items exist before reload
+  [ok]   click reload and wait for items
+  [ok]   verify all three dynamic items are present
+  [ok]   toggle hidden content on
+```
+
+![dynamic elements smoke test](../assets/test_automation_practices_dynamic_elements.png)
+
+---
+
+### `test_automation_practices/checkboxes.rb` — Checkbox State Management
+
+Covers: `click`, `evaluate`
+
+Reads initial state (all unchecked), toggles one checkbox individually, then uses the "Check All" and "Uncheck All" buttons — asserting state after each action.
+
+```
+  [ok]   open checkboxes page
+  [ok]   read initial state — all unchecked
+  [ok]   toggle checkbox 1 on
+  [ok]   check all and verify
+  [ok]   uncheck all and verify
+```
+
+![checkboxes smoke test](../assets/test_automation_practices_checkboxes.png)
+
+---
+
+### `test_automation_practices/notifications.rb` — Toast Notifications
+
+Covers: `click`, `wait_for`, `evaluate`
+
+Triggers a success notification and waits for it using a `data-test` attribute prefix selector (`[data-test^="notification-"]`), dismisses it, then triggers error and info notifications simultaneously and verifies both appear.
+
+```
+  [ok]   open notifications page
+  [ok]   trigger success notification and verify
+  [ok]   dismiss notification and verify container is empty
+  [ok]   trigger error and info notifications together
+```
+
+![notifications smoke test](../assets/test_automation_practices_notifications.png)
+
+---
+
+### `test_automation_practices/key_press.rb` — Keyboard Event Capture
+
+Covers: `evaluate`, `store`, `fetch`
+
+Dispatches `KeyboardEvent` instances directly on `document` via `evaluate`, then asserts the last-key display updates and the key history list contains all dispatched keys. Uses the daemon KV store to share the key list across steps.
+
+```
+  [ok]   open key press page
+  [ok]   dispatch key events and verify last-key display
+  [ok]   verify key history contains all dispatched keys
+```
+
+![key press smoke test](../assets/test_automation_practices_key_press.png)
+
+---
+
+## the-internet.herokuapp.com examples
 
 ### `the_internet/login.rb` — Form Authentication
 
@@ -58,8 +168,6 @@ Navigates to the login page, fills in the public test credentials, submits the f
   [ok]   capture screenshot
 ```
 
-![login smoke test](../assets/the_internet_login.png)
-
 ---
 
 ### `the_internet/checkboxes.rb` — Checkboxes
@@ -75,8 +183,6 @@ Reads the initial checkbox states (`[false, true]`), toggles the first checkbox,
   [ok]   verify both checkboxes are now checked
   [ok]   capture screenshot
 ```
-
-![checkboxes smoke test](../assets/the_internet_checkboxes.png)
 
 ---
 
@@ -96,8 +202,6 @@ Asserts the default dropdown has no selection, then selects Option 1 and Option 
   [ok]   capture screenshot
 ```
 
-![dropdown smoke test](../assets/the_internet_dropdown.png)
-
 ---
 
 ### `the_internet/dynamic_loading.rb` — Dynamic Loading
@@ -116,8 +220,6 @@ This example demonstrates the `wait_for` command — useful any time a page rend
   [ok]   capture screenshot
 ```
 
-![dynamic loading smoke test](../assets/the_internet_dynamic_loading.png)
-
 ---
 
 ### `the_internet/add_remove_elements.rb` — Add/Remove Elements
@@ -134,66 +236,6 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
   [ok]   capture screenshot
 ```
 
-![add/remove elements smoke test](../assets/the_internet_add_remove_elements.png)
-
----
-
----
-
-## practicetestautomation.com examples
-
-### `practice_test_automation/login.rb` — Login and Logout
-
-Covers: `fill`, `click`, `url`, `evaluate`
-
-Navigates to the login sandbox, fills in the public test credentials, submits the form, asserts the redirect to the success page and the heading text, then clicks the logout link and verifies the return to the login page.
-
-**Test credentials:** `student` / `Password123`
-
-```
-  [ok]   open login page
-  [ok]   fill and submit credentials
-  [ok]   verify successful login
-  [ok]   logout and verify
-```
-
----
-
-### `practice_test_automation/login_negative.rb` — Invalid Credentials
-
-Covers: `fill`, `click`, `evaluate`
-
-Submits an invalid username (keeping the correct password) and asserts the "Your username is invalid!" error message, then submits an invalid password (keeping the correct username) and asserts the "Your password is invalid!" error message.
-
-Demonstrates negative-path testing: verifying that error states are correctly surfaced rather than silently failing.
-
-```
-  [ok]   open login page
-  [ok]   submit invalid username — expect username error
-  [ok]   submit invalid password — expect password error
-```
-
----
-
-### `practice_test_automation/exceptions.rb` — Dynamic Elements and Disabled Fields
-
-Covers: `click`, `fill`, `evaluate`, `watch`
-
-Demonstrates three patterns that trip up naive automation scripts:
-
-1. **Disabled input (InvalidElementStateException avoidance)** — clicks the Edit button to enable a read-only field before filling it.
-2. **Dynamically added element (NoSuchElementException avoidance)** — clicks Add and uses `watch` to poll until row 2 appears after its 5-second server-side delay.
-3. **Confirmation message** — asserts the transient "Row 2 was added" text before it fades.
-
-```
-  [ok]   open test exceptions page
-  [ok]   enable row 1 input and edit it (InvalidElementStateException avoidance)
-  [ok]   click Add and wait for row 2 to appear (NoSuchElementException avoidance)
-  [ok]   verify confirmation message
-  [ok]   type into row 2 input and save
-  [ok]   remove row 2
-```
-
 ---
 
 ## Patterns demonstrated
@@ -203,10 +245,13 @@ Demonstrates three patterns that trip up naive automation scripts:
 | Open a named page with initial URL | All examples — `client.open_page("main", url: ...)` |
 | Fill form inputs | `login.rb` — `page(:main).fill(selector, value)` |
 | Click buttons and links | All examples — `page(:main).click(selector)` |
-| Assert current URL | `login.rb` — `page(:main).url` |
+| Assert current URL | `the_internet/login.rb` — `page(:main).url` |
 | Read DOM state via JS | `checkboxes.rb`, `dropdown.rb`, `add_remove_elements.rb` — `client.evaluate("main", expression)[:result]` |
 | Set DOM state via JS | `dropdown.rb` — `client.evaluate("main", "document.querySelector('select#dropdown').value = '1'")` |
+| Dispatch synthetic events via JS | `key_press.rb` — `client.evaluate("main", "document.dispatchEvent(new KeyboardEvent(...))")` |
 | Wait for async element (short) | `dynamic_loading.rb` — `page(:main).wait_for(selector, timeout:)` |
-| Poll for async element (long) | `exceptions.rb` — `page(:main).watch(selector, timeout:)` |
-| Negative-path assertion | `login_negative.rb` — assert error message text on failed login |
+| Poll for async element (long) | `dynamic_elements.rb` — `page(:main).watch(selector, timeout:)` |
+| Attribute prefix selector | `notifications.rb` — `[data-test^="notification-"]` for dynamic IDs |
+| Share state across steps | `key_press.rb` — `store(:key, value)` / `fetch(:key)` |
+| Negative-path assertion | `login_negative.rb` — assert error shown, success absent |
 | Assert with message | All examples — `assert condition, "message"` |
