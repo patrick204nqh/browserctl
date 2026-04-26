@@ -83,7 +83,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
 
     it "resolves ref to selector for click" do
-      allow(page).to receive(:at_css).and_return(double("el", click: nil))
+      allow(page).to receive(:at_css).and_return(double("el", evaluate: nil))
       res = dispatcher.dispatch({ cmd: "click", name: "main", ref: "e2" })
       expect(res[:ok]).to be true
     end
