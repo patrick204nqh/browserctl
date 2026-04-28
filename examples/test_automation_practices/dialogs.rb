@@ -10,36 +10,36 @@ Browserctl.workflow "test_automation_practices/dialogs" do
     open_page(:main, url: "#{base_url}/#/alerts")
   end
 
-  step "accept an alert — page stays responsive" do
+  step "accept an alert — result-container shows confirmation" do
     page(:main).dialog_accept
     page(:main).click("[data-test='alert-button']")
-    sleep 0.3
-    result = page(:main).evaluate("1 + 1")
-    assert result == 2, "expected page to be responsive after accepting alert"
+    page(:main).wait("[data-test='result-container']", timeout: 5)
+    result = page(:main).evaluate("document.querySelector('[data-test=\"result-container\"]')?.textContent?.trim()")
+    assert result == "Last action: Alert shown", "expected alert result, got: #{result.inspect}"
   end
 
-  step "accept a confirm — page stays responsive" do
+  step "accept a confirm — result-container shows true" do
     page(:main).dialog_accept
     page(:main).click("[data-test='confirm-button']")
-    sleep 0.3
-    result = page(:main).evaluate("1 + 1")
-    assert result == 2, "expected page to be responsive after accepting confirm"
+    page(:main).wait("[data-test='result-container']", timeout: 5)
+    result = page(:main).evaluate("document.querySelector('[data-test=\"result-container\"]')?.textContent?.trim()")
+    assert result == "Last action: Confirm dialog: true", "expected confirm true result, got: #{result.inspect}"
   end
 
-  step "dismiss a confirm — page stays responsive" do
+  step "dismiss a confirm — result-container shows false" do
     page(:main).dialog_dismiss
     page(:main).click("[data-test='confirm-button']")
-    sleep 0.3
-    result = page(:main).evaluate("1 + 1")
-    assert result == 2, "expected page to be responsive after dismissing confirm"
+    page(:main).wait("[data-test='result-container']", timeout: 5)
+    result = page(:main).evaluate("document.querySelector('[data-test=\"result-container\"]')?.textContent?.trim()")
+    assert result == "Last action: Confirm dialog: false", "expected confirm false result, got: #{result.inspect}"
   end
 
-  step "accept a prompt with text — page stays responsive" do
+  step "accept a prompt with text — result-container shows entered text" do
     page(:main).dialog_accept(text: "browserctl")
     page(:main).click("[data-test='prompt-button']")
-    sleep 0.3
-    result = page(:main).evaluate("1 + 1")
-    assert result == 2, "expected page to be responsive after accepting prompt"
+    page(:main).wait("[data-test='result-container']", timeout: 5)
+    result = page(:main).evaluate("document.querySelector('[data-test=\"result-container\"]')?.textContent?.trim()")
+    assert result&.include?("browserctl"), "expected prompt text in result, got: #{result.inspect}"
     page(:main).screenshot(path: screenshot_path)
   end
 end
