@@ -81,7 +81,6 @@ module Browserctl
           name_safe = page_name.to_s.gsub(/[^a-zA-Z0-9_-]/, "_")
           File.join(SCREENSHOT_DIR, "browserctl_shot_#{name_safe}_#{Time.now.to_i}.png")
         end
-
       end
     end
   end

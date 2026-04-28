@@ -68,7 +68,7 @@ module Browserctl
 
           with_page(req[:name]) do |session|
             key_count = 0
-            data.each do |_origin, keys|
+            data.each_value do |keys|
               keys.each do |k, v|
                 session.page.evaluate("localStorage.setItem(#{k.to_json}, #{v.to_json})")
                 key_count += 1

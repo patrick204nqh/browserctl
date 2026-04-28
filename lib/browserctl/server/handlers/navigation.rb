@@ -83,9 +83,7 @@ module Browserctl
           loop do
             found = page.at_css(selector)
             break { ok: true } if found
-            if Time.now >= deadline
-              break { error: "wait timeout: selector '#{selector}' not found after #{timeout}s" }
-            end
+            break { error: "wait timeout: selector '#{selector}' not found after #{timeout}s" } if Time.now >= deadline
 
             sleep 0.2
           end
