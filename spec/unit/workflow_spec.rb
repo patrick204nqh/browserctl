@@ -161,6 +161,18 @@ RSpec.describe "compose" do
   end
 end
 
+RSpec.describe "WorkflowContext#ask" do
+  it "prints prompt to stderr and reads a value from stdin" do
+    client = double("client")
+    ctx    = Browserctl::WorkflowContext.new({}, client)
+    allow($stderr).to receive(:print)
+    allow($stdin).to receive(:gets).and_return("my_secret\n")
+    result = ctx.ask("Enter password:")
+    expect($stderr).to have_received(:print).with("[browserctl] Enter password: ")
+    expect(result).to eq("my_secret")
+  end
+end
+
 RSpec.describe Browserctl::WorkflowContext do
   let(:client) { instance_double(Browserctl::Client) }
 

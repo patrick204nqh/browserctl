@@ -11,6 +11,7 @@ require_relative "handlers/devtools"
 require_relative "handlers/daemon_control"
 require_relative "handlers/storage"
 require_relative "handlers/session"
+require_relative "handlers/interaction"
 require_relative "../detectors"
 require_relative "../policy"
 
@@ -25,6 +26,7 @@ module Browserctl
     include Handlers::DaemonControl
     include Handlers::Storage
     include Handlers::Session
+    include Handlers::Interaction
 
     COMMAND_MAP = {
       "page_open" => :cmd_page_open,
@@ -55,6 +57,12 @@ module Browserctl
       "storage_export" => :cmd_storage_export,
       "storage_import" => :cmd_storage_import,
       "storage_delete" => :cmd_storage_delete,
+      "press" => :cmd_press,
+      "hover" => :cmd_hover,
+      "upload" => :cmd_upload,
+      "select" => :cmd_select,
+      "dialog_accept" => :cmd_dialog_accept,
+      "dialog_dismiss" => :cmd_dialog_dismiss,
       "session_save" => :cmd_session_save,
       "session_load" => :cmd_session_load,
       "session_list" => :cmd_session_list,

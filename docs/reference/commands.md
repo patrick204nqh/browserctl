@@ -42,8 +42,73 @@ Page is always the first argument after the verb.
 | `pause <page> [--message MSG]` | Pause automation — browser stays live for manual interaction |
 | `resume <page>` | Resume automation after manual action |
 | `devtools <page>` | Open Chrome DevTools for a named page |
+| `press <page> <key>` | Fire a `keydown` + `keyup` event for the given key |
+| `hover <page> <selector>` | Move the mouse cursor to the centre of the matched element |
+| `upload <page> <selector> <file>` | Set a `<input type="file">` element's value to a file path |
+| `select <page> <selector> <value>` | Set a `<select>` element's value and fire a `change` event |
+| `dialog accept <page> [text]` | Pre-register a one-shot handler to accept the next JS dialog |
+| `dialog dismiss <page>` | Pre-register a one-shot handler to dismiss the next JS dialog |
+| `ask <prompt>` | Pause and prompt the human for a value via stdin |
 
 `navigate` and `snapshot` responses include `"challenge": true` when a Cloudflare interstitial is detected. See [Handling Challenges](../guides/handling-challenges.md).
+
+### `press <page> <key>`
+
+Fires a `keydown` + `keyup` event for the given key. `key` is any Chrome key name: `Enter`, `Tab`, `Escape`, `ArrowDown`, `Backspace`, or a single character like `a`.
+
+```sh
+browserctl press main Enter
+browserctl press main Tab
+```
+
+### `hover <page> <selector>`
+
+Moves the mouse cursor to the centre of the element matched by `selector`.
+
+```sh
+browserctl hover main "#dropdown-trigger"
+```
+
+### `upload <page> <selector> <file>`
+
+Sets a `<input type="file">` element's value to `file`.
+
+```sh
+browserctl upload main "#resume-input" /path/to/resume.pdf
+```
+
+### `select <page> <selector> <value>`
+
+Sets a `<select>` element's value and fires a `change` event.
+
+```sh
+browserctl select main "#country" "AU"
+```
+
+### `dialog accept <page> [text]`
+
+Pre-registers a one-shot handler to accept the next JavaScript dialog (`alert`, `confirm`, `prompt`). Call this **before** the action that triggers the dialog. `text` is only used for `prompt` dialogs.
+
+```sh
+browserctl dialog accept main
+browserctl dialog accept main "my-prompt-answer"
+```
+
+### `dialog dismiss <page>`
+
+Pre-registers a one-shot handler to dismiss the next JavaScript dialog.
+
+```sh
+browserctl dialog dismiss main
+```
+
+### `ask <prompt>`
+
+Pauses execution and prompts the human for a value via stdin. Output is JSON `{ "ok": true, "value": "..." }`. Prompt is written to stderr so it doesn't pollute stdout JSON.
+
+```sh
+browserctl ask "Enter 2FA code:"
+```
 
 ---
 
@@ -245,6 +310,10 @@ Methods available on `page(:name)` inside a workflow:
 | `storage_set(key, value, store: "local")` | Write a localStorage or sessionStorage key |
 | `delete_cookies` | Delete all cookies for the page |
 | `devtools` | Return the Chrome DevTools URL for this page |
+| `press(key)` | Fire a `keydown` + `keyup` event for the given key |
+| `hover(selector)` | Move the mouse to the centre of the matched element |
+| `upload(selector, path)` | Set a file input's value to a file path |
+| `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 

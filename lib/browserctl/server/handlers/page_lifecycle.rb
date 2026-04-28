@@ -25,6 +25,10 @@ module Browserctl
         end
 
         def cmd_page_focus(req)
+          unless @browser.options.headless == false
+            return { error: "page focus requires headed mode — start browserd with --headed" }
+          end
+
           with_page(req[:name]) do |session|
             session.page.activate
             { ok: true }

@@ -120,6 +120,26 @@ See [Handling Challenges](../guides/handling-challenges.md) for a runnable examp
 
 ---
 
+## `ask` — Value injection
+
+`ask` is the complement to `pause/resume`. Instead of handing the browser to the human, it asks the human for a single value and resumes immediately.
+
+```ruby
+# In a workflow:
+code = ask("Enter the 2FA code sent to your phone:")
+page("main").fill("#otp-input", code)
+page("main").click("#submit")
+```
+
+From the CLI:
+```sh
+code=$(browserctl ask "Enter the 2FA code:")
+```
+
+`ask` reads from stdin and writes the value to stdout as JSON. The prompt is written to stderr.
+
+---
+
 ## HITL vs. fully autonomous agents
 
 HITL is not a concession to automation limitations. It is an architectural choice about where human judgment belongs in a workflow.

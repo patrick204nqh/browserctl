@@ -78,6 +78,11 @@ module Browserctl
       @client.session_list[:sessions]
     end
 
+    def ask(prompt)
+      $stderr.print("[browserctl] #{prompt} ")
+      $stdin.gets.chomp
+    end
+
     def invoke(workflow_name, **override_params)
       name = workflow_name.to_s
       guard_circular!(name)
@@ -136,6 +141,11 @@ module Browserctl
     def storage_set(key, value, store: "local")
       unwrap @client.storage_set(@name, key, value, store: store)
     end
+
+    def press(key)               = unwrap @client.press(@name, key)
+    def hover(selector)          = unwrap @client.hover(@name, selector)
+    def upload(selector, path)   = unwrap @client.upload(@name, selector, path)
+    def select(selector, value)  = unwrap @client.select(@name, selector, value)
 
     private
 
