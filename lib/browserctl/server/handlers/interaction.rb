@@ -17,11 +17,11 @@ module Browserctl
         def cmd_hover(req)
           with_page(req[:name]) do |session|
             coords = session.page.evaluate(
-              "(function(sel) { " \
-              "  var el = document.querySelector(sel); " \
-              "  if (!el) return null; " \
-              "  var r = el.getBoundingClientRect(); " \
-              "  return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; " \
+              "(function(sel) {   " \
+              "var el = document.querySelector(sel);   " \
+              "if (!el) return null;   " \
+              "var r = el.getBoundingClientRect();   " \
+              "return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; " \
               "})(#{req[:selector].to_json})"
             )
             return { error: "selector not found: #{req[:selector]}" } unless coords
