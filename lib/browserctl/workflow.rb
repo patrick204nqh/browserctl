@@ -78,6 +78,11 @@ module Browserctl
       @client.session_list[:sessions]
     end
 
+    def ask(prompt)
+      $stderr.print("[browserctl] #{prompt} ")
+      $stdin.gets.chomp
+    end
+
     def invoke(workflow_name, **override_params)
       name = workflow_name.to_s
       guard_circular!(name)

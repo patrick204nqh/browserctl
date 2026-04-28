@@ -28,6 +28,7 @@ require "browserctl/commands/session"
 require "browserctl/commands/daemon"
 require "browserctl/commands/workflow"
 require "browserctl/commands/dialog"
+require "browserctl/commands/ask"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -63,6 +64,7 @@ def usage
       wait     <page> <selector> [--timeout N]
       pause    <page> [--message MSG]
       resume   <page>
+      ask      <prompt>
       devtools <page>
       press    <page> <key>
       hover    <page> <selector>
@@ -134,6 +136,7 @@ case cmd
 when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
 when "record"   then Browserctl::Commands::Record.run(args)
 when "init"     then Browserctl::Commands::Init.run(args)
+when "ask"      then Browserctl::Commands::Ask.run(args)
 
 else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
