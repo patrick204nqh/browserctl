@@ -30,6 +30,7 @@ module Browserctl
       "page_open" => :cmd_page_open,
       "page_close" => :cmd_page_close,
       "page_list" => :cmd_page_list,
+      "page_focus" => :cmd_page_focus,
       "navigate" => :cmd_navigate,
       "wait" => :cmd_wait,
       "snapshot" => :cmd_snapshot,

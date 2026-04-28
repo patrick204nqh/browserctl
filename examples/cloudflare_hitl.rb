@@ -7,7 +7,7 @@
 # pauses automation so a human can solve it in the live browser, then resumes.
 #
 # Run:
-#   browserctl run examples/cloudflare_hitl.rb --url https://example.com
+#   browserctl workflow run examples/cloudflare_hitl.rb --url https://example.com
 #
 # Note: modern Cloudflare often passes a real headed Chrome without challenge.
 # The pause/resume branch fires only when the challenge page is actually served
@@ -22,11 +22,11 @@ Browserctl.workflow "cloudflare_hitl" do
   param :selector, default: "body"
 
   step "open page" do
-    client.open_page("main")
+    open_page(:main)
   end
 
   step "navigate to target URL" do
-    res = client.goto("main", url)
+    res = client.navigate("main", url)
 
     if res[:challenge]
       $stdout.puts ""
@@ -54,12 +54,12 @@ Browserctl.workflow "cloudflare_hitl" do
   end
 
   step "wait for content and snapshot" do
-    page(:main).wait_for(selector, timeout: 15)
+    page(:main).wait(selector, timeout: 15)
     result = page(:main).snapshot(format: "elements")
     $stdout.puts "  Snapshot: #{result[:snapshot]&.length || 0} elements captured"
   end
 
   step "close page" do
-    client.close_page("main")
+    close_page(:main)
   end
 end

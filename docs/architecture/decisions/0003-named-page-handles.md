@@ -27,9 +27,9 @@ Pages are identified by a caller-provided string name (e.g., `login`, `dashboard
 ## Consequences
 
 ### Positive
-- Workflow scripts are self-documenting — `page(:login).goto(url)` reads clearly
+- Workflow scripts are self-documenting — `page(:login).navigate(url)` reads clearly
 - Named pages survive across CLI invocations — the name is the stable reference
-- `list_pages` command gives a human-readable view of what's open
+- `page list` command gives a human-readable view of what's open
 
 ### Negative
 - Name collision is the caller's responsibility — opening `login` twice replaces the first

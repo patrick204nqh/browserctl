@@ -9,7 +9,7 @@ browserctl's public surface is split into three stability zones. Every command, 
 ### Fixed — Protocol layer
 **The wire protocol: JSON-RPC command names, response field names, socket path convention.**
 
-Locked after v0.5. Never changes without a major version bump and an explicit migration path. External tools (non-Ruby clients, other language bindings) depend on this layer.
+Locked after v0.6. Never changes without a major version bump and an explicit migration path. External tools (non-Ruby clients, other language bindings) depend on this layer.
 
 What is Fixed:
 - Command names in `COMMAND_MAP` (the strings sent over the Unix socket)
@@ -46,25 +46,27 @@ What is Extension:
 
 ## Fixed zone — command reference
 
-Every command that flows over the wire. Name, required params, optional params, and response fields are all Fixed once v0.5 ships.
+Every command that flows over the wire. Name, required params, optional params, and response fields are all Fixed once v0.6 ships.
 
 ### Page lifecycle
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `open_page` | `name` | `url` | `ok`, `name` |
-| `close_page` | `name` | — | `ok` |
-| `list_pages` | — | — | `pages` (array of strings) |
+| `page_open` | `name` | `url` | `ok`, `name` |
+| `page_close` | `name` | — | `ok` |
+| `page_list` | — | — | `pages` (array of strings) |
+| `page_focus` | `name` | — | `ok` |
 
 ### Navigation & interaction
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `goto` | `name`, `url` | — | `ok`, `url`, `challenge` |
+| `navigate` | `name`, `url` | — | `ok`, `url`, `challenge` |
 | `fill` | `name`, `value` | `selector`, `ref` | `ok` |
 | `click` | `name` | `selector`, `ref` | `ok` |
 | `evaluate` | `name`, `expression` | — | `ok`, `result` |
 | `url` | `name` | — | `ok`, `url` |
+| `wait` | `name`, `selector` | `timeout` (default 30s) | `ok`, `selector` |
 
 One of `selector` or `ref` is required for `fill` and `click`. Both cannot be omitted.
 
@@ -74,20 +76,16 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 |---------|----------------|----------------|-----------------|
 | `snapshot` | `name` | `format` (`"elements"`\|`"html"`), `diff` | `ok`, `snapshot` or `html`, `challenge`, `nonce` |
 | `screenshot` | `name` | `path`, `full` | `ok`, `path` |
-| `wait_for` | `name`, `selector` | `timeout` (default 10s) | `ok` |
-| `watch` | `name`, `selector` | `timeout` (default 30s) | `ok`, `selector` |
 
 `snapshot` with `format: "elements"` (default) returns `snapshot` field — a JSON array of interactable elements with ref IDs. With `format: "html"` returns `html` field. Both include `challenge` and `nonce`.
 
 `nonce` is a server-generated hex string (16 chars) unique per response. It is present in every `snapshot` response regardless of `format`. Consumers can use it to delimit page-provided content — the page cannot forge or predict the value.
 
-`wait_for` and `watch` both poll for a selector but are distinct wire commands: `wait_for` returns bare `ok` and is used as a programmatic blocking gate (default 10s); `watch` echoes back `selector` in its response and is designed for observational/interactive use (default 30s).
-
 ### HITL (Human-in-the-loop)
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `pause` | `name` | — | `ok`, `paused: true` |
+| `pause` | `name` | `message` | `ok`, `paused: true`, `message` |
 | `resume` | `name` | — | `ok`, `paused: false` |
 
 ### Cookies
@@ -96,16 +94,35 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 |---------|----------------|----------------|-----------------|
 | `cookies` | `name` | — | `ok`, `cookies` (array) |
 | `set_cookie` | `name`, `cookie_name`, `value`, `domain` | `path` (default `/`) | `ok` |
-| `clear_cookies` | `name` | — | `ok` |
+| `delete_cookies` | `name` | — | `ok` |
 | `import_cookies` | `name`, `cookies` (array) | — | `ok`, `count` |
 
 `export_cookies` has no wire command — it is implemented client-side by calling `cookies` then writing a file.
+
+### Storage
+
+| Command | Required params | Optional params | Response fields |
+|---------|----------------|----------------|-----------------|
+| `storage_get` | `name`, `key` | `store` (`"local"`\|`"session"`, default `"local"`) | `ok`, `value` |
+| `storage_set` | `name`, `key`, `value` | `store` (default `"local"`) | `ok` |
+| `storage_export` | `name`, `path` | `stores` (`"local"`\|`"session"`\|`"all"`, default `"all"`) | `ok`, `path`, `key_count` |
+| `storage_import` | `name`, `path` | — | `ok`, `origins`, `key_count` |
+| `storage_delete` | `name` | `stores` (default `"all"`) | `ok` |
+
+### Session
+
+| Command | Required params | Optional params | Response fields |
+|---------|----------------|----------------|-----------------|
+| `session_save` | `session_name` | — | `ok`, `path`, `pages`, `cookies` |
+| `session_load` | `session_name` | — | `ok`, `cookies`, `pages`, `local_storage_keys` |
+| `session_list` | — | — | `ok`, `sessions` (array of metadata hashes) |
+| `session_delete` | `session_name` | — | `ok` |
 
 ### DevTools
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
-| `inspect` | `name` | — | `ok`, `devtools_url` |
+| `devtools` | `name` | — | `ok`, `devtools_url` |
 
 ### Daemon control
 
@@ -116,40 +133,51 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 | `store` | `key`, `value` | — | `ok` |
 | `fetch` | `key` | — | `ok`, `value` |
 
-`fetch` returns `{ error: "key '<key>' not found", code: "key_not_found" }` when the key has never been stored. Values are scoped to the daemon process — they persist across `browserctl run` invocations for as long as the daemon is running, and are lost when the daemon stops.
+`fetch` returns `{ error: "key '<key>' not found", code: "key_not_found" }` when the key has never been stored. Values are scoped to the daemon process — they persist across `workflow run` invocations for as long as the daemon is running, and are lost when the daemon stops.
 
 ---
 
 ## Stable zone — CLI reference
 
-CLI command names and their flags. See [style-guide.md](style-guide.md) for the mapping from CLI names to wire names.
-
-### Intentional aliases (documented, not bugs)
-
-| CLI name | Maps to wire | Reason |
-|----------|-------------|--------|
-| `open` | `open_page` | brevity |
-| `close` | `close_page` | brevity |
-| `pages` | `list_pages` | brevity |
-| `snap` | `snapshot` | brevity |
-| `shot` | `screenshot` | brevity |
-| `eval` | `evaluate` | brevity |
-| `watch` | `watch` | 30s default, returns `selector` echo |
+CLI command names and their flags map 1-to-1 to wire commands via the subcommand routers in `lib/browserctl/commands/`. There are no abbreviation aliases — CLI names match their wire counterparts exactly.
 
 ---
 
-## Breaking changes before v0.5 (the lock)
+## Breaking changes log
+
+### v0.6 — Protocol version 2
+
+v0.6 is a breaking release. `PROTOCOL_VERSION` was bumped from `"1"` to `"2"`. Clients must check `ping[:protocol_version]` and reject `"1"` daemons.
+
+| Old wire command | New wire command | Change |
+|---|---|---|
+| `open_page` | `page_open` | noun-verb reorder |
+| `close_page` | `page_close` | noun-verb reorder |
+| `list_pages` | `page_list` | noun-verb reorder |
+| `goto` | `navigate` | full English word |
+| `wait_for` + `watch` | `wait` | unified (single timeout param) |
+| `clear_cookies` | `delete_cookies` | `delete` prefix convention |
+| `inspect` | `devtools` | descriptive name |
+| — | `storage_get/set/export/import/delete` | new (localStorage/sessionStorage) |
+| — | `session_save/load/list/delete` | new (session persistence) |
+| `pause` | `pause` (+ optional `message:` param) | backward-compatible addition |
+
+### v0.5 — Protocol version 1
 
 | Issue | Status |
 |-------|--------|
-| CLI cookie commands used underscores (`set_cookie`, `clear_cookies`) | ✅ Fixed — renamed to `set-cookie`, `clear-cookies` |
+| CLI cookie commands used underscores (`set_cookie`, `clear_cookies`) | ✅ Fixed — renamed to `set-cookie`, `clear-cookies` at the CLI layer |
 | `ping` response lacked protocol version | ✅ Fixed — `protocol_version: "1"` added |
-| `pause_resume.rb` grouped two commands in one file | ✅ Fixed — split into `pause.rb` and `resume.rb` |
-
-`watch` was audited and **retained** as a distinct wire command. It differs from `wait_for` in both its default timeout (30s vs 10s) and its response shape (`selector:` echo vs bare `ok:`). The distinction is intentional and both are Fixed.
 
 ---
 
 ## Protocol versioning
 
-The `ping` response includes `protocol_version: "1"` (shipped in v0.4). Future incompatible protocol changes increment this number. Clients can check this field to negotiate capabilities.
+The `ping` response includes `protocol_version` — currently `"2"` (shipped in v0.6). Clients can check this field before sending commands to verify compatibility:
+
+```ruby
+res = client.ping
+raise "incompatible daemon" unless res[:protocol_version] == "2"
+```
+
+Future incompatible protocol changes will increment this number and document the migration path here.

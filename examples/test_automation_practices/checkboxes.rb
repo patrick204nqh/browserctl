@@ -7,7 +7,7 @@ Browserctl.workflow "test_automation_practices/checkboxes" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_checkboxes.png")
 
   step "open checkboxes page" do
-    client.open_page("main", url: "#{base_url}/#/checkboxes")
+    open_page(:main, url: "#{base_url}/#/checkboxes")
   end
 
   step "read initial state — checkbox 2 pre-checked" do

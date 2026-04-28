@@ -11,7 +11,7 @@ Place workflow files in either:
 | `.browserctl/workflows/<name>.rb` | Project-level (committed to repo) |
 | `~/.browserctl/workflows/<name>.rb` | User-level (shared across projects) |
 
-The filename becomes the workflow name used with `browserctl run`.
+The filename becomes the workflow name used with `workflow run`.
 
 ---
 
@@ -32,7 +32,7 @@ end
 ```
 
 ```bash
-browserctl run hello
+browserctl workflow run hello
 ```
 
 ---
@@ -42,7 +42,7 @@ browserctl run hello
 ### `desc`
 
 ```ruby
-desc "Human-readable description shown by browserctl workflows"
+desc "Human-readable description shown by browserctl workflow list"
 ```
 
 ### `param`
@@ -64,13 +64,13 @@ param :base_url, default: "https://app.example.com"
 Pass params at runtime with `--key value` flags:
 
 ```bash
-browserctl run my_workflow --email me@example.com --password s3cr3t
+browserctl workflow run my_workflow --email me@example.com --password s3cr3t
 ```
 
 Or load them from a YAML or JSON file to keep credentials out of your shell history:
 
 ```bash
-browserctl run my_workflow --params .browserctl/params.yml
+browserctl workflow run my_workflow --params .browserctl/params.yml
 ```
 
 ```yaml
@@ -101,7 +101,7 @@ end
 
 # fail the step if it takes longer than 10 seconds
 step "wait for results", timeout: 10 do
-  page(:main).wait_for(".results-list")
+  page(:main).wait(".results-list")
 end
 
 # combine both
@@ -131,7 +131,7 @@ step "enter code on target site" do
 end
 ```
 
-`fetch` raises `WorkflowError` with a descriptive message if the key was never stored. Values are stored in the daemon's KV store and persist for as long as the daemon is running — a later `browserctl run` that connects to the same daemon can read a value stored by an earlier run. Values are lost when the daemon stops.
+`fetch` raises `WorkflowError` with a descriptive message if the key was never stored. Values are stored in the daemon's KV store and persist for as long as the daemon is running — a later `workflow run` that connects to the same daemon can read a value stored by an earlier run. Values are lost when the daemon stops.
 
 ---
 
@@ -146,16 +146,16 @@ assert count == 3, "expected 3 items, got #{count}"
 
 ### `open_page` and `close_page`
 
-Open or close a named browser page from within a workflow step. Use these instead of reaching into `client` directly for page lifecycle.
+Open or close a named browser page from within a workflow step.
 
 ```ruby
 step "open login page" do
   open_page(:login, url: "https://app.example.com/login")
 end
 
-step "open dashboard in parallel" do
+step "open dashboard separately" do
   open_page(:dashboard)
-  page(:dashboard).goto("#{base_url}/dashboard")
+  page(:dashboard).navigate("#{base_url}/dashboard")
 end
 
 step "close login tab when done" do
@@ -163,11 +163,27 @@ step "close login tab when done" do
 end
 ```
 
-`open_page` without a `url:` creates the page but does not navigate. Navigate separately with `page(:name).goto(url)` or pass `url:` directly.
+`open_page` without a `url:` creates the page but does not navigate. Navigate separately with `page(:name).navigate(url)` or pass `url:` directly.
+
+### `save_session` and `load_session`
+
+Persist the full browser state — open pages, cookies, and localStorage — to a named session. Load it back in a later run or on a fresh daemon.
+
+```ruby
+step "save authenticated session" do
+  save_session("github_work")
+end
+
+step "restore session" do
+  load_session("github_work")
+end
+```
+
+Sessions are stored as plain JSON files in `~/.browserctl/sessions/<name>/`. Use `list_sessions` to see all saved sessions.
 
 ### `page(:name)`
 
-Returns a `PageProxy` for a named browser page. The page must already be open (via `open_page` or `browserctl open`) before calling methods on it.
+Returns a `PageProxy` for a named browser page. The page must already be open (via `open_page` or `browserctl page open`) before calling methods on it.
 
 ```ruby
 page(:login).fill("input[name=email]", email)
@@ -190,33 +206,34 @@ Circular invocation (`a → b → a`) raises immediately.
 
 | Method | Description |
 |---|---|
-| `goto(url)` | Navigate the page to a URL |
+| `navigate(url)` | Navigate the page to a URL |
 | `fill(selector, value)` | Fill an input field |
 | `click(selector)` | Click an element |
-| `watch(selector, timeout: 30)` | Poll until selector appears (default 30s) — for async content |
-| `wait_for(selector, timeout: 10)` | Wait up to N seconds for an element to appear (short-form gate, default 10s) |
+| `wait(selector, timeout: 30)` | Wait until selector appears (default 30s) |
 | `url` | Return the current page URL as a string |
 | `evaluate(expression)` | Evaluate a JS expression and return the result |
-| `snapshot(**opts)` | Return a DOM snapshot (same as `browserctl snap`) |
-| `screenshot(**opts)` | Take a screenshot (same as `browserctl shot`) |
+| `snapshot(**opts)` | Return a DOM snapshot |
+| `screenshot(**opts)` | Take a screenshot |
+| `storage_get(key, store: "local")` | Read a localStorage or sessionStorage key |
+| `storage_set(key, value, store: "local")` | Write a localStorage or sessionStorage key |
+| `delete_cookies` | Delete all cookies for this page |
+| `devtools` | Return the Chrome DevTools URL for this page |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 
-Use `watch` for async content that may take seconds to load (API responses, animations, page transitions). Use `wait_for` as a quick synchronisation gate when the element is already expected to be present.
-
-For HITL pause/resume and direct cookie management inside a workflow, use `client` — the raw daemon client available in every step block:
+For HITL pause/resume inside a workflow, use `client` — the raw daemon client available in every step block:
 
 ```ruby
 step "handle challenge" do
-  res = client.goto("main", url)
+  res = client.navigate("main", target_url)
   if res[:challenge]
-    client.pause("main")
-    loop { break unless client.snapshot("main", format: "html")[:challenge]; sleep 3 }
+    client.pause("main", message: "Solve the challenge, then: browserctl resume main")
+    loop do
+      snap = client.snapshot("main", format: "html")
+      break unless snap[:challenge]
+      sleep 3
+    end
   end
-end
-
-step "restore session" do
-  client.import_cookies("main", ".browserctl/sessions/app.json")
 end
 ```
 
@@ -229,7 +246,7 @@ For the complete `client` API, see the [Command Reference](../reference/commands
 ```ruby
 # .browserctl/workflows/smoke_login.rb
 Browserctl.workflow "smoke_login" do
-  desc "Log in, verify the dashboard, then log out"
+  desc "Log in, verify the dashboard, then capture a screenshot"
 
   param :email,    required: true
   param :password, required: true, secret: true
@@ -246,7 +263,7 @@ Browserctl.workflow "smoke_login" do
   end
 
   step "verify dashboard" do
-    page(:main).watch("[data-test=dashboard]", timeout: 10)
+    page(:main).wait("[data-test=dashboard]", timeout: 10)
     assert page(:main).url.include?("/dashboard"), "redirect to dashboard failed"
   end
 
@@ -257,7 +274,7 @@ end
 ```
 
 ```bash
-browserctl run smoke_login --email me@example.com --password s3cr3t
+browserctl workflow run smoke_login --email me@example.com --password s3cr3t
 ```
 
 Expected output:
@@ -276,7 +293,7 @@ Expected output:
 If the file is not in a search path (e.g. a one-off script), pass the path directly:
 
 ```bash
-browserctl run path/to/my_workflow.rb --key value
+browserctl workflow run path/to/my_workflow.rb --key value
 ```
 
 ---
@@ -284,8 +301,8 @@ browserctl run path/to/my_workflow.rb --key value
 ## Listing and inspecting workflows
 
 ```bash
-browserctl workflows          # list all discoverable workflows with descriptions
-browserctl describe <name>    # show params and step labels for a workflow
+browserctl workflow list              # list all discoverable workflows with descriptions
+browserctl workflow describe <name>   # show params and step labels for a workflow
 ```
 
 ---
@@ -307,33 +324,37 @@ end
 ```ruby
 step "wait for results" do
   page(:main).click("button#search")
-  page(:main).watch(".results-list", timeout: 15)
+  page(:main).wait(".results-list", timeout: 15)
   count = page(:main).evaluate("document.querySelectorAll('.result-item').length")
   assert count > 0, "no results returned"
 end
 ```
 
-### Skipping login with cookie export/import
+### Saving and restoring a session
 
-Authenticate once, export the session, then import it in future runs to skip the login step entirely.
+Authenticate once, save the full session, then load it in future runs to skip login entirely.
 
 ```bash
 # After a successful login session:
-browserctl export-cookies main .browserctl/sessions/app.json
+browserctl session save myapp
 
 # On the next run (daemon restarted):
-browserctl import-cookies main .browserctl/sessions/app.json
+browserctl session load myapp
 ```
-
-The `sessions/` directory is git-ignored by default when you run `browserctl init`.
 
 You can also do this inside a workflow:
 
 ```ruby
-step "restore session" do
-  client.import_cookies("main", ".browserctl/sessions/app.json")
+step "restore authenticated session" do
+  load_session("myapp")
+end
+
+step "save session after login" do
+  save_session("myapp")
 end
 ```
+
+Sessions capture cookies, localStorage, and all open page URLs. The `~/.browserctl/sessions/` directory is git-ignored by default when you run `browserctl init`.
 
 ---
 
@@ -364,7 +385,7 @@ When a step hits a wall that needs human action, pause the session and resume wh
 
 ```ruby
 step "navigate to protected page" do
-  res = client.goto("main", target_url)
+  res = client.navigate("main", target_url)
   if res[:challenge]
     puts "→ Challenge detected. Solve it in the browser, then: browserctl resume main"
     client.pause("main")

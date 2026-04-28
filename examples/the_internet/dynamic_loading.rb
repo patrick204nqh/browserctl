@@ -7,7 +7,7 @@ Browserctl.workflow "the_internet/dynamic_loading" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_dynamic_loading.png")
 
   step "open dynamic loading page" do
-    client.open_page("main", url: "#{base_url}/dynamic_loading/1")
+    open_page(:main, url: "#{base_url}/dynamic_loading/1")
   end
 
   step "assert finish text is hidden before start" do
@@ -17,7 +17,7 @@ Browserctl.workflow "the_internet/dynamic_loading" do
 
   step "click Start and wait for content" do
     page(:main).click("#start button")
-    page(:main).wait_for("#finish h4", timeout: 10)
+    page(:main).wait("#finish h4", timeout: 10)
   end
 
   step "assert finish text is correct" do

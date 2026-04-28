@@ -7,7 +7,7 @@ Browserctl.workflow "the_internet/dropdown" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_dropdown.png")
 
   step "open dropdown page" do
-    client.open_page("main", url: "#{base_url}/dropdown")
+    open_page(:main, url: "#{base_url}/dropdown")
   end
 
   step "assert default is unselected" do

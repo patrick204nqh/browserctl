@@ -12,21 +12,21 @@ browserctl ships with ready-to-run examples against two publicly available test 
 browserd --headed &
 
 # the-internet examples
-browserctl run examples/the_internet/login.rb
-browserctl run examples/the_internet/checkboxes.rb
-browserctl run examples/the_internet/dropdown.rb
-browserctl run examples/the_internet/dynamic_loading.rb
-browserctl run examples/the_internet/add_remove_elements.rb
+browserctl workflow run examples/the_internet/login.rb
+browserctl workflow run examples/the_internet/checkboxes.rb
+browserctl workflow run examples/the_internet/dropdown.rb
+browserctl workflow run examples/the_internet/dynamic_loading.rb
+browserctl workflow run examples/the_internet/add_remove_elements.rb
 
 # test-automation-practices examples
-browserctl run examples/test_automation_practices/login.rb
-browserctl run examples/test_automation_practices/login_negative.rb
-browserctl run examples/test_automation_practices/dynamic_elements.rb
-browserctl run examples/test_automation_practices/checkboxes.rb
-browserctl run examples/test_automation_practices/notifications.rb
-browserctl run examples/test_automation_practices/key_press.rb
+browserctl workflow run examples/test_automation_practices/login.rb
+browserctl workflow run examples/test_automation_practices/login_negative.rb
+browserctl workflow run examples/test_automation_practices/dynamic_elements.rb
+browserctl workflow run examples/test_automation_practices/checkboxes.rb
+browserctl workflow run examples/test_automation_practices/notifications.rb
+browserctl workflow run examples/test_automation_practices/key_press.rb
 
-browserctl shutdown
+browserctl daemon stop
 ```
 
 Expected output for the login example:
@@ -48,7 +48,7 @@ Target: `https://moatazeldebsy.github.io/test-automation-practices` — a self-h
 
 ### `test_automation_practices/login.rb` — Login and Logout
 
-Covers: `fill`, `click`, `wait_for`, `evaluate`
+Covers: `fill`, `click`, `wait`, `evaluate`
 
 Fills the public test credentials into the auth form, submits, waits for the success element to appear, then clicks logout and verifies the login button reappears.
 
@@ -67,7 +67,7 @@ Fills the public test credentials into the auth form, submits, waits for the suc
 
 ### `test_automation_practices/login_negative.rb` — Invalid Credentials
 
-Covers: `fill`, `click`, `wait_for`, `evaluate`
+Covers: `fill`, `click`, `wait`, `evaluate`
 
 Submits wrong credentials and asserts the error element appears while no success element is present. Demonstrates negative-path testing.
 
@@ -83,9 +83,9 @@ Submits wrong credentials and asserts the error element appears while no success
 
 ### `test_automation_practices/dynamic_elements.rb` — Dynamic Content Loading
 
-Covers: `click`, `watch`, `wait_for`, `evaluate`
+Covers: `click`, `wait`, `wait`, `evaluate`
 
-Asserts no dynamic items exist before triggering a reload, clicks the reload button, uses `watch` to poll until items appear after a built-in network delay, then toggles hidden content on and verifies it renders.
+Asserts no dynamic items exist before triggering a reload, clicks the reload button, uses `wait` to poll until items appear after a built-in network delay, then toggles hidden content on and verifies it renders.
 
 ```
   [ok]   open dynamic elements page
@@ -119,7 +119,7 @@ Reads initial state (all unchecked), toggles one checkbox individually, then use
 
 ### `test_automation_practices/notifications.rb` — Toast Notifications
 
-Covers: `click`, `wait_for`, `evaluate`
+Covers: `click`, `wait`, `evaluate`
 
 Triggers a success notification and waits for it using a `data-test` attribute prefix selector (`[data-test^="notification-"]`), dismisses it, then triggers error and info notifications simultaneously and verifies both appear.
 
@@ -206,11 +206,11 @@ Asserts the default dropdown has no selection, then selects Option 1 and Option 
 
 ### `the_internet/dynamic_loading.rb` — Dynamic Loading
 
-Covers: `click`, `wait_for`, `evaluate`
+Covers: `click`, `wait`, `evaluate`
 
 Verifies the finish element is hidden before clicking Start, then clicks the Start button and waits up to 10 seconds for `#finish h4` to appear, asserting its text is `"Hello World!"`.
 
-This example demonstrates the `wait_for` command — useful any time a page renders content asynchronously.
+This example demonstrates the `wait` command — useful any time a page renders content asynchronously.
 
 ```
   [ok]   open dynamic loading page
@@ -249,8 +249,8 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
 | Read DOM state via JS | `checkboxes.rb`, `dropdown.rb`, `add_remove_elements.rb` — `client.evaluate("main", expression)[:result]` |
 | Set DOM state via JS | `dropdown.rb` — `client.evaluate("main", "document.querySelector('select#dropdown').value = '1'")` |
 | Dispatch synthetic events via JS | `key_press.rb` — `client.evaluate("main", "document.dispatchEvent(new KeyboardEvent(...))")` |
-| Wait for async element (short) | `dynamic_loading.rb` — `page(:main).wait_for(selector, timeout:)` |
-| Poll for async element (long) | `dynamic_elements.rb` — `page(:main).watch(selector, timeout:)` |
+| Wait for async element | `dynamic_loading.rb` — `page(:main).wait(selector, timeout:)` |
+| Poll for async element | `dynamic_elements.rb` — `page(:main).wait(selector, timeout:)` |
 | Attribute prefix selector | `notifications.rb` — `[data-test^="notification-"]` for dynamic IDs |
 | Share state across steps | `key_press.rb` — `store(:key, value)` / `fetch(:key)` |
 | Negative-path assertion | `login_negative.rb` — assert error shown, success absent |

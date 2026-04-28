@@ -8,7 +8,7 @@ Browserctl.workflow "test_automation_practices/login_negative" do
         default: File.expand_path(".browserctl/screenshots/test_automation_practices_login_negative.png")
 
   step "open auth page" do
-    client.open_page("main", url: "#{base_url}/#/auth")
+    open_page(:main, url: "#{base_url}/#/auth")
   end
 
   step "submit wrong credentials" do
@@ -18,7 +18,7 @@ Browserctl.workflow "test_automation_practices/login_negative" do
   end
 
   step "verify error is shown and success is absent" do
-    page(:main).wait_for("[data-test='auth-error']", timeout: 10)
+    page(:main).wait("[data-test='auth-error']", timeout: 10)
     error = client.evaluate("main", "document.querySelector('[data-test=\"auth-error\"]')?.innerText?.trim()")[:result]
     assert error&.length&.positive?, "expected an error message, got: #{error.inspect}"
     no_success = client.evaluate("main", "!document.querySelector('[data-test=\"auth-success\"]')")[:result]

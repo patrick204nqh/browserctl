@@ -49,7 +49,7 @@ agent-browser has no equivalent pause/resume primitive.
 
 Knowing *when* to pause is as important as being able to pause. browserctl ships with built-in detection for known blockers:
 
-- **Cloudflare challenges** — `snapshot` and `goto` responses include a `challenge: true` field when a Cloudflare interstitial is detected
+- **Cloudflare challenges** — `snapshot` and `navigate` responses include a `challenge: true` field when a Cloudflare interstitial is detected
 
 The detection layer is designed to grow. The same pattern that detects Cloudflare can be extended to detect:
 - Bot-detection pages (DataDome, PerimeterX, Arkose)
@@ -73,11 +73,10 @@ Browserctl.workflow :checkout_smoke do
   param :password, required: true, secret: true
 
   step "login" do
-    page(:main).goto("https://shop.example.com/login")
-    snap = page(:main).snapshot
-    page(:main).fill(snap.ref(:email_field), email)
-    page(:main).fill(snap.ref(:password_field), password)
-    page(:main).click(snap.ref(:submit))
+    page(:main).navigate("https://shop.example.com/login")
+    page(:main).fill("input[name=email]", email)
+    page(:main).fill("input[name=password]", password)
+    page(:main).click("button[type=submit]")
   end
 end
 ```
@@ -98,7 +97,7 @@ agent-browser wraps `snapshot` output in nonce-delimited content boundaries, pre
 
 ### Live viewport streaming
 
-agent-browser provides a WebSocket-based dashboard with a live browser viewport, useful for pair-browsing and debugging agent sessions in real time. browserctl has no live preview — inspection is via `browserctl inspect` which opens Chrome DevTools, not a streaming view.
+agent-browser provides a WebSocket-based dashboard with a live browser viewport, useful for pair-browsing and debugging agent sessions in real time. browserctl has no live preview — inspection is via `browserctl devtools <page>` which opens Chrome DevTools, not a streaming view.
 
 ---
 

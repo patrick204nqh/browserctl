@@ -13,63 +13,89 @@ browserctl has three distinct naming surfaces. Each has its own convention, and 
 `snake_case` always. These are the keys in `COMMAND_MAP` and what flows over the Unix socket.
 
 ```
-open_page   close_page   list_pages
-goto        snapshot      screenshot
-fill        click         evaluate
-wait_for    url           ping
-shutdown    pause         resume
-inspect     cookies       set_cookie
-clear_cookies             import_cookies
-store       fetch
+page_open    page_close   page_list    page_focus
+navigate     snapshot     screenshot
+fill         click        evaluate
+wait         url          ping
+shutdown     pause        resume
+devtools     cookies      set_cookie
+delete_cookies            import_cookies
+storage_get  storage_set  storage_export
+storage_import            storage_delete
+session_save session_load session_list
+session_delete
+store        fetch
 ```
 
-Never abbreviate on the wire (`snapshot`, not `snap`). The wire protocol is the Fixed zone — once locked, these names never change.
+Never abbreviate on the wire (`snapshot`, not `snap`; `navigate`, not `goto`). The wire protocol is the Fixed zone — these names cannot change without a `PROTOCOL_VERSION` bump.
 
 ### CLI commands (`bin/browserctl`)
 
-Lowercase, hyphen-separated for multi-word names. Single-word commands are their natural verb or noun.
+v0.6 uses **noun-verb subcommand groups** for related commands and **full English words** for standalone verbs. No abbreviations; no aliases.
 
-Short-form aliases are allowed **and intentional** — document them explicitly, do not treat them as bugs.
+| CLI command | Wire command | Notes |
+|---|---|---|
+| `page open` | `page_open` | subcommand group |
+| `page close` | `page_close` | subcommand group |
+| `page list` | `page_list` | subcommand group |
+| `page focus` | `page_focus` | subcommand group (headed mode only) |
+| `navigate` | `navigate` | standalone verb |
+| `snapshot` | `snapshot` | full word (no `snap` alias) |
+| `screenshot` | `screenshot` | full word (no `shot` alias) |
+| `evaluate` | `evaluate` | full word (no `eval` alias) |
+| `fill` | `fill` | standalone |
+| `click` | `click` | standalone |
+| `url` | `url` | standalone |
+| `wait` | `wait` | standalone |
+| `pause` | `pause` | standalone |
+| `resume` | `resume` | standalone |
+| `devtools` | `devtools` | standalone |
+| `cookie list` | `cookies` | subcommand group |
+| `cookie set` | `set_cookie` | subcommand group |
+| `cookie delete` | `delete_cookies` | subcommand group |
+| `cookie export` | client-side | reads `cookies`, writes file |
+| `cookie import` | `import_cookies` | subcommand group |
+| `storage get` | `storage_get` | subcommand group |
+| `storage set` | `storage_set` | subcommand group |
+| `storage export` | `storage_export` | subcommand group |
+| `storage import` | `storage_import` | subcommand group |
+| `storage delete` | `storage_delete` | subcommand group |
+| `session save` | `session_save` | subcommand group |
+| `session load` | `session_load` | subcommand group |
+| `session list` | `session_list` | subcommand group |
+| `session delete` | `session_delete` | subcommand group |
+| `session export` | client-side | zips session directory |
+| `session import` | client-side | unzips session archive |
+| `daemon ping` | `ping` | subcommand group |
+| `daemon status` | client-side | reads `ping` + `page_list` + `url` per page |
+| `daemon start` | client-side | spawns `browserd` subprocess |
+| `daemon stop` | `shutdown` | subcommand group |
+| `daemon list` | client-side | scans sockets, pings each |
+| `workflow run` | client-side | runs a workflow file or name |
+| `workflow list` | client-side | lists registered workflows |
+| `workflow describe` | client-side | shows params + steps |
 
-| Canonical CLI name | Wire command | Notes |
-|--------------------|--------------|-------|
-| `open` | `open_page` | concise alias |
-| `close` | `close_page` | concise alias |
-| `pages` | `list_pages` | concise alias |
-| `goto` | `goto` | — |
-| `snap` | `snapshot` | short-form alias; `--format elements` is the default |
-| `shot` | `screenshot` | short-form alias |
-| `fill` | `fill` | — |
-| `click` | `click` | — |
-| `eval` | `evaluate` | short-form alias |
-| `url` | `url` | — |
-| `watch` | `watch` | 30s default, returns selector echo |
-| `pause` | `pause` | — |
-| `resume` | `resume` | — |
-| `inspect` | `inspect` | — |
-| `cookies` | `cookies` | — |
-| `set-cookie` | `set_cookie` | hyphen (not `set_cookie`) |
-| `clear-cookies` | `clear_cookies` | hyphen (not `clear_cookies`) |
-| `export-cookies` | client-side | hyphen ✓ |
-| `import-cookies` | `import_cookies` | hyphen ✓ |
-| `ping` | `ping` | — |
-| `status` | client-side | reads `ping` + `list_pages` + `url` per page |
-| `shutdown` | `shutdown` | — |
-
-**Rule:** multi-word CLI commands are always hyphenated. Underscores are forbidden in CLI command names.
+**Rules:**
+- Subcommand groups follow `<noun> <verb>` order.
+- Standalone verbs (not grouped) are full English words with no abbreviation alias.
+- No hyphenated names — use spaces (subcommands) or underscores (wire).
 
 ### Ruby SDK (`Browserctl::Client` methods)
 
-`snake_case` always. Full names preferred over abbreviations. The sole exception is `inspect_page` (avoids shadowing `Kernel#inspect`).
+`snake_case` always. Full names preferred over abbreviations. Method names follow the wire command names.
 
 ```ruby
-open_page    close_page   list_pages
-goto         snapshot     screenshot
+page_open    page_close   page_list    page_focus
+navigate     snapshot     screenshot
 fill         click        evaluate
-wait_for     watch        url
-pause        resume       inspect_page
-cookies      set_cookie   clear_cookies
+wait         url
+pause        resume       devtools
+cookies      set_cookie   delete_cookies
 export_cookies            import_cookies
+storage_get  storage_set  storage_export
+storage_import            storage_delete
+session_save session_load session_list
+session_delete
 store        fetch
 ping         shutdown
 ```
@@ -85,7 +111,7 @@ ping         shutdown
 | Spec files | mirror source path, `_spec.rb` suffix | `spec/unit/snapshot_spec.rb` |
 | Docs | `kebab-case.md` | `api-stability.md` |
 
-One command handler = one file. Do not group paired commands (e.g. `pause_resume.rb`) in a single file.
+One command handler = one file. Do not group paired commands in a single file.
 
 ---
 

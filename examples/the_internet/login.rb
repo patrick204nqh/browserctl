@@ -9,7 +9,7 @@ Browserctl.workflow "the_internet/login" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_login.png")
 
   step "open login page" do
-    client.open_page("main", url: "#{base_url}/login")
+    open_page(:main, url: "#{base_url}/login")
   end
 
   step "fill and submit credentials" do

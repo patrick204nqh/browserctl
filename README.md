@@ -20,11 +20,11 @@ Every browser automation tool restarts the browser when your script ends. That m
 
 ```bash
 browserd &                                               # start the daemon (headless)
-browserctl open login --url https://example.com/login
-browserctl snap login                                    # AI-friendly JSON snapshot with ref IDs
+browserctl page open login --url https://example.com/login
+browserctl snapshot login                                # AI-friendly JSON snapshot with ref IDs
 browserctl fill login --ref e1 --value me@example.com   # interact by ref, no selectors needed
 browserctl click login --ref e2
-browserctl shutdown
+browserctl daemon stop
 ```
 
 ---
@@ -71,10 +71,10 @@ gem install browserctl
 browserd &
 
 # 3. Open a named page
-browserctl open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
+browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
 
 # 4. Snapshot the page — get AI-friendly JSON with ref IDs
-browserctl snap main
+browserctl snapshot main
 
 # 5. Interact using refs
 browserctl fill  main --ref e1 --value admin
@@ -83,10 +83,10 @@ browserctl click main --ref e3
 
 # 6. Observe
 browserctl url  main
-browserctl snap main --diff   # only what changed
+browserctl snapshot main --diff   # only what changed
 
 # 7. Done
-browserctl shutdown
+browserctl daemon stop
 ```
 
 → [Full Getting Started guide](docs/getting-started.md)
@@ -178,7 +178,7 @@ Start multiple named instances for agent isolation:
 ```bash
 browserd --name agent-a &
 browserd --name agent-b &
-browserctl --daemon agent-a open main --url https://app.example.com
+browserctl --daemon agent-a page open main --url https://app.example.com
 ```
 
 The daemon shuts itself down after 30 minutes of inactivity.
