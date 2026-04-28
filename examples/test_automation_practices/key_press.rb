@@ -17,18 +17,18 @@ Browserctl.workflow "test_automation_practices/key_press" do
       sleep 0.1
     end
 
-    last = client.evaluate("main",
-                           "document.querySelector('[data-test=\"last-key-pressed\"]')?.innerText?.trim()")[:result]
+    last = page(:main).evaluate(
+      "document.querySelector('[data-test=\"last-key-pressed\"]')?.innerText?.trim()"
+    )
     assert last == keys.last, "expected last key '#{keys.last}', got: #{last.inspect}"
     store(:keys, keys)
   end
 
   step "verify key history contains the most recent keys" do
     keys = fetch(:keys)
-    history = client.evaluate(
-      "main",
+    history = page(:main).evaluate(
       "Array.from(document.querySelectorAll('[data-test^=\"key-\"]')).map(el => el.innerText?.trim())"
-    )[:result]
+    )
     # The site retains only the last 4 keys in the history list; assert those
     keys.last(4).each do |key|
       assert history.any? { |entry| entry&.include?(key) }, "expected '#{key}' in history, got: #{history.inspect}"

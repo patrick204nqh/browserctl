@@ -19,10 +19,9 @@ Browserctl.workflow "test_automation_practices/file_upload" do
 
       page(:main).upload("[data-test='file-input']", path)
 
-      filename = client.evaluate(
-        "main",
+      filename = page(:main).evaluate(
         "document.querySelector('[data-test=\"file-input\"]').files[0]?.name"
-      )[:result]
+      )
       assert filename == "browserctl_test.txt", "expected filename in input, got: #{filename.inspect}"
     end
     page(:main).screenshot(path: screenshot_path)

@@ -12,7 +12,7 @@ Browserctl.workflow "test_automation_practices/dynamic_elements" do
   end
 
   step "assert no dynamic items exist before reload" do
-    absent = client.evaluate("main", "!document.querySelector('[data-test=\"dynamic-item-0\"]')")[:result]
+    absent = page(:main).evaluate("!document.querySelector('[data-test=\"dynamic-item-0\"]')")
     assert absent, "expected no dynamic items before triggering reload"
   end
 
@@ -23,10 +23,9 @@ Browserctl.workflow "test_automation_practices/dynamic_elements" do
   end
 
   step "verify all three dynamic items are present" do
-    count = client.evaluate(
-      "main",
+    count = page(:main).evaluate(
       "[0,1,2].filter(i => !!document.querySelector(`[data-test=\"dynamic-item-${i}\"]`)).length"
-    )[:result]
+    )
     assert count == 3, "expected 3 dynamic items, got: #{count}"
     page(:main).screenshot(path: screenshot_path)
   end
@@ -34,7 +33,7 @@ Browserctl.workflow "test_automation_practices/dynamic_elements" do
   step "toggle hidden content on" do
     page(:main).click("[data-test='toggle-hidden-button']")
     page(:main).wait("[data-test='hidden-content']", timeout: 5)
-    visible = client.evaluate("main", "!!document.querySelector('[data-test=\"hidden-content\"]')")[:result]
+    visible = page(:main).evaluate("!!document.querySelector('[data-test=\"hidden-content\"]')")
     assert visible, "expected hidden content to appear after toggle"
   end
 end

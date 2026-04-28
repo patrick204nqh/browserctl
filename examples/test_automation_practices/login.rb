@@ -20,7 +20,7 @@ Browserctl.workflow "test_automation_practices/login" do
 
   step "verify successful login" do
     page(:main).wait("[data-test='auth-success']", timeout: 10)
-    msg = client.evaluate("main", "document.querySelector('[data-test=\"auth-success\"]')?.innerText?.trim()")[:result]
+    msg = page(:main).evaluate("document.querySelector('[data-test=\"auth-success\"]')?.innerText?.trim()")
     assert msg&.length&.positive?, "expected a success message, got: #{msg.inspect}"
     page(:main).screenshot(path: screenshot_path)
   end
@@ -28,7 +28,7 @@ Browserctl.workflow "test_automation_practices/login" do
   step "logout and verify form reappears" do
     page(:main).click("[data-test='logout-button']")
     page(:main).wait("[data-test='login-button']", timeout: 5)
-    visible = client.evaluate("main", "!!document.querySelector('[data-test=\"login-button\"]')")[:result]
+    visible = page(:main).evaluate("!!document.querySelector('[data-test=\"login-button\"]')")
     assert visible, "expected login form to reappear after logout"
   end
 end

@@ -15,10 +15,9 @@ Browserctl.workflow "test_automation_practices/hover" do
     [1, 2, 3].each do |i|
       page(:main).hover("[data-test='hover-figure-#{i}']")
       sleep 0.2
-      caption = client.evaluate(
-        "main",
+      caption = page(:main).evaluate(
         "!!document.querySelector('[data-test=\"hover-caption-#{i}\"]')"
-      )[:result]
+      )
       assert caption, "expected caption to appear on figure #{i} after hover"
     end
   end
