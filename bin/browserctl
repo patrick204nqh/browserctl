@@ -63,6 +63,10 @@ def usage
       pause    <page> [--message MSG]
       resume   <page>
       devtools <page>
+      press    <page> <key>
+      hover    <page> <selector>
+      upload   <page> <selector> <file>
+      select   <page> <selector> <value>
 
     Cookie:
       cookie list   <page>
@@ -166,6 +170,24 @@ else
     puts "(#{opts[:message]})" if opts[:message]
     puts "When done: browserctl resume #{name}"
   when "resume" then Browserctl::Commands::Resume.run(client, args)
+  when "press"
+    name = args.shift or abort "usage: browserctl press <page> <key>"
+    key  = args.shift or abort "usage: browserctl press <page> <key>"
+    print_result(client.press(name, key))
+  when "hover"
+    name     = args.shift or abort "usage: browserctl hover <page> <selector>"
+    selector = args.shift or abort "usage: browserctl hover <page> <selector>"
+    print_result(client.hover(name, selector))
+  when "upload"
+    name     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+    selector = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+    path     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+    print_result(client.upload(name, selector, path))
+  when "select"
+    name     = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+    selector = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+    value    = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+    print_result(client.select(name, selector, value))
   when "devtools"
     name = args.shift or abort "usage: browserctl devtools <page>"
     res = client.devtools(name)

@@ -225,6 +225,43 @@ module Browserctl
       call("storage_delete", name: name, stores: stores)
     end
 
+    # Fires a keydown + keyup event for the given key name on a page.
+    # @param name [String] logical page name
+    # @param key [String] key name e.g. "Enter", "Tab", "Escape", "ArrowDown"
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def press(name, key)          = call("press",  name: name, key: key)
+
+    # Moves the mouse to the centre of the element matched by selector.
+    # @param name [String] logical page name
+    # @param selector [String] CSS selector
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def hover(name, selector)     = call("hover",  name: name, selector: selector)
+
+    # Sets a file-input element to the given file path.
+    # @param name [String] logical page name
+    # @param selector [String] CSS selector for the file input
+    # @param path [String] absolute or relative file path
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def upload(name, selector, path) = call("upload", name: name, selector: selector, path: path)
+
+    # Sets a <select> element's value and fires a change event.
+    # @param name [String] logical page name
+    # @param selector [String] CSS selector for the select element
+    # @param value [String] option value to select
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def select(name, selector, value) = call("select", name: name, selector: selector, value: value)
+
+    # Pre-registers a one-shot handler to accept the next JS dialog on a page.
+    # @param name [String] logical page name
+    # @param text [String, nil] prompt text for window.prompt dialogs (ignored for alert/confirm)
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def dialog_accept(name, text: nil) = call("dialog_accept", name: name, text: text)
+
+    # Pre-registers a one-shot handler to dismiss the next JS dialog on a page.
+    # @param name [String] logical page name
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def dialog_dismiss(name)           = call("dialog_dismiss", name: name)
+
     # Saves the current browser state (cookies, localStorage, open pages) to a named session.
     # @param session_name [String] name for the saved session
     # @return [Hash] `{ ok: true, path:, pages: N, cookies: N }` or `{ error: }`

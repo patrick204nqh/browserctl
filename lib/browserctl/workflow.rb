@@ -137,6 +137,11 @@ module Browserctl
       unwrap @client.storage_set(@name, key, value, store: store)
     end
 
+    def press(key)               = unwrap @client.press(@name, key)
+    def hover(selector)          = unwrap @client.hover(@name, selector)
+    def upload(selector, path)   = unwrap @client.upload(@name, selector, path)
+    def select(selector, value)  = unwrap @client.select(@name, selector, value)
+
     private
 
     def unwrap(res)
