@@ -27,6 +27,7 @@ require "browserctl/commands/storage"
 require "browserctl/commands/session"
 require "browserctl/commands/daemon"
 require "browserctl/commands/workflow"
+require "browserctl/commands/dialog"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -67,6 +68,8 @@ def usage
       hover    <page> <selector>
       upload   <page> <selector> <file>
       select   <page> <selector> <value>
+      dialog accept  <page> [text]
+      dialog dismiss <page>
 
     Cookie:
       cookie list   <page>
@@ -188,6 +191,7 @@ else
     selector = args.shift or abort "usage: browserctl select <page> <selector> <value>"
     value    = args.shift or abort "usage: browserctl select <page> <selector> <value>"
     print_result(client.select(name, selector, value))
+  when "dialog" then Browserctl::Commands::Dialog.run(client, args)
   when "devtools"
     name = args.shift or abort "usage: browserctl devtools <page>"
     res = client.devtools(name)
