@@ -5,7 +5,7 @@ module Browserctl
   IDLE_TTL         = 30 * 60
   # Increment when a breaking wire protocol change ships (new field names, removed commands, changed response shapes).
   # Clients read this from `ping` to verify compatibility before sending commands.
-  PROTOCOL_VERSION = "1"
+  PROTOCOL_VERSION = "2"
 
   def self.socket_path(name = nil)
     File.join(BROWSERCTL_DIR, name ? "#{name}.sock" : "browserd.sock")

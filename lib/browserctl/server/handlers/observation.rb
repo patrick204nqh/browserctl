@@ -82,31 +82,6 @@ module Browserctl
           File.join(SCREENSHOT_DIR, "browserctl_shot_#{name_safe}_#{Time.now.to_i}.png")
         end
 
-        def cmd_wait_for(req)
-          with_page(req[:name]) do |session|
-            wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 10).to_f)
-          end
-        end
-
-        def cmd_watch(req)
-          with_page(req[:name]) do |session|
-            result = wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 30).to_f)
-            result[:error] ? result : { ok: true, selector: req[:selector] }
-          end
-        end
-
-        def wait_for_selector(page, selector, timeout)
-          deadline = Time.now + timeout
-          loop do
-            found = page.at_css(selector)
-            break { ok: true } if found
-            if Time.now >= deadline
-              break { error: "wait_for timeout: selector '#{selector}' not found after #{timeout}s" }
-            end
-
-            sleep 0.2
-          end
-        end
       end
     end
   end

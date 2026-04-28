@@ -6,7 +6,7 @@ module Browserctl
       module Navigation
         private
 
-        def cmd_goto(req)
+        def cmd_navigate(req)
           unless Policy.allowed_navigation?(req[:url].to_s)
             return { error: "navigation to '#{req[:url]}' blocked by domain policy", code: "domain_not_allowed" }
           end
@@ -14,6 +14,13 @@ module Browserctl
           with_page(req[:name]) do |session|
             session.page.go_to(req[:url])
             { ok: true, url: session.page.current_url, challenge: Detectors.cloudflare?(session.page) }
+          end
+        end
+
+        def cmd_wait(req)
+          with_page(req[:name]) do |session|
+            result = wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 30).to_f)
+            result[:error] ? result : { ok: true, selector: req[:selector] }
           end
         end
 
@@ -69,6 +76,19 @@ module Browserctl
           return { error: "selector or ref required" } unless req[:ref]
 
           session.ref_registry[req[:ref]] || { error: "ref '#{req[:ref]}' not found — run snap first" }
+        end
+
+        def wait_for_selector(page, selector, timeout)
+          deadline = Time.now + timeout
+          loop do
+            found = page.at_css(selector)
+            break { ok: true } if found
+            if Time.now >= deadline
+              break { error: "wait timeout: selector '#{selector}' not found after #{timeout}s" }
+            end
+
+            sleep 0.2
+          end
         end
       end
     end

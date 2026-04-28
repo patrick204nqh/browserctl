@@ -6,7 +6,7 @@ module Browserctl
       module PageLifecycle
         private
 
-        def cmd_open_page(req)
+        def cmd_page_open(req)
           session = @global_mutex.synchronize do
             @pages[req[:name]] ||= PageSession.new(@browser.create_page)
           end
@@ -14,13 +14,13 @@ module Browserctl
           { ok: true, name: req[:name] }
         end
 
-        def cmd_close_page(req)
+        def cmd_page_close(req)
           session = @global_mutex.synchronize { @pages.delete(req[:name]) }
           session&.page&.close
           { ok: true }
         end
 
-        def cmd_list_pages(_req)
+        def cmd_page_list(_req)
           { pages: @global_mutex.synchronize { @pages.keys } }
         end
       end

@@ -22,45 +22,45 @@ RSpec.describe Browserctl::CommandDispatcher do
       expect(result[:pid]).to eq(Process.pid)
     end
 
-    it "responds to list_pages" do
+    it "responds to page_list" do
       pages["main"] = Browserctl::PageSession.new(double("page"))
-      expect(dispatcher.dispatch({ cmd: "list_pages" })).to eq({ pages: ["main"] })
+      expect(dispatcher.dispatch({ cmd: "page_list" })).to eq({ pages: ["main"] })
     end
 
     it "returns error for missing page" do
-      result = dispatcher.dispatch({ cmd: "goto", name: "missing", url: "http://x.com" })
+      result = dispatcher.dispatch({ cmd: "navigate", name: "missing", url: "http://x.com" })
       expect(result[:error]).to match(/no page named 'missing'/)
     end
 
-    it "open_page creates and stores a page" do
+    it "page_open creates and stores a page" do
       page = double("page")
       allow(browser).to receive(:create_page).and_return(page)
-      result = dispatcher.dispatch({ cmd: "open_page", name: "home" })
+      result = dispatcher.dispatch({ cmd: "page_open", name: "home" })
       expect(result).to eq({ ok: true, name: "home" })
       expect(pages["home"]).to be_a(Browserctl::PageSession)
       expect(pages["home"].page).to eq(page)
     end
 
-    it "open_page navigates to url when given" do
+    it "page_open navigates to url when given" do
       page = double("page")
       allow(browser).to receive(:create_page).and_return(page)
       expect(page).to receive(:go_to).with("http://example.com")
-      dispatcher.dispatch({ cmd: "open_page", name: "home", url: "http://example.com" })
+      dispatcher.dispatch({ cmd: "page_open", name: "home", url: "http://example.com" })
     end
 
-    it "open_page re-navigates an existing page when url is given" do
+    it "page_open re-navigates an existing page when url is given" do
       page = double("page")
       pages["home"] = Browserctl::PageSession.new(page)
       expect(page).to receive(:go_to).with("http://example.com/new")
-      result = dispatcher.dispatch({ cmd: "open_page", name: "home", url: "http://example.com/new" })
+      result = dispatcher.dispatch({ cmd: "page_open", name: "home", url: "http://example.com/new" })
       expect(result).to eq({ ok: true, name: "home" })
     end
 
-    it "close_page removes page and closes it" do
+    it "page_close removes page and closes it" do
       page = double("page")
       allow(page).to receive(:close)
       pages["home"] = Browserctl::PageSession.new(page)
-      result = dispatcher.dispatch({ cmd: "close_page", name: "home" })
+      result = dispatcher.dispatch({ cmd: "page_close", name: "home" })
       expect(result).to eq({ ok: true })
       expect(pages.key?("home")).to be false
     end
@@ -181,7 +181,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
-  describe "#cmd_watch" do
+  describe "#cmd_wait" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("browser")) }
@@ -192,14 +192,14 @@ RSpec.describe Browserctl::CommandDispatcher do
         call_count += 1
         call_count >= 2 ? double("el") : nil
       end
-      res = dispatcher.dispatch({ cmd: "watch", name: "main", selector: ".result", timeout: 1 })
+      res = dispatcher.dispatch({ cmd: "wait", name: "main", selector: ".result", timeout: 1 })
       expect(res[:ok]).to be true
       expect(res[:selector]).to eq ".result"
     end
 
     it "returns error on timeout" do
       allow(page).to receive(:at_css).and_return(nil)
-      res = dispatcher.dispatch({ cmd: "watch", name: "main", selector: ".missing", timeout: 0.2 })
+      res = dispatcher.dispatch({ cmd: "wait", name: "main", selector: ".missing", timeout: 0.2 })
       expect(res[:error]).to match(/timeout/)
     end
   end
@@ -244,13 +244,13 @@ RSpec.describe Browserctl::CommandDispatcher do
       end
     end
 
-    context "when goto lands on challenge page" do
+    context "when navigate lands on challenge page" do
       let(:cf_url) { "https://example.com/cdn-cgi/challenge-platform/h/g/orchestrate/chl_page/v1" }
       let(:page)   { instance_double("Ferrum::Page", body: "<html></html>", current_url: cf_url) }
 
-      it "includes challenge: true in goto response" do
+      it "includes challenge: true in navigate response" do
         allow(page).to receive(:go_to)
-        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        res = dispatcher.dispatch({ cmd: "navigate", name: "main", url: "https://example.com" })
         expect(res[:challenge]).to be true
       end
     end
@@ -266,9 +266,9 @@ RSpec.describe Browserctl::CommandDispatcher do
         expect(res[:challenge]).to be false
       end
 
-      it "includes challenge: false in goto" do
+      it "includes challenge: false in navigate" do
         allow(page).to receive(:go_to)
-        res = dispatcher.dispatch({ cmd: "goto", name: "main", url: "https://example.com" })
+        res = dispatcher.dispatch({ cmd: "navigate", name: "main", url: "https://example.com" })
         expect(res[:challenge]).to be false
       end
     end
@@ -391,7 +391,7 @@ RSpec.describe Browserctl::CommandDispatcher do
       dispatcher.dispatch({ cmd: "snapshot", name: "temp", format: "elements" })
       expect(pages["temp"].ref_registry).not_to be_empty
 
-      dispatcher.dispatch({ cmd: "close_page", name: "temp" })
+      dispatcher.dispatch({ cmd: "page_close", name: "temp" })
       expect(pages.key?("temp")).to be false
     end
 
@@ -414,7 +414,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
-  describe "#cmd_inspect" do
+  describe "#cmd_devtools" do
     let(:browser) { double("browser") }
     let(:page)    { instance_double("Ferrum::Page") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
@@ -423,19 +423,19 @@ RSpec.describe Browserctl::CommandDispatcher do
     it "returns a devtools_url for a known page" do
       allow(browser).to receive_message_chain(:process, :port).and_return(9222)
       allow(page).to receive(:target_id).and_return("ABCD1234")
-      res = dispatcher.dispatch({ cmd: "inspect", name: "main" })
+      res = dispatcher.dispatch({ cmd: "devtools", name: "main" })
       expect(res[:ok]).to be true
       expect(res[:devtools_url]).to include("9222")
       expect(res[:devtools_url]).to include("ABCD1234")
     end
 
     it "returns error for unknown page" do
-      res = dispatcher.dispatch({ cmd: "inspect", name: "ghost" })
+      res = dispatcher.dispatch({ cmd: "devtools", name: "ghost" })
       expect(res[:error]).to match(/no page named 'ghost'/)
     end
   end
 
-  describe "#cmd_cookies / #cmd_set_cookie / #cmd_clear_cookies" do
+  describe "#cmd_cookies / #cmd_set_cookie / #cmd_delete_cookies" do
     let(:browser) { double("browser") }
     let(:page)    { instance_double("Ferrum::Page") }
     let(:cookies) { double("cookies") }
@@ -494,15 +494,15 @@ RSpec.describe Browserctl::CommandDispatcher do
       end
     end
 
-    describe "#cmd_clear_cookies" do
+    describe "#cmd_delete_cookies" do
       it "calls cookies.clear and returns ok" do
         expect(cookies).to receive(:clear)
-        res = dispatcher.dispatch({ cmd: "clear_cookies", name: "main" })
+        res = dispatcher.dispatch({ cmd: "delete_cookies", name: "main" })
         expect(res[:ok]).to be true
       end
 
       it "returns error for unknown page" do
-        res = dispatcher.dispatch({ cmd: "clear_cookies", name: "ghost" })
+        res = dispatcher.dispatch({ cmd: "delete_cookies", name: "ghost" })
         expect(res[:error]).to match(/no page named 'ghost'/)
       end
     end

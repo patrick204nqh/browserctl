@@ -6,7 +6,7 @@ module Browserctl
       module DevTools
         private
 
-        def cmd_inspect(req)
+        def cmd_devtools(req)
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 
