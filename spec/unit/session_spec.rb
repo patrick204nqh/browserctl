@@ -85,4 +85,41 @@ RSpec.describe Browserctl::Session do
       expect(described_class.exist?("test_session")).to be false
     end
   end
+
+  describe "name validation" do
+    it "rejects path-traversal names" do
+      expect do
+        described_class.save("../../evil", metadata: metadata, cookies: [],
+                                           local_storage: {}, session_storage: {})
+      end
+        .to raise_error(ArgumentError, /invalid session name/)
+    end
+
+    it "rejects names with slashes" do
+      expect { described_class.load("foo/bar") }.to raise_error(ArgumentError, /invalid session name/)
+    end
+
+    it "accepts valid names with letters, digits, _ and -" do
+      expect do
+        described_class.save("my-session_01", metadata: metadata, cookies: [],
+                                              local_storage: {}, session_storage: {})
+      end.not_to raise_error
+    end
+  end
+
+  describe "file permissions on sensitive files" do
+    it "writes cookies.json with mode 0600" do
+      described_class.save("test_session", metadata: metadata, cookies: cookies,
+                                           local_storage: {}, session_storage: {})
+      mode = File.stat(File.join(described_class.path("test_session"), "cookies.json")).mode & 0o777
+      expect(mode).to eq(0o600)
+    end
+
+    it "writes local_storage.json with mode 0600" do
+      described_class.save("test_session", metadata: metadata, cookies: [],
+                                           local_storage: local_storage, session_storage: {})
+      mode = File.stat(File.join(described_class.path("test_session"), "local_storage.json")).mode & 0o777
+      expect(mode).to eq(0o600)
+    end
+  end
 end

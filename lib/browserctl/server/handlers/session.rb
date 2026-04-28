@@ -26,10 +26,11 @@ module Browserctl
             end
           end
 
+          now = Time.now.iso8601
           Browserctl::Session.save(
             req[:session_name],
             metadata: { version: 1, name: req[:session_name],
-                        created_at: Time.now.iso8601, pages: pages_meta },
+                        created_at: now, updated_at: now, pages: pages_meta },
             cookies: cookies,
             local_storage: local_storage,
             session_storage: {}
@@ -39,7 +40,7 @@ module Browserctl
         end
         # rubocop:enable Metrics/AbcSize
 
-        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
         def cmd_session_load(req)
           data = Browserctl::Session.load(req[:session_name])
 
@@ -63,12 +64,15 @@ module Browserctl
             next if keys.empty?
 
             tmp_page = @browser.create_page
-            tmp_page.go_to(origin)
-            keys.each do |k, v|
-              tmp_page.evaluate("localStorage.setItem(#{k.to_json}, #{v.to_json})")
-              ls_key_count += 1
+            begin
+              tmp_page.go_to(origin)
+              keys.each do |k, v|
+                tmp_page.evaluate("localStorage.setItem(#{k.to_json}, #{v.to_json})")
+                ls_key_count += 1
+              end
+            ensure
+              tmp_page.close
             end
-            tmp_page.close
           end
 
           { ok: true, cookies: cookie_count, pages: data[:metadata][:pages].length,
@@ -76,7 +80,7 @@ module Browserctl
         rescue RuntimeError => e
           { error: e.message }
         end
-        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
         def cmd_session_list(_req)
           sessions = Browserctl::Session.all

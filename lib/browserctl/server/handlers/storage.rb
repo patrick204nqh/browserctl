@@ -57,7 +57,8 @@ module Browserctl
           end
         end
 
-        # Imports storage keys from a JSON file into the page's localStorage.
+        # Imports keys from a JSON file into the page's localStorage only.
+        # sessionStorage keys in the file are ignored (sessionStorage is tab-scoped and not restorable).
         # Returns { ok: true, origins: N, key_count: M } or { error: }
         def cmd_storage_import(req)
           path = File.expand_path(req[:path])
