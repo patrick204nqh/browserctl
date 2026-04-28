@@ -5,7 +5,7 @@ module Browserctl
     class Inspect
       def self.run(client, args)
         name = args.shift or abort "usage: browserctl inspect <page>"
-        res = client.inspect_page(name)
+        res = client.devtools(name)
         if res[:error]
           warn "Error: #{res[:error]}"
           exit 1

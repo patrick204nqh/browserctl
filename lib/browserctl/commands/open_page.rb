@@ -14,7 +14,7 @@ module Browserctl
           opt :url, "URL to navigate to", type: :string, short: "-u"
         end
         name = args.shift or abort "usage: browserctl open <page> [--url URL]"
-        print_result(client.open_page(name, url: opts[:url]))
+        print_result(client.page_open(name, url: opts[:url]))
       end
     end
   end

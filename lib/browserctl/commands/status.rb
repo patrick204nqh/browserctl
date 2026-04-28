@@ -7,7 +7,7 @@ module Browserctl
     module Status
       def self.run(client)
         ping = client.ping
-        pages = client.list_pages[:pages] || []
+        pages = client.page_list[:pages] || []
         page_info = pages.map do |name|
           url_res = client.url(name)
           { name: name, url: url_res[:url] || url_res[:error] }

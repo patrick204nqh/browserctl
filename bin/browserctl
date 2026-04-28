@@ -14,20 +14,20 @@ require "json"
 require "optimist"
 require "browserctl"
 require "browserctl/commands/cli_output"
-require "browserctl/commands/open_page"
 require "browserctl/commands/fill"
 require "browserctl/commands/click"
 require "browserctl/commands/snapshot"
 require "browserctl/commands/screenshot"
-require "browserctl/commands/watch"
 require "browserctl/commands/record"
 require "browserctl/commands/pause"
 require "browserctl/commands/resume"
 require "browserctl/commands/init"
-require "browserctl/commands/inspect"
-require "browserctl/commands/export_cookies"
-require "browserctl/commands/import_cookies"
-require "browserctl/commands/status"
+require "browserctl/commands/page"
+require "browserctl/commands/cookie"
+require "browserctl/commands/storage"
+require "browserctl/commands/session"
+require "browserctl/commands/daemon"
+require "browserctl/commands/workflow"
 
 def print_result(res)
   if res.is_a?(Hash) && res[:error]
@@ -43,49 +43,71 @@ def usage
     Usage: browserctl <command> [args]
 
     Setup:
-      init                                         Scaffold .browserctl/ in this project
+      init
 
-    Browser commands (require browserd running):
-      open   <page> [--url URL]                   Open or focus a named page
-      close  <page>                                Close a named page
-      pages                                        List open pages
-      goto   <page> <url>                          Navigate a page
-      fill   <page> <selector> <value>             Fill an input
-             <page> --ref <ref> --value <value>    Fill via snapshot ref
-      click  <page> <selector>                     Click an element
-             <page> --ref <ref>                    Click via snapshot ref
-      shot   <page> [--out PATH] [--full]          Take a screenshot
-      snap   <page> [--format ai|html] [--diff]    Snapshot DOM (default: ai)
-      url    <page>                                Print current URL
-      eval   <page> <expression>                   Evaluate JS expression
-      watch  <page> <selector> [--timeout N]       Wait for a selector to appear
-      pause   <page>                               Pause automation — browser stays live
-      resume  <page>                               Resume automation after manual action
-      inspect <page>                               Open Chrome DevTools for a named page
-      cookies <page>                               List all cookies as JSON
-      set-cookie <page> <name> <value> <domain>    Set a cookie (path defaults to /)
-      clear-cookies <page>                         Clear all cookies for a page
-      export-cookies <page> <path>                 Export cookies to a JSON file
-      import-cookies <page> <path>                 Import cookies from a JSON file
+    Page:
+      page open <name> [--url URL]
+      page close <name>
+      page list
+      page focus <name>
 
-    Recording commands:
-      record start <name>            Start recording browser commands
-      record stop  [--out PATH]      Stop recording and save workflow
-      record status                  Show active recording name
+    Interaction (page is always first arg after verb):
+      navigate <page> <url>
+      fill     <page> <selector> <value>
+               <page> --ref <ref> --value <value>
+      click    <page> <selector>
+               <page> --ref <ref>
+      snapshot <page> [--format elements|html] [--diff]
+      screenshot <page> [--out PATH] [--full]
+      evaluate <page> <expression>
+      url      <page>
+      wait     <page> <selector> [--timeout N]
+      pause    <page> [--message MSG]
+      resume   <page>
+      devtools <page>
 
-    Workflow commands:
-      run      <name|file> [--params file] [--key value ...]   Run a workflow
-      workflows                                List available workflows
-      describe <name>                          Describe a workflow
+    Cookie:
+      cookie list   <page>
+      cookie set    <page> <name> <value> --domain DOMAIN [--path /]
+      cookie delete <page>
+      cookie export <page> <path>
+      cookie import <page> <path>
 
-    Daemon commands:
-      ping                   Check if browserd is alive
-      status                 Show daemon status, PID, and open pages
-      shutdown               Stop browserd
+    Storage:
+      storage get    <page> <key> [--store local|session]
+      storage set    <page> <key> <value> [--store local|session]
+      storage export <page> <path> [--store local|session|all]
+      storage import <page> <path>
+      storage delete <page> [--store local|session|all]
 
-    Options:
-      --daemon <name>    Connect to a named daemon instance
-      --version, -v      Print version and exit
+    Session:
+      session save   <name>
+      session load   <name>
+      session list
+      session delete <name>
+      session export <name> <path>
+      session import <path>
+
+    Recording:
+      record start <name>
+      record stop  [--out PATH]
+      record status
+
+    Workflow:
+      workflow run      <name|file> [--params file] [--key value ...]
+      workflow list
+      workflow describe <name>
+
+    Daemon:
+      daemon start  [--headed] [--name NAME]
+      daemon stop
+      daemon status
+      daemon ping
+      daemon list
+
+    Global options:
+      --daemon <name>    Connect to named or auto-indexed daemon (d1, d2, work, ...)
+      --version, -v
   USAGE
   exit 0
 end
@@ -105,70 +127,62 @@ usage if cmd.nil? || %w[-h --help help].include?(cmd)
 runner = Browserctl::Runner.new
 
 case cmd
-when "run"
-  name = args.shift or abort "usage: browserctl run <workflow_name|file.rb> [--key value ...]"
-  if File.exist?(name)
-    before = Browserctl.registry_snapshot.keys
-    load File.expand_path(name)
-    name = (Browserctl.registry_snapshot.keys - before).first || File.basename(name, ".rb")
-  end
-  params_file_idx = args.index("--params")
-  file_params = {}
-  if params_file_idx
-    params_path = args.delete_at(params_file_idx + 1)
-    args.delete_at(params_file_idx)
-    begin
-      file_params = Browserctl::Runner.load_params_file(params_path)
-    rescue StandardError => e
-      abort "Error loading params file: #{e.message}"
-    end
-  end
-  cli_params = {}
-  args.each_slice(2) do |flag, val|
-    key = flag.sub(/\A--/, "").to_sym
-    cli_params[key] = val
-  end
-  params = file_params.merge(cli_params)
-  success = runner.run_workflow(name, **params)
-  exit(success ? 0 : 1)
-
-when "workflows"
-  list = runner.list_workflows
-  list.each { |w| puts "#{w[:name].ljust(24)} #{w[:desc]}" }
-
-when "describe"
-  name = args.shift or abort "usage: browserctl describe <workflow_name>"
-  puts JSON.pretty_generate(runner.describe_workflow(name))
-
-when "record" then Browserctl::Commands::Record.run(args)
-when "init"   then Browserctl::Commands::Init.run(args)
+when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
+when "record"   then Browserctl::Commands::Record.run(args)
+when "init"     then Browserctl::Commands::Init.run(args)
 
 else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
 
   case cmd
-  when "open"     then Browserctl::Commands::OpenPage.run(client, args)
-  when "close"    then print_result(client.close_page(args[0]))
-  when "pages"    then print_result(client.list_pages)
-  when "goto"     then print_result(client.goto(args[0], args[1]))
+  when "page"     then Browserctl::Commands::Page.run(client, args)
+  when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
+  when "storage"  then Browserctl::Commands::Storage.run(client, args)
+  when "session"  then Browserctl::Commands::Session.run(client, args)
+  when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
+  when "navigate" then print_result(client.navigate(args[0], args[1]))
   when "fill"     then Browserctl::Commands::Fill.run(client, args)
   when "click"    then Browserctl::Commands::Click.run(client, args)
-  when "shot"     then Browserctl::Commands::Screenshot.run(client, args)
-  when "snap"     then Browserctl::Commands::Snapshot.run(client, args)
+  when "snapshot" then Browserctl::Commands::Snapshot.run(client, args)
+  when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
+  when "evaluate" then print_result(client.evaluate(args[0], args[1]))
   when "url"      then print_result(client.url(args[0]))
-  when "eval"     then print_result(client.evaluate(args[0], args[1]))
-  when "watch"    then Browserctl::Commands::Watch.run(client, args)
-  when "pause"    then Browserctl::Commands::Pause.run(client, args)
+  when "wait"     do
+    opts = Optimist.options(args) do
+      opt :timeout, "Seconds to wait (default: 30)", default: 30.0, short: "-t"
+    end
+    name = args.shift; selector = args.shift
+    abort "usage: browserctl wait <page> <selector> [--timeout N]" unless name && selector
+    print_result(client.wait(name, selector, timeout: opts[:timeout]))
+  end
+  when "pause"    do
+    opts = Optimist.options(args) do
+      opt :message, "Message shown to human", type: :string, short: "-m"
+    end
+    name = args.shift or abort "usage: browserctl pause <page> [--message MSG]"
+    res = client.pause(name, message: opts[:message])
+    if res[:error]
+      warn "Error: #{res[:error]}"
+      exit 1
+    end
+    puts "Page '#{name}' paused. Browser is live — interact freely."
+    puts "(#{opts[:message]})" if opts[:message]
+    puts "When done: browserctl resume #{name}"
+  end
   when "resume"   then Browserctl::Commands::Resume.run(client, args)
-  when "inspect"       then Browserctl::Commands::Inspect.run(client, args)
-  when "cookies"         then print_result(client.cookies(args[0]))
-  when "set-cookie"      then print_result(client.set_cookie(args[0], args[1], args[2], args[3]))
-  when "clear-cookies"   then print_result(client.clear_cookies(args[0]))
-  when "export-cookies" then Browserctl::Commands::ExportCookies.run(client, args)
-  when "import-cookies" then Browserctl::Commands::ImportCookies.run(client, args)
-  when "ping"     then print_result(client.ping)
-  when "status"   then Browserctl::Commands::Status.run(client)
-  when "shutdown" then print_result(client.shutdown)
+  when "devtools" do
+    name = args.shift or abort "usage: browserctl devtools <page>"
+    res = client.devtools(name)
+    if res[:error]
+      warn "Error: #{res[:error]}"
+      exit 1
+    end
+    url = res[:devtools_url]
+    puts "Opening DevTools for '#{name}':"
+    puts "  #{url}"
+    opener = RUBY_PLATFORM =~ /darwin/ ? "open" : "xdg-open"
+    system(opener, url)
+  end
   else
     abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."
   end

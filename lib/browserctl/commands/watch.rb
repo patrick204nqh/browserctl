@@ -20,7 +20,7 @@ module Browserctl
           warn "Error: --timeout must be a positive number"
           exit 1
         end
-        print_result(client.watch(name, selector, timeout: opts[:timeout]))
+        print_result(client.wait(name, selector, timeout: opts[:timeout]))
       end
     end
   end
