@@ -50,14 +50,7 @@ browserctl daemon stop
 </td>
 </tr></table>
 
-> Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. To regenerate locally:
->
-> ```bash
-> rake demo               # full pipeline: screenshots + browser GIF + terminal GIF
-> rake demo:screenshots   # smoke test screenshots only
-> rake demo:browser_gif   # browser animation only  (requires: ffmpeg)
-> rake demo:terminal      # terminal GIF only        (requires: vhs)
-> ```
+> Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. See [Development](#development) to regenerate locally.
 
 ---
 
@@ -210,9 +203,10 @@ bin/setup              # brew bundle (macOS) + bundle install + Chrome check
 bundle exec rspec      # run tests
 bundle exec rubocop    # lint
 
-rake demo              # regenerate screenshots + terminal GIF
-rake demo:screenshots  # screenshots only (no VHS required)
-rake demo:terminal     # terminal GIF only
+rake demo               # full pipeline: screenshots + browser GIF + terminal GIF
+rake demo:screenshots   # smoke test screenshots only
+rake demo:browser_gif   # browser animation only  (requires: ffmpeg)
+rake demo:terminal      # terminal GIF only        (requires: vhs)
 ```
 
 ---
