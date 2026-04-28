@@ -19,29 +19,29 @@ browserd &         # headless (default)
 browserd --headed  # shows the browser window
 ```
 
-Check it's alive: `browserctl ping`
+Check it's alive: `browserctl daemon ping`
 
 Logs are written to `~/.browserctl/browserd.log` — the path is printed on startup. Tail it when debugging: `tail -f ~/.browserctl/browserd.log`
 
 If a daemon is already running, `browserd` aborts rather than clobbering the live session:
 ```
-browserd already running (PID 12345). Use 'browserctl shutdown' first.
+browserd already running (PID 12345). Use 'browserctl daemon stop' first.
 ```
 
 ## Core workflow
 
 1. Open a named page (name describes purpose, e.g. `login`, `checkout`)
 2. Navigate, fill, click using discrete commands
-3. Use `snap` when you don't know the layout — `--format elements` is the default
+3. Use `snapshot` when you don't know the layout — `--format elements` is the default
 4. When a sequence stabilises, save it as a workflow
 
 ## Commands
 
 ```sh
 # Navigation
-browserctl open  login --url https://app.example.com/login
-browserctl goto  login https://app.example.com/other
-browserctl url   login
+browserctl page open  login --url https://app.example.com/login
+browserctl navigate   login https://app.example.com/other
+browserctl url        login
 
 # Interaction — by selector
 browserctl fill  login "input[name=email]"    user@example.com
@@ -53,15 +53,15 @@ browserctl fill  login --ref e1 --value user@example.com
 browserctl click login --ref e2
 
 # Observation
-browserctl snap login                   # interactable elements JSON (use this first for unknown layouts)
-browserctl snap login --diff            # only elements changed since last snap
-browserctl snap login --format html     # raw HTML
-browserctl shot login                   # screenshot → /tmp/
-browserctl shot login --out /tmp/my.png --full
+browserctl snapshot login                   # interactable elements JSON (use this first for unknown layouts)
+browserctl snapshot login --diff            # only elements changed since last snap
+browserctl snapshot login --format html     # raw HTML
+browserctl screenshot login                 # screenshot → /tmp/
+browserctl screenshot login --out /tmp/my.png --full
 
 # Waiting
-browserctl watch login "button#submit"            # poll until selector appears
-browserctl watch login ".toast" --timeout 5       # fail after 5s
+browserctl wait login "button#submit"            # poll until selector appears
+browserctl wait login ".toast" --timeout 5       # fail after 5s
 
 # Recording
 browserctl record start my_flow              # start capturing commands
@@ -74,32 +74,32 @@ browserctl pause  login            # pause automation — browser stays live for
 browserctl resume login            # resume automation after human action
 
 # DevTools
-browserctl inspect login           # open Chrome DevTools URL for a named page
+browserctl devtools login          # open Chrome DevTools URL for a named page
 
 # Cookies
-browserctl cookies login                                          # list all cookies as JSON
-browserctl set-cookie login cf_clearance "xyz..." ".example.com" # set a cookie (path defaults to /)
-browserctl clear-cookies login                                    # clear all cookies
-browserctl export-cookies login .browserctl/sessions/app.json    # export to file
-browserctl import-cookies login .browserctl/sessions/app.json    # import from file
+browserctl cookie list   login                                                  # list all cookies as JSON
+browserctl cookie set    login cf_clearance "xyz..." --domain ".example.com"   # set a cookie
+browserctl cookie delete login                                                  # clear all cookies
+browserctl cookie export login .browserctl/sessions/app.json                   # export to file
+browserctl cookie import login .browserctl/sessions/app.json                   # import from file
 
 # Page management
-browserctl pages
-browserctl close login
+browserctl page list
+browserctl page close login
 
 # Daemon
-browserctl ping      # → { ok: true, pid: N, protocol_version: "1" }
-browserctl status    # → { daemon: "online", pid: N, protocol_version: "1", pages: [{name:, url:}] }
-browserctl shutdown
+browserctl daemon ping    # → { ok: true, pid: N, protocol_version: "2" }
+browserctl daemon status  # → { daemon: "online", pid: N, pages: [{name:, url:}] }
+browserctl daemon stop
 
 # Named daemon (multi-agent isolation)
 browserd --name session-abc &
-browserctl --daemon session-abc open main --url https://app.example.com
+browserctl --daemon session-abc page open main --url https://app.example.com
 ```
 
 ## Snapshot format (elements)
 
-`snap` (default) returns a JSON array of interactable elements:
+`snapshot` (default) returns a JSON array of interactable elements:
 
 ```json
 [
@@ -115,12 +115,12 @@ browserctl fill  login --ref e1 --value user@example.com
 browserctl click login --ref e2
 ```
 
-Or use `selector` values with `fill` and `click`. Prefer `snap` over raw HTML for token efficiency.
+Or use `selector` values with `fill` and `click`. Prefer `snapshot` over raw HTML for token efficiency.
 
-After the first `snap`, use `--diff` to fetch only what changed — avoids re-processing the full DOM on every step:
+After the first `snapshot`, use `--diff` to fetch only what changed — avoids re-processing the full DOM on every step:
 
 ```sh
-browserctl snap login --diff
+browserctl snapshot login --diff
 ```
 
 ## Naming pages
@@ -142,8 +142,8 @@ throwaway script. Only harden once the sequence is confirmed reliable.
 
 ```sh
 browserd --headed &
-browserctl open main --url https://app.example.com/login
-browserctl snap main                          # learn the selectors
+browserctl page open main --url https://app.example.com/login
+browserctl snapshot main                      # learn the selectors
 browserctl fill main "input[name=email]" me@example.com
 browserctl fill main "input[name=password]" secret
 browserctl click main "button[type=submit]"
@@ -217,11 +217,11 @@ Workflows in `~/.browserctl/workflows/` are global.
 
 ## Cloudflare challenges and HITL
 
-`goto` and `snap` responses include `challenge: true` when Cloudflare is detected. Use `pause` to hand control to a human, then poll until cleared:
+`navigate` and `snapshot` responses include `challenge: true` when Cloudflare is detected. Use `pause` to hand control to a human, then poll until cleared:
 
 ```sh
 # 1. Navigate — check for challenge
-browserctl goto main https://protected.example.com
+browserctl navigate main https://protected.example.com
 # → { "challenge": true }
 
 # 2. Pause and wait for human to solve
@@ -230,13 +230,13 @@ browserctl pause main
 browserctl resume main
 
 # 3. Capture cf_clearance for future sessions
-browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
+browserctl cookie list main | jq '.cookies[] | select(.name == "cf_clearance")'
 # → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
 
 # 4. Restore in a new session (skips re-solving)
-browserctl open main
-browserctl set-cookie main cf_clearance "xyz..." ".example.com"
-browserctl goto main https://protected.example.com
+browserctl page open main
+browserctl cookie set main cf_clearance "xyz..." --domain ".example.com"
+browserctl navigate main https://protected.example.com
 ```
 
 > `cf_clearance` expires in 30 min–a few hours. Re-capture when Cloudflare challenges again.
@@ -245,15 +245,15 @@ browserctl goto main https://protected.example.com
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
 - **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
-- **Use `snap`** for any page you haven't seen before — the default `elements` format gives valid selectors and ref IDs without reading raw HTML.
-- **Use `--ref` for interactions** — after a `snap`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snap` call — re-snap if you need fresh refs after page changes.
-- **Use `snap --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
-- **Use `watch`** when you need to wait for an element that appears asynchronously — more efficient than polling `snap`.
+- **Use `snapshot`** for any page you haven't seen before — the default `elements` format gives valid selectors and ref IDs without reading raw HTML.
+- **Use `--ref` for interactions** — after a `snapshot`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snapshot` call — re-snapshot if you need fresh refs after page changes.
+- **Use `snapshot --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
+- **Use `wait`** when you need to wait for an element that appears asynchronously — more efficient than polling `snapshot`.
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
-- **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snap <page>`.
+- **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snapshot <page>`.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
-- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `set-cookie` to avoid re-solving in future sessions.
+- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Recording and refs
@@ -291,8 +291,8 @@ end
 ## Troubleshooting
 
 - `browserd is not running` → run `browserd &` first; check `~/.browserctl/browserd.log` for startup errors
-- `browserd already running (PID N)` → run `browserctl shutdown` then restart
-- `no page named 'X'` → run `browserctl status` to see what's open, then `browserctl open X`
-- Selector not found → use `snap` to get valid selectors (elements format is the default)
-- Stale page → `browserctl goto <page> <url>` to reload
+- `browserd already running (PID N)` → run `browserctl daemon stop` then restart
+- `no page named 'X'` → run `browserctl daemon status` to see what's open, then `browserctl page open X`
+- Selector not found → use `snapshot` to get valid selectors (elements format is the default)
+- Stale page → `browserctl navigate <page> <url>` to reload
 - Debug live → `tail -f ~/.browserctl/browserd.log`

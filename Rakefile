@@ -62,21 +62,21 @@ namespace :demo do
     mkdir_p frames_dir
 
     with_daemon(headed: ENV["HEADED"] == "1") do
-      sh "bundle exec browserctl open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth"
+      sh "bundle exec browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth"
       sleep 2
-      sh "bundle exec browserctl shot main --out #{frames_dir}/01_login.png"
+      sh "bundle exec browserctl screenshot main --out #{frames_dir}/01_login.png"
 
       sh "bundle exec browserctl fill main '[data-test=username-input]' admin"
       sleep 1
-      sh "bundle exec browserctl shot main --out #{frames_dir}/02_username.png"
+      sh "bundle exec browserctl screenshot main --out #{frames_dir}/02_username.png"
 
       sh "bundle exec browserctl fill main '[data-test=password-input]' admin"
       sleep 1
-      sh "bundle exec browserctl shot main --out #{frames_dir}/03_filled.png"
+      sh "bundle exec browserctl screenshot main --out #{frames_dir}/03_filled.png"
 
       sh "bundle exec browserctl click main '[data-test=login-button]'"
       sleep 3
-      sh "bundle exec browserctl shot main --out #{frames_dir}/04_success.png"
+      sh "bundle exec browserctl screenshot main --out #{frames_dir}/04_success.png"
     end
 
     concat = "#{frames_dir}/concat.txt"
