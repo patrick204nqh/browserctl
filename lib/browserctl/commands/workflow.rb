@@ -19,7 +19,6 @@ module Browserctl
         end
       end
 
-      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/AbcSize
       def self.run_workflow(runner, args)
         name = args.shift or abort "usage: browserctl workflow run <name|file> [--params file] [--key value ...]"
         if File.exist?(name)
@@ -50,7 +49,6 @@ module Browserctl
         success = runner.run_workflow(name, **params)
         exit(success ? 0 : 1)
       end
-      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/AbcSize
 
       def self.run_list(runner)
         list = runner.list_workflows

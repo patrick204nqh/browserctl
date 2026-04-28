@@ -8,7 +8,6 @@ module Browserctl
       module Session
         private
 
-        # rubocop:disable Metrics/AbcSize
         def cmd_session_save(req)
           first_session = @global_mutex.synchronize { @pages.values.first }
           return { error: "no open pages — open a page before saving a session" } unless first_session
@@ -38,9 +37,7 @@ module Browserctl
           { ok: true, path: Browserctl::Session.path(req[:session_name]),
             pages: pages_meta.length, cookies: cookies.length }
         end
-        # rubocop:enable Metrics/AbcSize
 
-        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
         def cmd_session_load(req)
           data = Browserctl::Session.load(req[:session_name])
 
@@ -80,7 +77,6 @@ module Browserctl
         rescue RuntimeError => e
           { error: e.message }
         end
-        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
         def cmd_session_list(_req)
           sessions = Browserctl::Session.all

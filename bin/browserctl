@@ -36,7 +36,6 @@ def print_result(res)
   puts res.to_json
 end
 
-# rubocop:disable Metrics/MethodLength
 def usage
   puts <<~USAGE
     Usage: browserctl <command> [args]
@@ -110,7 +109,6 @@ def usage
   USAGE
   exit 0
 end
-# rubocop:enable Metrics/MethodLength
 
 daemon_idx  = ARGV.index("--daemon")
 daemon_name = if daemon_idx
@@ -146,15 +144,15 @@ else
   when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
   when "evaluate" then print_result(client.evaluate(args[0], args[1]))
   when "url"      then print_result(client.url(args[0]))
-  when "wait"     do
+  when "wait"
     opts = Optimist.options(args) do
       opt :timeout, "Seconds to wait (default: 30)", default: 30.0, short: "-t"
     end
-    name = args.shift; selector = args.shift
+    name = args.shift
+    selector = args.shift
     abort "usage: browserctl wait <page> <selector> [--timeout N]" unless name && selector
     print_result(client.wait(name, selector, timeout: opts[:timeout]))
-  end
-  when "pause"    do
+  when "pause"
     opts = Optimist.options(args) do
       opt :message, "Message shown to human", type: :string, short: "-m"
     end
@@ -167,9 +165,8 @@ else
     puts "Page '#{name}' paused. Browser is live — interact freely."
     puts "(#{opts[:message]})" if opts[:message]
     puts "When done: browserctl resume #{name}"
-  end
-  when "resume"   then Browserctl::Commands::Resume.run(client, args)
-  when "devtools" do
+  when "resume" then Browserctl::Commands::Resume.run(client, args)
+  when "devtools"
     name = args.shift or abort "usage: browserctl devtools <page>"
     res = client.devtools(name)
     if res[:error]
@@ -181,7 +178,6 @@ else
     puts "  #{url}"
     opener = RUBY_PLATFORM =~ /darwin/ ? "open" : "xdg-open"
     system(opener, url)
-  end
   else
     abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."
   end

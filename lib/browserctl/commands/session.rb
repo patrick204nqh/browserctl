@@ -9,7 +9,6 @@ module Browserctl
 
       USAGE = "Usage: browserctl session <save|load|list|delete|export|import> [args]"
 
-      # rubocop:disable Metrics/CyclomaticComplexity
       def self.run(client, args)
         sub = args.shift or abort USAGE
         case sub
@@ -22,7 +21,6 @@ module Browserctl
         else abort "unknown session subcommand '#{sub}'\n#{USAGE}"
         end
       end
-      # rubocop:enable Metrics/CyclomaticComplexity
 
       def self.run_save(client, args)
         name = args.shift or abort "usage: browserctl session save <name>"

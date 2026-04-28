@@ -56,7 +56,6 @@ module Browserctl
         puts "browserd started (pid #{pid})"
       end
 
-      # rubocop:disable Metrics/CyclomaticComplexity
       def self.run_list
         sockets = Dir[File.join(Browserctl::BROWSERCTL_DIR, "*.sock")]
         rows = sockets.map do |sock_path|
@@ -73,7 +72,6 @@ module Browserctl
         end.compact
         puts({ daemons: rows }.to_json)
       end
-      # rubocop:enable Metrics/CyclomaticComplexity
     end
   end
 end
