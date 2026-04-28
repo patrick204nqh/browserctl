@@ -29,6 +29,7 @@ Browserctl.workflow "smoke/params_file" do
   end
 
   step "assert login succeeded" do
+    page(:main).wait(".flash.success", timeout: 10)
     assert page(:main).url.include?("/secure"), "expected redirect to /secure — params may not have loaded"
     puts "  [ok] reached secure area — params file loaded correctly"
   end
