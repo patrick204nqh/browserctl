@@ -10,6 +10,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/patrick204nqh/browserctl/compare/v0.5.0...v0.6.0) (2026-04-28)
+
+
+### Features
+
+* add feedback capture guidelines and update .gitignore to include feedback directory ([03a436d](https://github.com/patrick204nqh/browserctl/commit/03a436d69d37826a6c24662b70d6852eac78aa54))
+* **v0.6:** CLI redesign — noun-verb commands, storage/session, daemon auto-index ([#41](https://github.com/patrick204nqh/browserctl/issues/41)) ([b40040f](https://github.com/patrick204nqh/browserctl/commit/b40040f6fba7b78791e845e55af156be46bde3c3))
+* **v0.6:** page_focus command, integration specs, and doc polish ([#42](https://github.com/patrick204nqh/browserctl/issues/42)) ([8cf006d](https://github.com/patrick204nqh/browserctl/commit/8cf006d0e3698bb0698c59d7af5b87f72a3cd154))
+
+
+### Bug Fixes
+
+* correct initial checkbox state assertion to [false, true, false] ([#33](https://github.com/patrick204nqh/browserctl/issues/33)) ([5ab0fe4](https://github.com/patrick204nqh/browserctl/commit/5ab0fe4fbe5d5f244c795235f0531e0c970d75c7))
+* dismiss on-load notifications before asserting counts ([#35](https://github.com/patrick204nqh/browserctl/issues/35)) ([b508ba6](https://github.com/patrick204nqh/browserctl/commit/b508ba6748d245526f6321a731e6a7bf4ad5cc86))
+* fill replaces existing input value instead of appending ([#29](https://github.com/patrick204nqh/browserctl/issues/29)) ([c7abb48](https://github.com/patrick204nqh/browserctl/commit/c7abb48153e1c64fcd73e22a5bf376a98555f68c))
+* notifications workflow — exclude container from counts, use evaluate for dismiss ([#34](https://github.com/patrick204nqh/browserctl/issues/34)) ([de43301](https://github.com/patrick204nqh/browserctl/commit/de43301942eb7a6335bc9fc7130c22ecf3dd8b38))
+* README & CONTRIBUTING polish + Rakefile v0.6 CI fix ([#43](https://github.com/patrick204nqh/browserctl/issues/43)) ([422c614](https://github.com/patrick204nqh/browserctl/commit/422c6141035d47bb3fd4bc86f732029b44e35206))
+* replace all remaining stale v0.5 CLI commands with v0.6 equivalents ([#45](https://github.com/patrick204nqh/browserctl/issues/45)) ([8d00923](https://github.com/patrick204nqh/browserctl/commit/8d0092380bbc7890761e6d8f5da7864358ce88f7))
+* update demo assets installation and improve login tape requirements ([cf02e3a](https://github.com/patrick204nqh/browserctl/commit/cf02e3ad11fc99f1483904e396160d4345363e17))
+* update login demo tape to use data-test selectors for input fields and buttons ([016fcda](https://github.com/patrick204nqh/browserctl/commit/016fcdaf77ce542d06efe898312063581fc3fffe))
+* update stale `browserctl run` references to `browserctl workflow run` ([#44](https://github.com/patrick204nqh/browserctl/issues/44)) ([7f7005a](https://github.com/patrick204nqh/browserctl/commit/7f7005ac6fd6517c8751cf808378233343e9ace8))
+* use baseline delta assertions instead of absolute notification counts ([#37](https://github.com/patrick204nqh/browserctl/issues/37)) ([33ac119](https://github.com/patrick204nqh/browserctl/commit/33ac119bbb43c0290fe03da06ca3f8545095f7a2))
+* wait for notification-container before dismissing on-load toasts ([#36](https://github.com/patrick204nqh/browserctl/issues/36)) ([883cdf8](https://github.com/patrick204nqh/browserctl/commit/883cdf839bcef2d57bcb4764ff89862aa1969486))
+
 ## [0.5.0](https://github.com/patrick204nqh/browserctl/compare/v0.4.0...v0.5.0) (2026-04-25)
 
 
