@@ -76,7 +76,7 @@ module Browserctl
       return unless pid.positive?
 
       Process.kill(0, pid)
-      abort "browserd already running (PID #{pid}). Use 'browserctl shutdown' first."
+      abort "browserd already running (PID #{pid}). Use 'browserctl daemon stop' first."
     rescue Errno::ESRCH
       # Dead process — stale PID file, safe to continue
     rescue Errno::EPERM

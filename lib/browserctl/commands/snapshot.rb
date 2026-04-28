@@ -10,11 +10,11 @@ module Browserctl
 
       def self.run(client, args)
         opts = Optimist.options(args) do
-          banner "Usage: browserctl snap <page> [--format elements|html] [--diff]"
+          banner "Usage: browserctl snapshot <page> [--format elements|html] [--diff]"
           opt :format, "Output format: elements (default) or html", default: "elements", short: "-f"
           opt :diff,   "Return only changed elements", default: false, short: "-d"
         end
-        name = args.shift or abort "usage: browserctl snap <page> [--format elements|html] [--diff]"
+        name = args.shift or abort "usage: browserctl snapshot <page> [--format elements|html] [--diff]"
         unless VALID_FORMATS.include?(opts[:format])
           warn "Error: --format must be one of: #{VALID_FORMATS.join(', ')}"
           exit 1
