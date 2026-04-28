@@ -32,8 +32,9 @@ Browserctl.workflow "test_automation_practices/dynamic/dynamic_elements" do
 
   step "toggle hidden content on" do
     page(:main).click("[data-test='toggle-hidden-button']")
+    page(:main).wait("[data-test='hidden-content']", timeout: 5)
     visible = page(:main).evaluate(
-      "!document.querySelector('[data-test=\"hidden-content\"]').classList.contains('hidden')"
+      "!document.querySelector('[data-test=\"hidden-content\"]')?.classList.contains('hidden')"
     )
     assert visible, "expected hidden-content to become visible after toggle (hidden class should be absent)"
   end

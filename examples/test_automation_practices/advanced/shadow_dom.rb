@@ -27,7 +27,9 @@ Browserctl.workflow "test_automation_practices/advanced/shadow_dom" do
       ".querySelector('[data-test=\"shadow-button\"]').click()"
     )
     sleep 0.3
-    result = page(:main).evaluate("1 + 1")
-    assert result == 2, "expected page to be responsive after shadow DOM alert"
+    still_present = page(:main).evaluate(
+      "!!document.querySelector('[data-test=\"shadow-host\"]')"
+    )
+    assert still_present, "expected shadow-host to remain in DOM after alert was accepted"
   end
 end

@@ -6,12 +6,12 @@ TAP_BASE = "examples/test_automation_practices"
 TAP_OUT  = "test_automation_practices"
 
 EXAMPLES = {
-  "#{TAP_BASE}/login.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_login.png",
-  "#{TAP_BASE}/login_negative.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_login_negative.png",
-  "#{TAP_BASE}/dynamic_elements.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_dynamic_elements.png",
-  "#{TAP_BASE}/checkboxes.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_checkboxes.png",
-  "#{TAP_BASE}/notifications.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_notifications.png",
-  "#{TAP_BASE}/key_press.rb" => "#{ASSETS_OUT}/#{TAP_OUT}_key_press.png"
+  "#{TAP_BASE}/auth/login.rb" => "#{ASSETS_OUT}/tap_auth_login.png",
+  "#{TAP_BASE}/auth/login_negative.rb" => "#{ASSETS_OUT}/tap_auth_login_negative.png",
+  "#{TAP_BASE}/dynamic/dynamic_elements.rb" => "#{ASSETS_OUT}/tap_dynamic_dynamic_elements.png",
+  "#{TAP_BASE}/forms/checkboxes.rb" => "#{ASSETS_OUT}/tap_forms_checkboxes.png",
+  "#{TAP_BASE}/dialogs/notifications.rb" => "#{ASSETS_OUT}/tap_dialogs_notifications.png",
+  "#{TAP_BASE}/interactions/key_press.rb" => "#{ASSETS_OUT}/tap_interactions_key_press.png"
 }.freeze
 
 def shutdown_daemon

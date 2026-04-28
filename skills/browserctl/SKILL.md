@@ -180,7 +180,7 @@ Browserctl.workflow "probe_login" do
     page(:main).click("button[type=submit]")
   end
   step "verify" do
-    page(:main).watch("[data-test=dashboard]", timeout: 10)
+    page(:main).wait("[data-test=dashboard]", timeout: 10)
     assert page(:main).url.include?("/dashboard")
   end
 end
@@ -213,7 +213,7 @@ Browserctl.workflow "smoke_login" do
   end
 
   step "verify" do
-    page(:login).watch("[data-test=dashboard]")
+    page(:login).wait("[data-test=dashboard]")
     assert page(:login).url.include?("/dashboard")
   end
 end
@@ -302,8 +302,7 @@ end
 ```
 
 `page(:name)` — returns a `PageProxy` for commands on an already-open page.
-`watch(selector, timeout: 30)` — poll for async content (preferred over `wait_for` for dynamic pages).
-`wait_for(selector, timeout: 10)` — short synchronisation gate for content already expected to be present.
+`wait(selector, timeout: 30)` — poll until selector appears in the DOM; raises on timeout.
 
 PageProxy methods (all raise `WorkflowError` on daemon error):
 

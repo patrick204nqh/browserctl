@@ -27,7 +27,7 @@ Browserctl.workflow "test_automation_practices/advanced/ab_testing" do
       "document.querySelector('[data-test=\"variant-button\"]')?.textContent?.trim()"
     )
     page(:main).click("[data-test='variant-button']")
-    sleep 0.1
+    sleep 0.5
     updated_text = page(:main).evaluate(
       "document.querySelector('[data-test=\"variant-button\"]')?.textContent?.trim()"
     )

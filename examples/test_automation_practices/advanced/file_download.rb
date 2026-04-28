@@ -13,6 +13,7 @@ Browserctl.workflow "test_automation_practices/advanced/file_download" do
 
   step "click TXT download — button becomes disabled during download" do
     page(:main).click("[data-test='download-button-0']")
+    page(:main).wait("[data-test='download-button-0'][disabled]", timeout: 5)
     disabled = page(:main).evaluate(
       "document.querySelector('[data-test=\"download-button-0\"]')?.disabled"
     )
