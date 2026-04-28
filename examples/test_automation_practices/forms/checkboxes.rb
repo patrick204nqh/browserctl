@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/checkboxes" do
+Browserctl.workflow "test_automation_practices/forms/checkboxes" do
   desc "Checkboxes: toggle individual, check all, uncheck all — assert state each time"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_checkboxes.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/tap_forms_checkboxes.png")
 
   step "open checkboxes page" do
     open_page(:main, url: "#{base_url}/#/checkboxes")

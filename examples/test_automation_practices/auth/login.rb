@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/login" do
+Browserctl.workflow "test_automation_practices/auth/login" do
   desc "Auth page: fill credentials, verify success message, logout"
 
   param :username,        default: "admin"
   param :password,        default: "admin", secret: true
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_login.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/tap_auth_login.png")
 
   step "open auth page" do
     open_page(:main, url: "#{base_url}/#/auth")

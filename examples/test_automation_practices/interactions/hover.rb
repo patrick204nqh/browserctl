@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/hover" do
+Browserctl.workflow "test_automation_practices/interactions/hover" do
   desc "Hover states page: move mouse over each figure, verify overlay content appears on each"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_hover.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/tap_interactions_hover.png")
 
   step "open hover states page" do
     open_page(:main, url: "#{base_url}/#/hover")

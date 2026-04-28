@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/login_negative" do
+Browserctl.workflow "test_automation_practices/auth/login_negative" do
   desc "Auth page: invalid credentials show an error message"
 
   param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_login_negative.png")
+        default: File.expand_path(".browserctl/screenshots/tap_auth_login_negative.png")
 
   step "open auth page" do
     open_page(:main, url: "#{base_url}/#/auth")

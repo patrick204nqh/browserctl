@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/file_upload" do
+Browserctl.workflow "test_automation_practices/forms/file_upload" do
   desc "File upload page: attach a local file via the hidden file input, verify the file is selected"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_file_upload.png")
+        default: File.expand_path(".browserctl/screenshots/tap_forms_file_upload.png")
 
   step "open file upload page" do
     open_page(:main, url: "#{base_url}/#/file-upload")

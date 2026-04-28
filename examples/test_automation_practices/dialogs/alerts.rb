@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/dialogs" do
+Browserctl.workflow "test_automation_practices/dialogs/alerts" do
   desc "Alerts page: pre-register accept/dismiss handlers before triggering each JS dialog type"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_dialogs.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/tap_dialogs_alerts.png")
 
   step "open alerts page" do
     open_page(:main, url: "#{base_url}/#/alerts")

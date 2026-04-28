@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/dynamic_elements" do
+Browserctl.workflow "test_automation_practices/dynamic/dynamic_elements" do
   desc "Dynamic elements: trigger reload, wait for items, toggle hidden content"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_dynamic_elements.png")
+        default: File.expand_path(".browserctl/screenshots/tap_dynamic_dynamic_elements.png")
 
   step "open dynamic elements page" do
     open_page(:main, url: "#{base_url}/#/dynamic-elements")

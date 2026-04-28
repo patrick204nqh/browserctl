@@ -6,12 +6,12 @@ NOTIFICATION_ITEMS_JS = <<~JS
   document.querySelectorAll('[data-test^="notification-"]:not([data-test="notification-container"])').length
 JS
 
-Browserctl.workflow "test_automation_practices/notifications" do
+Browserctl.workflow "test_automation_practices/dialogs/notifications" do
   desc "Notifications: trigger success, error, and info toasts — verify count increases on each trigger"
 
   param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
+        default: File.expand_path(".browserctl/screenshots/tap_dialogs_notifications.png")
 
   step "open notifications page and record baseline" do
     open_page(:main, url: "#{base_url}/#/notifications")

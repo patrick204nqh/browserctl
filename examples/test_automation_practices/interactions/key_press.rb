@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/key_press" do
+Browserctl.workflow "test_automation_practices/interactions/key_press" do
   desc "Key press page: fire real keyboard events via press, verify last-key display and history list update"
 
   param :base_url,        default: "https://moatazeldebsy.github.io/test-automation-practices"
-  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_key_press.png")
+  param :screenshot_path, default: File.expand_path(".browserctl/screenshots/tap_interactions_key_press.png")
 
   step "open key press page" do
     open_page(:main, url: "#{base_url}/#/key-press")
