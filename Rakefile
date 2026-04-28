@@ -45,7 +45,7 @@ namespace :demo do
     mkdir_p ASSETS_OUT
     with_daemon(headed: ENV["HEADED"] == "1") do
       EXAMPLES.each do |example, path|
-        sh "bundle exec browserctl run #{example} --screenshot_path #{path}"
+        sh "bundle exec browserctl workflow run #{example} --screenshot_path #{path}"
       end
     end
   end

@@ -43,7 +43,7 @@ module Browserctl
           FileUtils.mkdir_p(File.dirname(out))
           Recording.generate_workflow(name, output_path: out)
           puts "Workflow saved: #{out}"
-          puts "Run with: browserctl run #{name}"
+          puts "Run with: browserctl workflow run #{name}"
         end
 
         def run_status
