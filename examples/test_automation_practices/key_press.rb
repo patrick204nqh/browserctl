@@ -23,13 +23,14 @@ Browserctl.workflow "test_automation_practices/key_press" do
     store(:keys, keys)
   end
 
-  step "verify key history contains all dispatched keys" do
+  step "verify key history contains the most recent keys" do
     keys = fetch(:keys)
     history = client.evaluate(
       "main",
       "Array.from(document.querySelectorAll('[data-test^=\"key-\"]')).map(el => el.innerText?.trim())"
     )[:result]
-    keys.each do |key|
+    # The site retains only the last 4 keys in the history list; assert those
+    keys.last(4).each do |key|
       assert history.any? { |entry| entry&.include?(key) }, "expected '#{key}' in history, got: #{history.inspect}"
     end
     page(:main).screenshot(path: screenshot_path)

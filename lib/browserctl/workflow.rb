@@ -146,6 +146,8 @@ module Browserctl
     def hover(selector)          = unwrap @client.hover(@name, selector)
     def upload(selector, path)   = unwrap @client.upload(@name, selector, path)
     def select(selector, value)  = unwrap @client.select(@name, selector, value)
+    def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
+    def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 
     private
 
