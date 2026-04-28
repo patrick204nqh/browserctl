@@ -218,6 +218,10 @@ Circular invocation (`a → b → a`) raises immediately.
 | `storage_set(key, value, store: "local")` | Write a localStorage or sessionStorage key |
 | `delete_cookies` | Delete all cookies for this page |
 | `devtools` | Return the Chrome DevTools URL for this page |
+| `press(key)` | Fire a `keydown` + `keyup` event for the given key |
+| `hover(selector)` | Move the mouse to the centre of the matched element |
+| `upload(selector, path)` | Set a file input's value to a file path |
+| `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 
@@ -309,13 +313,52 @@ browserctl workflow describe <name>   # show params and step labels for a workfl
 
 ## Patterns
 
-### Dropdown via JavaScript
-
-browserctl has no native `select` command. Use `evaluate` to set the value directly:
+### Keyboard and mouse
 
 ```ruby
-step "select option" do
-  page(:main).evaluate("document.querySelector('select#plan').value = 'pro'")
+step "navigate dropdown" do |ctx|
+  p = page(:main)
+  p.hover("#menu-trigger")    # mouse over to reveal the dropdown
+  p.click("#menu-trigger")    # then click
+  p.press("Escape")           # dismiss with keyboard
+end
+```
+
+### File upload
+
+```ruby
+step "upload CV" do
+  page(:main).upload("#resume-input", "/home/patrick/cv.pdf")
+end
+```
+
+### Select
+
+```ruby
+step "choose country" do
+  page(:main).select("#country", "AU")
+end
+```
+
+### Dialog handling
+
+Pre-register the handler **before** the action that triggers the dialog:
+
+```ruby
+step "delete record" do
+  p = page(:main)
+  p.dialog_accept        # register: accept the next confirm()
+  p.click("#delete-btn") # triggers the confirm — auto-accepted
+end
+```
+
+### Asking the human for a value
+
+```ruby
+step "enter 2FA" do
+  code = ask("Enter the 2FA code sent to your phone:")
+  page(:main).fill("#otp-input", code)
+  page(:main).click("#verify")
 end
 ```
 
