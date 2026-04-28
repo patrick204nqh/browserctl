@@ -5,7 +5,7 @@
 <h1 align="center">browserctl</h1>
 
 <p align="center">
-  A persistent browser daemon for AI agents and iterative dev workflows — the session stays alive between commands.
+  A browser daemon that keeps sessions alive between commands — for AI agents and iterative dev workflows.
 </p>
 
 <p align="center">
@@ -20,10 +20,10 @@ Every browser automation tool restarts the browser when your script ends. That m
 
 ```bash
 browserd &                                               # start the daemon (headless)
-browserctl page open login --url https://example.com/login
-browserctl snapshot login                                # AI-friendly JSON snapshot with ref IDs
-browserctl fill login --ref e1 --value me@example.com   # interact by ref, no selectors needed
-browserctl click login --ref e2
+browserctl page open main --url https://example.com/login
+browserctl snapshot main                                 # AI-friendly JSON snapshot with ref IDs
+browserctl fill main --ref e1 --value me@example.com    # interact by ref, no selectors needed
+browserctl click main --ref e2
 browserctl daemon stop
 ```
 
@@ -50,8 +50,6 @@ browserctl daemon stop
 </td>
 </tr></table>
 
-> Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example. See [Development](#development) to regenerate locally.
-
 ---
 
 ## Quick Start
@@ -64,18 +62,19 @@ gem install browserctl
 browserd &
 
 # 3. Open a named page
-browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
+browserctl page open main --url https://the-internet.herokuapp.com/login
 
-# 4. Snapshot the page — get AI-friendly JSON with ref IDs
+# 4. Snapshot — returns JSON with a ref ID per interactable element
 browserctl snapshot main
+# → [{"ref":"e1","tag":"input","attrs":{"id":"username"}}, {"ref":"e2",...}, {"ref":"e3","tag":"button","text":"Login",...}]
 
-# 5. Interact using refs
-browserctl fill  main --ref e1 --value admin
-browserctl fill  main --ref e2 --value admin
+# 5. Interact using the ref IDs from the snapshot
+browserctl fill main --ref e1 --value tomsmith
+browserctl fill main --ref e2 --value SuperSecretPassword!
 browserctl click main --ref e3
 
 # 6. Observe
-browserctl url  main
+browserctl url main
 browserctl snapshot main --diff   # only what changed
 
 # 7. Done
@@ -100,7 +99,7 @@ browserctl daemon stop
 
 Most automation tools are stateless — every script spins up a fresh browser and tears it down. browserctl doesn't.
 
-| | browserctl | Playwright / Selenium |
+| Capability | browserctl | Playwright / Selenium |
 |---|---|---|
 | Session persists across commands | ✓ | ✗ (per-script lifecycle) |
 | Named page handles | ✓ | ✗ |
@@ -118,7 +117,7 @@ Most automation tools are stateless — every script spins up a fresh browser an
 
 ## Installation
 
-**Requirements:** Ruby >= 3.3 · Chrome or Chromium on your `PATH`
+**Requirements:** Ruby >= 3.3 · Chrome or Chromium installed
 
 ```bash
 gem install browserctl
@@ -158,7 +157,7 @@ browserctl ships as a Claude Code plugin. Install it once and Claude automatical
 }
 ```
 
-Once installed, Claude Code loads the `browserctl` skill automatically — no `/invoke` needed.
+Once installed, the `browserctl` skill loads automatically.
 
 ---
 
@@ -208,6 +207,8 @@ rake demo:screenshots   # smoke test screenshots only
 rake demo:browser_gif   # browser animation only  (requires: ffmpeg)
 rake demo:terminal      # terminal GIF only        (requires: vhs)
 ```
+
+> Demo assets are regenerated automatically on every push to `main` that touches `demo/` or the login example.
 
 ---
 

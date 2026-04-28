@@ -1,6 +1,6 @@
 # Contributing to browserctl
 
-Thank you for taking the time to contribute! This guide covers everything you need to get started.
+This guide covers the workflow for contributing code, docs, and bug reports to browserctl.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ Thank you for taking the time to contribute! This guide covers everything you ne
 
 ## Development Setup
 
-**Requirements:** Ruby >= 3.3, Chrome or Chromium on `PATH`
+**Requirements:** Ruby >= 3.3, Chrome or Chromium installed
 
 ```bash
 git clone https://github.com/patrick204nqh/browserctl
@@ -24,7 +24,7 @@ cd browserctl
 bin/setup
 ```
 
-`bin/setup` installs gem dependencies and checks for Chrome/Chromium.
+`bin/setup` installs gem dependencies and checks for Chrome/Chromium. It also installs [lefthook](https://github.com/evilmartians/lefthook) Git hooks — pre-commit runs RuboCop, pre-push runs the test suite.
 
 ---
 
@@ -83,6 +83,7 @@ Configuration lives in `.rubocop.yml`. Please keep new code consistent with the 
 **Branch naming conventions:**
 - `fix/<short-description>` — bug fixes
 - `feat/<short-description>` — new features
+- `docs/<short-description>` — documentation changes
 - `chore/<short-description>` — maintenance, refactoring, deps
 
 ---
@@ -104,7 +105,7 @@ release-please opens (or updates) a Release PR
         ↓
 maintainer reviews and merges the Release PR
         ↓
-release-please creates a GitHub Release + tag (e.g. v0.2.0)
+release-please creates a GitHub Release + tag (e.g. v0.6.0)
         ↓
 release workflow triggers → gem built and pushed to RubyGems
 ```
@@ -143,7 +144,7 @@ This project follows [Semantic Versioning](https://semver.org). release-please d
 Open an issue at [github.com/patrick204nqh/browserctl/issues](https://github.com/patrick204nqh/browserctl/issues). Include:
 
 - Ruby version (`ruby --version`)
-- Chrome/Chromium version (`google-chrome --version`)
+- Chrome/Chromium version (`google-chrome --version` on Linux; `open -a "Google Chrome" --args --version` on macOS)
 - OS and version
 - Steps to reproduce
 - Expected vs. actual behavior
