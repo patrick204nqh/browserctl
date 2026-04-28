@@ -15,14 +15,14 @@ EXAMPLES = {
 }.freeze
 
 def shutdown_daemon
-  system("bundle exec browserctl shutdown", out: File::NULL, err: File::NULL)
+  system("bundle exec browserctl daemon stop", out: File::NULL, err: File::NULL)
 rescue StandardError
   nil
 end
 
 def daemon_ready?
   30.times.any? do
-    break true if system("bundle exec browserctl ping", out: File::NULL, err: File::NULL)
+    break true if system("bundle exec browserctl daemon ping", out: File::NULL, err: File::NULL)
 
     sleep 0.5
     false
