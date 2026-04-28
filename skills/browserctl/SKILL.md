@@ -305,6 +305,29 @@ end
 `watch(selector, timeout: 30)` — poll for async content (preferred over `wait_for` for dynamic pages).
 `wait_for(selector, timeout: 10)` — short synchronisation gate for content already expected to be present.
 
+PageProxy methods (all raise `WorkflowError` on daemon error):
+
+```ruby
+page(:main).navigate(url)
+page(:main).fill(selector, value)
+page(:main).click(selector)
+page(:main).press(key)                   # "Enter", "Tab", "Escape", "ArrowDown", ...
+page(:main).hover(selector)              # move mouse to element centre
+page(:main).upload(selector, path)       # set <input type="file"> to a local file
+page(:main).select(selector, value)      # set <select> value + fire change event
+page(:main).dialog_accept(text: nil)     # register one-shot: accept next alert/confirm/prompt
+page(:main).dialog_dismiss               # register one-shot: dismiss next confirm
+page(:main).wait(selector, timeout: 30)
+page(:main).url
+page(:main).evaluate(expression)
+page(:main).snapshot(**opts)
+page(:main).screenshot(**opts)
+page(:main).storage_get(key, store: "local")
+page(:main).storage_set(key, value, store: "local")
+page(:main).delete_cookies
+page(:main).devtools
+```
+
 ## Troubleshooting
 
 - `browserd is not running` → run `browserd &` first; check `~/.browserctl/browserd.log` for startup errors
