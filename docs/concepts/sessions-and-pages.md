@@ -21,7 +21,7 @@ browserd --headed # starts with a visible window
 
 The daemon listens on a Unix socket at `~/.browserctl/browserd.sock`. Every `browserctl` command sends a JSON-RPC message over that socket and prints the result. The browser never closes between commands — it waits.
 
-The daemon shuts itself down after 30 minutes of inactivity to avoid orphan processes. `browserctl shutdown` stops it immediately.
+The daemon shuts itself down after 30 minutes of inactivity to avoid orphan processes. `browserctl daemon stop` stops it immediately.
 
 ---
 
@@ -30,10 +30,10 @@ The daemon shuts itself down after 30 minutes of inactivity to avoid orphan proc
 Inside the daemon, each browser tab is a **named page**. You give it a name when you open it, and you use that name for every subsequent command.
 
 ```bash
-browserctl open login --url https://app.example.com/login
+browserctl page open login --url https://app.example.com/login
 browserctl fill login "input[name=email]" me@example.com
-browserctl snap login
-browserctl close login
+browserctl snapshot login
+browserctl page close login
 ```
 
 Names are arbitrary strings — `login`, `dashboard`, `checkout`, `agent-session-42`. Naming matters for two reasons:
@@ -43,12 +43,12 @@ Names are arbitrary strings — `login`, `dashboard`, `checkout`, `agent-session
 **2. Resumability.** After a pause, after a retry, after any interruption, the name is the stable reference. You don't track a tab ID or an index. You track a name you chose.
 
 ```bash
-browserctl pages   # lists all open named pages and their current URLs
+browserctl page list   # lists all open named pages and their current URLs
 ```
 
 ---
 
-## Session state
+## In-memory session state
 
 Everything the browser accumulates — cookies, localStorage, authenticated sessions, form input, open tabs — stays alive as long as the daemon runs. A later command picks up exactly where an earlier one left off.
 
@@ -63,6 +63,72 @@ No re-authentication. No cookie injection. The session is just alive.
 
 ---
 
+## Saving and restoring sessions
+
+In-memory state is lost when the daemon stops. `session save` captures everything — open pages, cookies, and localStorage — to a plain JSON bundle on disk. `session load` restores it into a running daemon, including re-opening every saved page at its saved URL.
+
+```bash
+# After logging in and navigating to the right state:
+browserctl session save github_work
+
+# Next time, on a fresh daemon:
+browserd &
+browserctl session load github_work
+# → pages are back, cookies are restored, localStorage is seeded
+```
+
+Session files live in `~/.browserctl/sessions/<name>/` as readable JSON:
+
+```
+~/.browserctl/sessions/github_work/
+  metadata.json       # page names + URLs + timestamps
+  cookies.json        # all cookies from the shared daemon jar
+  local_storage.json  # localStorage by origin
+```
+
+To share a session or move it to another machine, export it as a zip:
+
+```bash
+browserctl session export github_work ~/sessions/github_work.zip
+browserctl session import ~/sessions/github_work.zip
+```
+
+List and manage sessions:
+
+```bash
+browserctl session list
+browserctl session delete github_work
+```
+
+---
+
+## localStorage and sessionStorage
+
+`storage get/set/export/import/delete` give direct access to the page's Web Storage without injecting custom scripts.
+
+```bash
+browserctl storage get  main user_id
+browserctl storage set  main theme dark
+browserctl storage export main /tmp/storage.json
+browserctl storage import main /tmp/storage.json
+browserctl storage delete main
+```
+
+Use `--store session` for sessionStorage (default is `local`):
+
+```bash
+browserctl storage get main session_token --store session
+```
+
+Inside a workflow, `storage_get` and `storage_set` are available directly on the page proxy:
+
+```ruby
+token = page(:main).storage_get("auth_token")
+page(:main).storage_set("theme", "dark")
+```
+
+---
+
 ## Multi-agent isolation
 
 When you need multiple independent browser sessions running in parallel — separate agents, separate users, separate contexts — run multiple named daemon instances:
@@ -71,8 +137,17 @@ When you need multiple independent browser sessions running in parallel — sepa
 browserd --name agent-a &
 browserd --name agent-b &
 
-browserctl --daemon agent-a open main --url https://app.example.com
-browserctl --daemon agent-b open main --url https://staging.example.com
+browserctl --daemon agent-a page open main --url https://app.example.com
+browserctl --daemon agent-b page open main --url https://staging.example.com
 ```
 
-Each daemon manages its own Chrome instance with its own cookie jar. Commands routed to `agent-a` never affect `agent-b`. This is the mechanism for agent fleet use cases where you need N isolated sessions running simultaneously.
+Each daemon manages its own Chrome instance with its own cookie jar. Commands routed to `agent-a` never affect `agent-b`.
+
+If you start a second unnamed daemon while the first is running, it auto-picks the next available slot rather than aborting:
+
+```bash
+browserd &   # starts as "default"
+browserd &   # default slot taken — starts as "d1", prints connection hint
+```
+
+Use `browserctl daemon list` to see all running instances.

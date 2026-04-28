@@ -47,8 +47,8 @@ browserd --headed &
 Confirm it's running:
 
 ```bash
-browserctl ping
-# → {"ok":true,"pid":12345,"protocol_version":"1"}
+browserctl daemon ping
+# → {"ok":true,"pid":12345,"protocol_version":"2"}
 ```
 
 ---
@@ -58,7 +58,7 @@ browserctl ping
 Open a browser tab and give it a name:
 
 ```bash
-browserctl open main --url https://example.com
+browserctl page open main --url https://example.com
 ```
 
 The name (`main`) is what you'll use to address this tab in every subsequent command. Call it anything — `login`, `dashboard`, `session-1`.
@@ -70,7 +70,7 @@ The name (`main`) is what you'll use to address this tab in every subsequent com
 Snapshot the page to see what's on it:
 
 ```bash
-browserctl snap main
+browserctl snapshot main
 ```
 
 You'll get a compact JSON array of every interactable element on the page, each with a short ref ID:
@@ -96,13 +96,13 @@ These ref IDs are how you interact with elements without writing CSS selectors.
 Navigate to a different URL on the same named page:
 
 ```bash
-browserctl goto main https://the-internet.herokuapp.com/login
+browserctl navigate main https://the-internet.herokuapp.com/login
 ```
 
 Snapshot again to discover the form fields:
 
 ```bash
-browserctl snap main
+browserctl snapshot main
 ```
 
 Fill and submit using refs:
@@ -126,13 +126,13 @@ browserctl url main
 Take a screenshot:
 
 ```bash
-browserctl shot main --out /tmp/after-login.png --full
+browserctl screenshot main --out /tmp/after-login.png --full
 ```
 
-Snap again to see what changed — use `--diff` to get only the elements that are different from the last snapshot:
+Snapshot again to see what changed — use `--diff` to get only the elements that are different from the last snapshot:
 
 ```bash
-browserctl snap main --diff
+browserctl snapshot main --diff
 ```
 
 ---
@@ -140,7 +140,7 @@ browserctl snap main --diff
 ## 6. Shut down
 
 ```bash
-browserctl shutdown
+browserctl daemon stop
 ```
 
 The daemon stops and the browser closes. Your session state is gone — next time you'll start fresh.

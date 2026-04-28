@@ -15,9 +15,9 @@ For the concepts behind HITL, see [Human-in-the-Loop](../concepts/hitl.md).
 browserd --headed &
 
 # Run the example
-browserctl run examples/cloudflare_hitl.rb --url https://nopecha.com/demo/cloudflare
+browserctl workflow run examples/cloudflare_hitl.rb --url https://nopecha.com/demo/cloudflare
 
-browserctl shutdown
+browserctl daemon stop
 ```
 
 When the challenge fires, the terminal pauses:
@@ -48,7 +48,7 @@ The workflow unblocks and continues:
 
 ## How challenge detection works
 
-`goto` and `snapshot` inspect the page body for known Cloudflare signals and include a `challenge:` boolean in their response:
+`navigate` and `snapshot` inspect the page body for known Cloudflare signals and include a `challenge:` boolean in their response:
 
 | Signal | Meaning |
 |--------|---------|
@@ -59,7 +59,7 @@ The workflow unblocks and continues:
 | URL contains `challenge-platform` | Challenge platform redirect |
 
 ```ruby
-res = client.goto("main", url)
+res = client.navigate("main", url)
 res[:challenge]   # => true when any signal is present
 ```
 
@@ -69,7 +69,7 @@ res[:challenge]   # => true when any signal is present
 
 ```ruby
 step "navigate to target URL" do
-  res = client.goto("main", url)
+  res = client.navigate("main", url)
 
   if res[:challenge]
     client.pause("main")
@@ -93,16 +93,16 @@ end
 After solving a challenge, the browser holds a `cf_clearance` cookie. Capture it to skip re-solving in future sessions:
 
 ```bash
-browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
+browserctl cookie list main | jq '.cookies[] | select(.name == "cf_clearance")'
 # → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
 ```
 
 Restore it in a new session:
 
 ```bash
-browserctl open main
-browserctl set-cookie main cf_clearance "xyz..." ".example.com"
-browserctl goto main https://example.com   # no challenge
+browserctl page open main
+browserctl cookie set main cf_clearance "xyz..." --domain .example.com
+browserctl navigate main https://example.com   # no challenge
 ```
 
 Or from Ruby:
@@ -118,7 +118,7 @@ client.set_cookie("main", "cf_clearance", "xyz...", ".example.com")
 ## Adapting to your own URL
 
 ```bash
-browserctl run examples/cloudflare_hitl.rb --url https://your-protected-site.com
+browserctl workflow run examples/cloudflare_hitl.rb --url https://your-protected-site.com
 ```
 
 Because headed Chrome is a real browser, many Cloudflare zones pass silently without showing a widget. The `if res[:challenge]` branch is a no-op in that case and automation continues normally.

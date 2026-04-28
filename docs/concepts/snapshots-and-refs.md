@@ -14,10 +14,10 @@ browserctl uses a different model: **refs**.
 
 ## The snapshot
 
-`browserctl snap <page>` inspects the live page and returns a compact JSON array of every interactable element — inputs, buttons, links, selects, textareas. Static elements that cannot be acted on are omitted.
+`browserctl snapshot <page>` inspects the live page and returns a compact JSON array of every interactable element — inputs, buttons, links, selects, textareas. Static elements that cannot be acted on are omitted.
 
 ```bash
-browserctl snap login
+browserctl snapshot login
 ```
 
 ```json
@@ -81,11 +81,11 @@ Refs are valid until the next `snap` call. Every snapshot assigns refs from scra
 An agent workflow looks like this:
 
 ```
-1. snap login           → receive JSON with refs
+1. snapshot login           → receive JSON with refs
 2. identify e1 as the email field (by tag, name, placeholder)
 3. fill login --ref e1  → no selector reasoning required
 4. click login --ref e3 → submit
-5. snap login           → observe the result
+5. snapshot login           → observe the result
 ```
 
 The model sees semantics, not structure. The selector is there in the JSON if needed, but in practice the ref + metadata is enough to act correctly.
@@ -97,12 +97,12 @@ The model sees semantics, not structure. The selector is there in the JSON if ne
 After the first snapshot, subsequent snapshots can return only the elements that changed since the last one:
 
 ```bash
-browserctl snap login --diff
+browserctl snapshot login --diff
 ```
 
 This is useful in two situations:
 
-**Async updates.** After clicking a button that triggers an API call, `snap --diff` tells you exactly which elements appeared or changed — a loading spinner becoming a success message, a table row added, a disabled button becoming enabled. You don't have to diff the full page yourself.
+**Async updates.** After clicking a button that triggers an API call, `snapshot --diff` tells you exactly which elements appeared or changed — a loading spinner becoming a success message, a table row added, a disabled button becoming enabled. You don't have to diff the full page yourself.
 
 **Token efficiency.** If the page has 80 elements and only 3 changed after an action, there's no reason to re-read all 80. The diff surfaces just the signal.
 
@@ -139,7 +139,7 @@ The easiest fix: take the `selector` value from the snapshot JSON for that ref a
 When a model needs to understand page structure rather than interact with specific elements, pass `--format html`:
 
 ```bash
-browserctl snap login --format html
+browserctl snapshot login --format html
 ```
 
 This returns the full page HTML. Useful for reading content, understanding layout, or extracting information. For interaction, use the default JSON format.
@@ -148,7 +148,7 @@ This returns the full page HTML. Useful for reading content, understanding layou
 
 ## Cloudflare challenge signals
 
-Both `snap` and `goto` include a `challenge` field in their response when a Cloudflare interstitial is detected on the page:
+Both `snapshot` and `navigate` include a `challenge` field in their response when a Cloudflare interstitial is detected on the page:
 
 ```json
 { "challenge": true, ... }

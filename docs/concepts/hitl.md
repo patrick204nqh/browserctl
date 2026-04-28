@@ -30,15 +30,15 @@ This is not a workaround for a limitation. It is the intended workflow for tasks
 
 Knowing *when* to pause is as important as being able to pause. browserctl builds detection directly into the browsing primitives.
 
-Both `goto` and `snap` include a `challenge` field in their response:
+Both `navigate` and `snapshot` include a `challenge` field in their response:
 
 ```ruby
-res = client.goto("main", url)
+res = client.navigate("main", url)
 res[:challenge]   # => true when Cloudflare interstitial is detected
 ```
 
 ```bash
-browserctl snap main   # JSON includes "challenge": true when blocked
+browserctl snapshot main   # JSON includes "challenge": true when blocked
 ```
 
 When `challenge` is true, the workflow decides what to do: pause and wait, retry the navigation, or abort.
@@ -67,7 +67,7 @@ Cloudflare is just the first detector. The detection layer is designed to grow �
 
 The philosophy is: **surface the signal, let the workflow decide.** browserctl doesn't try to auto-solve challenges (fragile, constantly broken by vendor updates, often illegal). It identifies that the situation requires attention and hands it off cleanly.
 
-A `register_detector` plugin API is planned for v0.6 — third-party detectors will be registerable without modifying the core. For now, additional detection logic can be added via the plugin system using `register_command`.
+A `register_detector` plugin API is planned for v0.7 — third-party detectors will be registerable without modifying the core. For now, additional detection logic can be added via the plugin system using `register_command`.
 
 ---
 
@@ -77,12 +77,12 @@ After a human solves a Cloudflare challenge, the browser holds a `cf_clearance` 
 
 ```bash
 # after solving the challenge:
-browserctl cookies main | jq '.cookies[] | select(.name == "cf_clearance")'
+browserctl cookie list main | jq '.cookies[] | select(.name == "cf_clearance")'
 
 # in a new session:
-browserctl open main
-browserctl set-cookie main cf_clearance "xyz..." ".example.com"
-browserctl goto main https://example.com   # passes without a challenge
+browserctl page open main
+browserctl cookie set main cf_clearance "xyz..." --domain .example.com
+browserctl navigate main https://example.com   # passes without a challenge
 ```
 
 `cf_clearance` cookies expire (typically 30 minutes to a few hours). When they age out, Cloudflare will serve a new challenge.
@@ -95,7 +95,7 @@ The pattern in code — detect, pause, poll for resolution, continue:
 
 ```ruby
 step "navigate to protected page" do
-  res = client.goto("main", target_url)
+  res = client.navigate("main", target_url)
 
   if res[:challenge]
     puts "⚠  Challenge detected — solve it in the browser, then: browserctl resume main"
@@ -111,7 +111,7 @@ step "navigate to protected page" do
 end
 
 step "continue as normal" do
-  page(:main).wait_for("[data-test=main-content]", timeout: 15)
+  page(:main).wait("[data-test=main-content]", timeout: 15)
   # ...
 end
 ```

@@ -44,10 +44,12 @@ The `record` command captures a live browser session as a replayable Ruby workfl
 
 ```bash
 # Record the session
-browserctl record my-bug
+browserctl record start my-bug
+# ... interact in the browser ...
+browserctl record stop
 
 # Later: replay it against any environment
-browserctl run my-bug --url https://staging.example.com
+browserctl workflow run my-bug --url https://staging.example.com
 ```
 
 Evidence is not an afterthought. Screenshots are named, dated, and stored. Every HITL pause is logged with context. The session trace is yours to export.
@@ -70,19 +72,18 @@ Browserctl.workflow :verify_checkout do
   param :password, required: true, secret: true
 
   step "navigate to login" do
-    page(:main).goto("https://shop.example.com/login")
-    page(:main).screenshot(out: "evidence/login-page.png")
+    page(:main).navigate("https://shop.example.com/login")
+    page(:main).screenshot(path: "evidence/login-page.png")
   end
 
   step "authenticate" do
-    snap = page(:main).snapshot
-    page(:main).fill(snap.ref(:email_field), email)
-    page(:main).fill(snap.ref(:password_field), password)
-    page(:main).click(snap.ref(:submit))
+    page(:main).fill("input[name=email]", email)
+    page(:main).fill("input[name=password]", password)
+    page(:main).click("button[type=submit]")
   end
 
   step "confirm checkout reached" do
-    page(:main).wait_for("[data-test=checkout-header]", timeout: 15)
+    page(:main).wait("[data-test=checkout-header]", timeout: 15)
     page(:main).screenshot(out: "evidence/checkout.png")
   end
 end

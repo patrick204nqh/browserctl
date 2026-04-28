@@ -23,6 +23,13 @@ module Browserctl
         def cmd_page_list(_req)
           { pages: @global_mutex.synchronize { @pages.keys } }
         end
+
+        def cmd_page_focus(req)
+          with_page(req[:name]) do |session|
+            session.page.activate
+            { ok: true }
+          end
+        end
       end
     end
   end
