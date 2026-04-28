@@ -6,36 +6,36 @@ NOTIFICATION_ITEMS_JS = <<~JS
   document.querySelectorAll('[data-test^="notification-"]:not([data-test="notification-container"])').length
 JS
 
-Browserctl.workflow "test_automation_practices/notifications" do
+Browserctl.workflow "test_automation_practices/dialogs/notifications" do
   desc "Notifications: trigger success, error, and info toasts — verify count increases on each trigger"
 
   param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
+        default: File.expand_path(".browserctl/screenshots/tap_dialogs_notifications.png")
 
   step "open notifications page and record baseline" do
     open_page(:main, url: "#{base_url}/#/notifications")
     page(:main).wait("[data-test='notification-container']", timeout: 5)
     # Let any delayed on-load notifications finish appearing before we snapshot the baseline
     sleep 1
-    store(:baseline, client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result])
+    store(:baseline, page(:main).evaluate(NOTIFICATION_ITEMS_JS))
   end
 
   step "trigger success notification and verify count increased by 1" do
     base = fetch(:baseline)
     page(:main).click("[data-test='add-success']")
     page(:main).wait("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
-    count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
+    count = page(:main).evaluate(NOTIFICATION_ITEMS_JS)
     assert count == base + 1, "expected #{base + 1} notifications after success, got: #{count}"
   end
 
   step "dismiss one notification and verify count returns to baseline" do
     base = fetch(:baseline)
-    client.evaluate("main", "document.querySelector('[data-test^=\"close-notification-\"]')?.click()")
+    page(:main).evaluate("document.querySelector('[data-test^=\"close-notification-\"]')?.click()")
     deadline = Time.now + 5
     remaining = nil
     loop do
-      remaining = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
+      remaining = page(:main).evaluate(NOTIFICATION_ITEMS_JS)
       break if remaining <= base || Time.now > deadline
 
       sleep 0.2
@@ -50,7 +50,7 @@ Browserctl.workflow "test_automation_practices/notifications" do
     page(:main).click("[data-test='add-error']")
     page(:main).click("[data-test='add-info']")
     page(:main).wait("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
-    count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
+    count = page(:main).evaluate(NOTIFICATION_ITEMS_JS)
     assert count == base + 2, "expected #{base + 2} notifications (error + info), got: #{count}"
     page(:main).screenshot(path: screenshot_path)
   end

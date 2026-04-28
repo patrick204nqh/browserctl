@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-Browserctl.workflow "test_automation_practices/login_negative" do
+Browserctl.workflow "test_automation_practices/auth/login_negative" do
   desc "Auth page: invalid credentials show an error message"
 
   param :base_url, default: "https://moatazeldebsy.github.io/test-automation-practices"
   param :screenshot_path,
-        default: File.expand_path(".browserctl/screenshots/test_automation_practices_login_negative.png")
+        default: File.expand_path(".browserctl/screenshots/tap_auth_login_negative.png")
 
   step "open auth page" do
     open_page(:main, url: "#{base_url}/#/auth")
@@ -19,9 +19,9 @@ Browserctl.workflow "test_automation_practices/login_negative" do
 
   step "verify error is shown and success is absent" do
     page(:main).wait("[data-test='auth-error']", timeout: 10)
-    error = client.evaluate("main", "document.querySelector('[data-test=\"auth-error\"]')?.innerText?.trim()")[:result]
+    error = page(:main).evaluate("document.querySelector('[data-test=\"auth-error\"]')?.innerText?.trim()")
     assert error&.length&.positive?, "expected an error message, got: #{error.inspect}"
-    no_success = client.evaluate("main", "!document.querySelector('[data-test=\"auth-success\"]')")[:result]
+    no_success = page(:main).evaluate("!document.querySelector('[data-test=\"auth-success\"]')")
     assert no_success, "expected no success element when credentials are invalid"
     page(:main).screenshot(path: screenshot_path)
   end
