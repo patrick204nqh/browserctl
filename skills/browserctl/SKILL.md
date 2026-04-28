@@ -69,6 +69,20 @@ browserctl record stop                       # end capture + auto-save to .brows
 browserctl record stop --out /tmp/my.rb      # or save to a custom path
 browserctl record status                     # check if a recording is active
 
+# Keyboard and mouse
+browserctl press  main Enter                             # fire keydown+keyup (Enter, Tab, Escape, ArrowDown, ...)
+browserctl hover  main "#menu-trigger"                  # move mouse to element centre
+browserctl select main "select#country" "AU"            # set <select> value + fire change event
+browserctl upload main "#resume-input" /path/file.pdf   # set file input to a local file
+
+# Dialogs — register handler BEFORE the action that triggers the dialog
+browserctl dialog accept  main                          # accept the next alert/confirm/prompt
+browserctl dialog accept  main "my answer"              # accept + supply prompt text
+browserctl dialog dismiss main                          # dismiss the next confirm
+
+# HITL — ask human for a value inline (no browser pause needed)
+browserctl ask "Enter 2FA code:"                        # prints prompt to stderr, returns JSON {ok, value}
+
 # Human-in-the-loop (HITL)
 browserctl pause  login            # pause automation — browser stays live for manual interaction
 browserctl resume login            # resume automation after human action
@@ -244,7 +258,7 @@ browserctl navigate main https://protected.example.com
 ## Rules
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
-- **Prefer discrete commands** (`fill`, `click`) over `eval` for simple actions. Use `eval` when no discrete command fits (e.g. dropdowns, reading DOM state).
+- **Prefer discrete commands** (`fill`, `click`, `press`, `select`, `hover`, `upload`) over `eval` for actions. Use `eval` only when no discrete command fits (e.g. reading computed DOM state, complex JS assertions).
 - **Use `snapshot`** for any page you haven't seen before — the default `elements` format gives valid selectors and ref IDs without reading raw HTML.
 - **Use `--ref` for interactions** — after a `snapshot`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snapshot` call — re-snapshot if you need fresh refs after page changes.
 - **Use `snapshot --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
@@ -252,6 +266,9 @@ browserctl navigate main https://protected.example.com
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
 - **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snapshot <page>`.
+- **Use `press`** for keyboard shortcuts, form submission (`Enter`), navigation (`Tab`, `Escape`, `ArrowDown`). Prefer it over `evaluate` keyboard dispatch.
+- **Use `dialog accept/dismiss` before the triggering action** — the handler is one-shot and fires when the dialog appears. Register it first, then click the button that triggers it.
+- **Use `ask`** when automation needs a human-supplied value (2FA code, CAPTCHA answer, confirmation) but doesn't need to hand over full browser control. Cleaner than `pause` for value injection.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
 - **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
