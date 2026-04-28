@@ -123,6 +123,11 @@ module Browserctl
     # @return [Hash] `{ ok: true, devtools_url: }` or `{ error: }`
     def devtools(name)             = call("devtools", name: name)
 
+    # Brings the named page's tab to front. Only works when browserd was started with --headed.
+    # @param name [String] logical page name
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def page_focus(name) = call("page_focus", name: name)
+
     # Stores a value in the daemon-scoped key-value store.
     # @param key [String] storage key
     # @param value [Object] value to store (must be JSON-serialisable)

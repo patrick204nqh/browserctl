@@ -40,7 +40,7 @@ module Browserctl
 
       def self.run_focus(client, args)
         name = args.shift or abort "usage: browserctl page focus <name>"
-        print_result(client.call("page_focus", name: name))
+        print_result(client.page_focus(name))
       end
     end
   end

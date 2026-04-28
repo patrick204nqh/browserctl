@@ -165,4 +165,16 @@ RSpec.describe "browserd daemon", :integration do
       expect(res[:result]).to eq(3)
     end
   end
+
+  describe "page focus" do
+    it "returns error in headless mode (default)" do
+      res = @client.page_focus("nonexistent")
+      expect(res[:error]).to match(/headed mode/)
+    end
+
+    it "returns error for missing page in headless mode" do
+      res = @client.page_focus("nope")
+      expect(res[:error]).not_to be_nil
+    end
+  end
 end
