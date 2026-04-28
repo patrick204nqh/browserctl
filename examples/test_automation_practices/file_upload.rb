@@ -18,11 +18,12 @@ Browserctl.workflow "test_automation_practices/file_upload" do
       File.write(path, "browserctl v0.7 upload test")
 
       page(:main).upload("[data-test='file-input']", path)
+      page(:main).wait("[data-test='uploaded-file-0']", timeout: 10)
 
       filename = page(:main).evaluate(
-        "document.querySelector('[data-test=\"file-input\"]').files[0]?.name"
+        "document.querySelector('[data-test=\"uploaded-file-0\"]')?.querySelector('span.truncate')?.textContent?.trim()"
       )
-      assert filename == "browserctl_test.txt", "expected filename in input, got: #{filename.inspect}"
+      assert filename == "browserctl_test.txt", "expected filename in list, got: #{filename.inspect}"
     end
     page(:main).screenshot(path: screenshot_path)
   end
