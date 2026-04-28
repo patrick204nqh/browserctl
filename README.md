@@ -62,15 +62,15 @@ gem install browserctl
 browserd &
 
 # 3. Open a named page
-browserctl page open main --url https://the-internet.herokuapp.com/login
+browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
 
 # 4. Snapshot — returns JSON with a ref ID per interactable element
 browserctl snapshot main
-# → [{"ref":"e1","tag":"input","attrs":{"id":"username"}}, {"ref":"e2",...}, {"ref":"e3","tag":"button","text":"Login",...}]
+# → [{"ref":"e1","tag":"input","attrs":{"data-test":"username-input"}}, {"ref":"e2",...}, {"ref":"e3","tag":"button","text":"Login",...}]
 
 # 5. Interact using the ref IDs from the snapshot
-browserctl fill main --ref e1 --value tomsmith
-browserctl fill main --ref e2 --value SuperSecretPassword!
+browserctl fill main --ref e1 --value admin
+browserctl fill main --ref e2 --value admin
 browserctl click main --ref e3
 
 # 6. Observe
