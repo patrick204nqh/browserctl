@@ -11,7 +11,7 @@ module Browserctl
     RECORDINGS_DIR = File.join(Dir.tmpdir, "browserctl-recordings")
     STATE_FILE     = File.expand_path("~/.browserctl/active_recording")
 
-    RECORDABLE = %w[open_page goto fill click screenshot evaluate].freeze
+    RECORDABLE = %w[page_open navigate fill click screenshot evaluate].freeze
 
     SENSITIVE_PARAM_PATTERN = /\A(token|key|secret|auth|code|access_token|api_key|client_secret|state)\z/ix
 
@@ -127,8 +127,8 @@ module Browserctl
 
         page = cmd[:name]
         case cmd[:cmd]
-        when "open_page"  then ["open #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
-        when "goto"       then ["goto #{page}", "page(:#{page}).goto(#{cmd[:url].inspect})"]
+        when "page_open"  then ["open #{page}", "page(:#{page}).navigate(#{cmd[:url].inspect})"]
+        when "navigate"   then ["navigate #{page}", "page(:#{page}).navigate(#{cmd[:url].inspect})"]
         when "screenshot" then ["screenshot #{page}", "page(:#{page}).screenshot"]
         when "evaluate"   then ["eval on #{page}", "page(:#{page}).evaluate(#{cmd[:expression].inspect})"]
         else ["#{cmd[:cmd]} on #{page}", "# unrecognised command: #{cmd.inspect}"]
@@ -153,7 +153,7 @@ module Browserctl
 
       def prepare_attrs(cmd, attrs)
         attrs = attrs.except(:value) if cmd == "fill"
-        attrs[:url] = redact_url(attrs[:url]) if %w[goto open_page].include?(cmd) && attrs[:url]
+        attrs[:url] = redact_url(attrs[:url]) if %w[navigate page_open].include?(cmd) && attrs[:url]
         attrs
       end
 

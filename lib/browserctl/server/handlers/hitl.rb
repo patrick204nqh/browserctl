@@ -11,7 +11,8 @@ module Browserctl
           return { error: "no page named '#{req[:name]}'" } unless session
 
           session.mutex.synchronize { session.pause! }
-          { ok: true, paused: true }
+          Browserctl.logger.info("HITL pause: #{req[:message]}") if req[:message]
+          { ok: true, paused: true, message: req[:message] }
         end
 
         def cmd_resume(req)

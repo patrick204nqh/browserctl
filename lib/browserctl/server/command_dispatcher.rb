@@ -9,6 +9,8 @@ require_relative "handlers/cookies"
 require_relative "handlers/hitl"
 require_relative "handlers/devtools"
 require_relative "handlers/daemon_control"
+require_relative "handlers/storage"
+require_relative "handlers/session"
 require_relative "../detectors"
 require_relative "../policy"
 
@@ -21,31 +23,41 @@ module Browserctl
     include Handlers::Hitl
     include Handlers::DevTools
     include Handlers::DaemonControl
+    include Handlers::Storage
+    include Handlers::Session
 
     COMMAND_MAP = {
-      "open_page" => :cmd_open_page,
-      "close_page" => :cmd_close_page,
-      "list_pages" => :cmd_list_pages,
-      "goto" => :cmd_goto,
+      "page_open" => :cmd_page_open,
+      "page_close" => :cmd_page_close,
+      "page_list" => :cmd_page_list,
+      "navigate" => :cmd_navigate,
+      "wait" => :cmd_wait,
       "snapshot" => :cmd_snapshot,
       "evaluate" => :cmd_evaluate,
       "fill" => :cmd_fill,
       "click" => :cmd_click,
       "screenshot" => :cmd_screenshot,
-      "wait_for" => :cmd_wait_for,
-      "watch" => :cmd_watch,
       "url" => :cmd_url,
       "ping" => :cmd_ping,
       "shutdown" => :cmd_shutdown,
       "pause" => :cmd_pause,
       "resume" => :cmd_resume,
-      "inspect" => :cmd_inspect,
+      "devtools" => :cmd_devtools,
       "cookies" => :cmd_cookies,
       "set_cookie" => :cmd_set_cookie,
-      "clear_cookies" => :cmd_clear_cookies,
+      "delete_cookies" => :cmd_delete_cookies,
       "import_cookies" => :cmd_import_cookies,
       "store" => :cmd_store,
-      "fetch" => :cmd_fetch
+      "fetch" => :cmd_fetch,
+      "storage_get" => :cmd_storage_get,
+      "storage_set" => :cmd_storage_set,
+      "storage_export" => :cmd_storage_export,
+      "storage_import" => :cmd_storage_import,
+      "storage_delete" => :cmd_storage_delete,
+      "session_save" => :cmd_session_save,
+      "session_load" => :cmd_session_load,
+      "session_list" => :cmd_session_list,
+      "session_delete" => :cmd_session_delete
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze

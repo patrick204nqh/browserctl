@@ -79,12 +79,12 @@ RSpec.describe Browserctl::Recording do
   describe ".generate_workflow" do
     it "produces valid Ruby workflow code from recorded commands" do
       described_class.start("checkout")
-      described_class.append("open_page", name: "cart", url: "https://example.com/cart")
+      described_class.append("page_open", name: "cart", url: "https://example.com/cart")
       described_class.append("click",     name: "cart", selector: "button#buy")
       described_class.stop
       ruby = described_class.generate_workflow("checkout")
       expect(ruby).to include('Browserctl.workflow "checkout"')
-      expect(ruby).to include('page(:cart).goto("https://example.com/cart")')
+      expect(ruby).to include('page(:cart).navigate("https://example.com/cart")')
       expect(ruby).to include('page(:cart).click("button#buy")')
     end
   end
@@ -101,8 +101,8 @@ RSpec.describe Browserctl::Recording do
   describe "URL redaction" do
     before { described_class.start("redact_test") }
 
-    it "redacts sensitive query params in goto URLs" do
-      described_class.append("goto", name: "main", url: "https://example.com/auth?token=abc123&page=1")
+    it "redacts sensitive query params in navigate URLs" do
+      described_class.append("navigate", name: "main", url: "https://example.com/auth?token=abc123&page=1")
       log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
       parsed = JSON.parse(log.strip)
       expect(parsed["url"]).to include("[REDACTED]")
@@ -110,8 +110,8 @@ RSpec.describe Browserctl::Recording do
       expect(parsed["url"]).to include("page=1")
     end
 
-    it "redacts sensitive params in open_page URLs" do
-      described_class.append("open_page", name: "main", url: "https://example.com/?code=xyz&ref=home")
+    it "redacts sensitive params in page_open URLs" do
+      described_class.append("page_open", name: "main", url: "https://example.com/?code=xyz&ref=home")
       log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
       parsed = JSON.parse(log.strip)
       expect(parsed["url"]).to include("[REDACTED]")
@@ -119,7 +119,7 @@ RSpec.describe Browserctl::Recording do
     end
 
     it "does not redact clean URLs" do
-      described_class.append("goto", name: "main", url: "https://example.com/path?page=2&sort=asc")
+      described_class.append("navigate", name: "main", url: "https://example.com/path?page=2&sort=asc")
       log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
       parsed = JSON.parse(log.strip)
       expect(parsed["url"]).to eq("https://example.com/path?page=2&sort=asc")
@@ -127,20 +127,20 @@ RSpec.describe Browserctl::Recording do
 
     it "returns the original URL on malformed input" do
       bad_url = "not a valid url ][]["
-      described_class.append("goto", name: "main", url: bad_url)
+      described_class.append("navigate", name: "main", url: bad_url)
       log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
       parsed = JSON.parse(log.strip)
       expect(parsed["url"]).to eq(bad_url)
     end
 
     it "adds a comment in the generated workflow when redaction occurs" do
-      described_class.append("goto", name: "main", url: "https://example.com/?token=secret")
+      described_class.append("navigate", name: "main", url: "https://example.com/?token=secret")
       ruby = described_class.generate_workflow("redact_test")
       expect(ruby).to include("# NOTE: sensitive query params were redacted during recording")
     end
 
     it "does not add a comment when no redaction occurs" do
-      described_class.append("goto", name: "main", url: "https://example.com/clean")
+      described_class.append("navigate", name: "main", url: "https://example.com/clean")
       ruby = described_class.generate_workflow("redact_test")
       expect(ruby).not_to include("# NOTE: sensitive query params were redacted")
     end

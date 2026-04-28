@@ -9,8 +9,8 @@ require_relative "recording"
 module Browserctl
   # Thin IPC client that wraps each browserd command as a Ruby method call.
   class Client
-    def initialize(socket_path = Browserctl.socket_path)
-      @socket_path = socket_path
+    def initialize(socket_path = nil)
+      @socket_path = socket_path || auto_discover_socket
     end
 
     def call(cmd, **params)
@@ -25,22 +25,22 @@ module Browserctl
     # @param name [String] logical page name
     # @param url [String, nil] optional URL to navigate to after opening
     # @return [Hash] `{ ok: true, name: }` or `{ error: }`
-    def open_page(name, url: nil)  = call("open_page",  name: name, url: url)
+    def page_open(name, url: nil)  = call("page_open",  name: name, url: url)
 
     # Closes a named page and removes it from the session.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def close_page(name)           = call("close_page", name: name)
+    def page_close(name)           = call("page_close", name: name)
 
     # Lists all open page names.
     # @return [Hash] `{ pages: [String] }`
-    def list_pages                 = call("list_pages")
+    def page_list                  = call("page_list")
 
     # Navigates a page to a URL. Returns `challenge: true` when Cloudflare is detected.
     # @param name [String] logical page name
     # @param url [String] destination URL
     # @return [Hash] `{ ok: true, url:, challenge: }` or `{ error: }`
-    def goto(name, url)            = call("goto", name: name, url: url)
+    def navigate(name, url)        = call("navigate", name: name, url: url)
 
     # Clicks an element identified by CSS selector or snapshot ref.
     # @param name [String] logical page name
@@ -81,32 +81,23 @@ module Browserctl
       call("snapshot", name: name, format: format, diff: diff)
     end
 
-    # Waits for a CSS selector to appear (short timeout).
+    # Waits for a CSS selector to appear within the given timeout.
     # @param name [String] logical page name
     # @param selector [String] CSS selector to wait for
-    # @param timeout [Numeric] seconds before giving up (default: 10)
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def wait_for(name, selector, timeout: 10) = call("wait_for", name: name, selector: selector, timeout: timeout)
-
-    # Polls for a CSS selector with a longer timeout (suitable for async operations).
-    # @param name [String] logical page name
-    # @param selector [String] CSS selector to poll for
     # @param timeout [Numeric] seconds before giving up (default: 30)
     # @return [Hash] `{ ok: true, selector: }` or `{ error: }`
-    def watch(name, selector, timeout: 30)
-      call("watch", name: name, selector: selector, timeout: timeout)
-    end
+    def wait(name, selector, timeout: 30) = call("wait", name: name, selector: selector, timeout: timeout)
 
     # Returns the current URL of a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true, url: }` or `{ error: }`
-    def url(name)                  = call("url",         name: name)
+    def url(name)                  = call("url",      name: name)
 
     # Evaluates a JavaScript expression and returns the result.
     # @param name [String] logical page name
     # @param expression [String] JavaScript expression
     # @return [Hash] `{ ok: true, result: }` or `{ error: }`
-    def evaluate(name, expression) = call("evaluate",    name: name, expression: expression)
+    def evaluate(name, expression) = call("evaluate", name: name, expression: expression)
 
     # Checks if browserd is alive.
     # @return [Hash] `{ ok: true, pid: }` or raises if daemon is not running
@@ -118,34 +109,35 @@ module Browserctl
 
     # Pauses automation on a page so a human can interact directly.
     # @param name [String] logical page name
-    # @return [Hash] `{ ok: true, paused: true }` or `{ error: }`
-    def pause(name)                = call("pause",   name: name)
+    # @param message [String, nil] optional message displayed to the human
+    # @return [Hash] `{ ok: true, paused: true, message: }` or `{ error: }`
+    def pause(name, message: nil)  = call("pause",  name: name, message: message)
 
     # Resumes automation on a paused page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true, paused: false }` or `{ error: }`
-    def resume(name)               = call("resume",  name: name)
+    def resume(name)               = call("resume", name: name)
 
     # Returns the Chrome DevTools URL for a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true, devtools_url: }` or `{ error: }`
-    def inspect_page(name)         = call("inspect", name: name)
+    def devtools(name)             = call("devtools", name: name)
 
     # Stores a value in the daemon-scoped key-value store.
     # @param key [String] storage key
     # @param value [Object] value to store (must be JSON-serialisable)
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def store(key, value) = call("store", key: key, value: value)
+    def store(key, value)          = call("store", key: key, value: value)
 
     # Retrieves a value from the daemon-scoped key-value store.
     # @param key [String] storage key
     # @return [Hash] `{ ok: true, value: }` or `{ error:, code: "key_not_found" }`
-    def fetch(key) = call("fetch", key: key)
+    def fetch(key)                 = call("fetch", key: key)
 
     # Returns all cookies for a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true, cookies: [Hash] }` or `{ error: }`
-    def cookies(name) = call("cookies", name: name)
+    def cookies(name)              = call("cookies", name: name)
 
     # Sets a cookie on a named page.
     # @param name [String] logical page name
@@ -159,12 +151,13 @@ module Browserctl
                          value: value, domain: domain, path: path)
     end
 
-    # Clears all cookies for a named page.
+    # Deletes all cookies for a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def clear_cookies(name) = call("clear_cookies", name: name)
+    def delete_cookies(name) = call("delete_cookies", name: name)
 
     # Exports all cookies for a named page to a JSON file.
+    # File I/O is client-side; daemon provides the cookie data.
     # @param name [String] logical page name
     # @param path [String] file path to write cookies to
     # @return [Hash] `{ ok: true, path:, count: }` or `{ error: }`
@@ -188,7 +181,87 @@ module Browserctl
       call("import_cookies", name: name, cookies: cookies)
     end
 
+    # Returns the value of a localStorage or sessionStorage key.
+    # @param name [String] logical page name
+    # @param key [String] storage key
+    # @param store [String] "local" or "session" (default: "local")
+    # @return [Hash] `{ ok: true, value: }` or `{ error: }`
+    def storage_get(name, key, store: "local")
+      call("storage_get", name: name, key: key, store: store)
+    end
+
+    # Sets a localStorage or sessionStorage key.
+    # @param name [String] logical page name
+    # @param key [String] storage key
+    # @param value [String] storage value
+    # @param store [String] "local" or "session" (default: "local")
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def storage_set(name, key, value, store: "local")
+      call("storage_set", name: name, key: key, value: value, store: store)
+    end
+
+    # Exports localStorage and/or sessionStorage to a JSON file.
+    # @param name [String] logical page name
+    # @param path [String] destination file path
+    # @param stores [String] "local", "session", or "all" (default: "all")
+    # @return [Hash] `{ ok: true, path:, key_count: }` or `{ error: }`
+    def storage_export(name, path, stores: "all")
+      call("storage_export", name: name, path: path, stores: stores)
+    end
+
+    # Imports storage keys from a JSON file into the page's localStorage.
+    # @param name [String] logical page name
+    # @param path [String] source file path
+    # @return [Hash] `{ ok: true, origins: N, key_count: M }` or `{ error: }`
+    def storage_import(name, path)
+      call("storage_import", name: name, path: path)
+    end
+
+    # Clears localStorage and/or sessionStorage for the page.
+    # @param name [String] logical page name
+    # @param stores [String] "local", "session", or "all" (default: "all")
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def storage_delete(name, stores: "all")
+      call("storage_delete", name: name, stores: stores)
+    end
+
+    # Saves the current browser state (cookies, localStorage, open pages) to a named session.
+    # @param session_name [String] name for the saved session
+    # @return [Hash] `{ ok: true, path:, pages: N, cookies: N }` or `{ error: }`
+    def session_save(session_name)
+      call("session_save", session_name: session_name)
+    end
+
+    # Restores a previously saved session into the running daemon.
+    # @param session_name [String] name of the session to load
+    # @return [Hash] `{ ok: true, cookies: N, pages: N, local_storage_keys: N }` or `{ error: }`
+    def session_load(session_name)
+      call("session_load", session_name: session_name)
+    end
+
+    # Lists all saved sessions.
+    # @return [Hash] `{ ok: true, sessions: [Hash] }` or `{ error: }`
+    def session_list
+      call("session_list")
+    end
+
+    # Permanently deletes a named session.
+    # @param session_name [String] name of the session to delete
+    # @return [Hash] `{ ok: true }` or `{ error: }`
+    def session_delete(session_name)
+      call("session_delete", session_name: session_name)
+    end
+
     private
+
+    def auto_discover_socket
+      default = Browserctl.socket_path
+      return default if File.exist?(default)
+
+      # Fall back to the first available auto-indexed daemon, or the default path
+      # (which will raise "browserd is not running" at connection time if absent).
+      Browserctl.all_daemon_sockets.first || default
+    end
 
     def communicate(payload)
       UNIXSocket.open(@socket_path) do |sock|

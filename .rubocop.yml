@@ -1,3 +1,5 @@
+inherit_from: .rubocop_todo.yml
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.3
@@ -42,4 +44,3 @@ Naming/PredicateMethod:
 
 Gemspec/DevelopmentDependencies:
   EnforcedStyle: gemspec
-

@@ -27,7 +27,7 @@ module Browserctl
           { ok: true }
         end
 
-        def cmd_clear_cookies(req)
+        def cmd_delete_cookies(req)
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 

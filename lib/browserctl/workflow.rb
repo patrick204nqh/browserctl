@@ -47,17 +47,35 @@ module Browserctl
     end
 
     def open_page(page_name, url: nil)
-      res = @client.open_page(page_name.to_s, url: url)
+      res = @client.page_open(page_name.to_s, url: url)
       raise WorkflowError, res[:error] if res[:error]
 
       res
     end
 
     def close_page(page_name)
-      res = @client.close_page(page_name.to_s)
+      res = @client.page_close(page_name.to_s)
       raise WorkflowError, res[:error] if res[:error]
 
       res
+    end
+
+    def save_session(session_name)
+      res = @client.session_save(session_name)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res
+    end
+
+    def load_session(session_name)
+      res = @client.session_load(session_name)
+      raise WorkflowError, res[:error] if res[:error]
+
+      res
+    end
+
+    def list_sessions
+      @client.session_list[:sessions]
     end
 
     def invoke(workflow_name, **override_params)
@@ -100,15 +118,24 @@ module Browserctl
       @client = client
     end
 
-    def goto(url)        = unwrap @client.goto(@name, url)
-    def fill(sel, val)   = unwrap @client.fill(@name, sel, val)
-    def click(sel)       = unwrap @client.click(@name, sel)
-    def snapshot(**) = unwrap @client.snapshot(@name, **)
-    def screenshot(**) = unwrap @client.screenshot(@name, **)
-    def watch(sel, timeout: 30)    = unwrap @client.watch(@name, sel, timeout: timeout)
-    def wait_for(sel, timeout: 10) = unwrap @client.wait_for(@name, sel, timeout: timeout)
-    def url              = @client.url(@name)[:url]
-    def evaluate(expr)   = @client.evaluate(@name, expr)[:result]
+    def navigate(url)             = unwrap @client.navigate(@name, url)
+    def fill(sel, val)            = unwrap @client.fill(@name, sel, val)
+    def click(sel)                = unwrap @client.click(@name, sel)
+    def snapshot(**)              = unwrap @client.snapshot(@name, **)
+    def screenshot(**)            = unwrap @client.screenshot(@name, **)
+    def wait(sel, timeout: 30)    = unwrap @client.wait(@name, sel, timeout: timeout)
+    def delete_cookies             = unwrap @client.delete_cookies(@name)
+    def devtools                   = @client.devtools(@name)[:devtools_url]
+    def url                        = @client.url(@name)[:url]
+    def evaluate(expr)             = @client.evaluate(@name, expr)[:result]
+
+    def storage_get(key, store: "local")
+      @client.storage_get(@name, key, store: store)[:value]
+    end
+
+    def storage_set(key, value, store: "local")
+      unwrap @client.storage_set(@name, key, value, store: store)
+    end
 
     private
 

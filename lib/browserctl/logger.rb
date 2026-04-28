@@ -18,10 +18,10 @@ module Browserctl
 
     # Delegate to each logger; swallow individual write failures so a broken file
     # logger never crashes the daemon or drops a client response.
-    def debug(msg = nil, &) = @loggers.each { |l| l.debug(msg, &) rescue nil } # rubocop:disable Style/RescueModifier
-    def info(msg = nil, &)  = @loggers.each { |l| l.info(msg, &)  rescue nil } # rubocop:disable Style/RescueModifier
-    def warn(msg = nil, &)  = @loggers.each { |l| l.warn(msg, &)  rescue nil } # rubocop:disable Style/RescueModifier
-    def error(msg = nil, &) = @loggers.each { |l| l.error(msg, &) rescue nil } # rubocop:disable Style/RescueModifier
+    def debug(msg = nil, &) = @loggers.each { |l| l.debug(msg, &) rescue nil }
+    def info(msg = nil, &)  = @loggers.each { |l| l.info(msg, &)  rescue nil }
+    def warn(msg = nil, &)  = @loggers.each { |l| l.warn(msg, &)  rescue nil }
+    def error(msg = nil, &) = @loggers.each { |l| l.error(msg, &) rescue nil }
 
     def level = @loggers.first&.level
 

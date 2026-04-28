@@ -125,7 +125,7 @@ module Browserctl
 
     def quietly
       yield
-    rescue Exception # rubocop:disable Lint/RescueException
+    rescue Exception
       nil
     end
   end
