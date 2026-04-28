@@ -19,14 +19,26 @@ browserd &         # headless (default)
 browserd --headed  # shows the browser window
 ```
 
+Or start it through the CLI (spawns in background automatically):
+
+```sh
+browserctl daemon start
+browserctl daemon start --headed
+browserctl daemon start --name work
+```
+
 Check it's alive: `browserctl daemon ping`
 
 Logs are written to `~/.browserctl/browserd.log` — the path is printed on startup. Tail it when debugging: `tail -f ~/.browserctl/browserd.log`
 
-If a daemon is already running, `browserd` aborts rather than clobbering the live session:
+If the default socket is already taken, `browserd` auto-indexes rather than aborting:
+
 ```
-browserd already running (PID 12345). Use 'browserctl daemon stop' first.
+browserd: default slot taken — starting as 'd1'
+  to connect: browserctl --daemon d1 <command>
 ```
+
+List all running daemons: `browserctl daemon list`
 
 ## Core workflow
 
@@ -58,6 +70,7 @@ browserctl snapshot login --diff            # only elements changed since last s
 browserctl snapshot login --format html     # raw HTML
 browserctl screenshot login                 # screenshot → /tmp/
 browserctl screenshot login --out /tmp/my.png --full
+browserctl evaluate  login "document.title" # evaluate a JS expression
 
 # Waiting
 browserctl wait login "button#submit"            # poll until selector appears
@@ -84,8 +97,9 @@ browserctl dialog dismiss main                          # dismiss the next confi
 browserctl ask "Enter 2FA code:"                        # prints prompt to stderr, returns JSON {ok, value}
 
 # Human-in-the-loop (HITL)
-browserctl pause  login            # pause automation — browser stays live for manual interaction
-browserctl resume login            # resume automation after human action
+browserctl pause  login                    # pause automation — browser stays live for manual interaction
+browserctl pause  login --message "Solve the CAPTCHA, then: browserctl resume login"
+browserctl resume login                    # resume automation after human action
 
 # DevTools
 browserctl devtools login          # open Chrome DevTools URL for a named page
@@ -97,19 +111,48 @@ browserctl cookie delete login                                                  
 browserctl cookie export login .browserctl/sessions/app.json                   # export to file
 browserctl cookie import login .browserctl/sessions/app.json                   # import from file
 
+# Storage (localStorage / sessionStorage)
+browserctl storage get    login cart_id                                         # read a key (default: localStorage)
+browserctl storage get    login cart_id --store session                         # read from sessionStorage
+browserctl storage set    login cart_id "abc123"                                # write a key
+browserctl storage export login .browserctl/storage.json                        # export all stores to file
+browserctl storage export login .browserctl/storage.json --store local          # export localStorage only
+browserctl storage import login .browserctl/storage.json                        # import storage from file
+browserctl storage delete login                                                  # clear all storage
+browserctl storage delete login --store session                                  # clear sessionStorage only
+
+# Session (save/restore full browser state: pages + cookies + localStorage)
+browserctl session save   myapp                          # snapshot current state
+browserctl session load   myapp                          # restore into running daemon
+browserctl session list                                  # list saved sessions
+browserctl session delete myapp                          # delete a saved session
+browserctl session export myapp /tmp/myapp.zip           # zip to portable archive
+browserctl session import /tmp/myapp.zip                 # unzip into sessions directory
+
 # Page management
 browserctl page list
 browserctl page close login
+browserctl page focus login    # bring tab to front (headed mode only)
 
 # Daemon
 browserctl daemon ping    # → { ok: true, pid: N, protocol_version: "2" }
 browserctl daemon status  # → { daemon: "online", pid: N, pages: [{name:, url:}] }
+browserctl daemon start [--headed] [--name NAME]
 browserctl daemon stop
+browserctl daemon list    # list all running daemon instances
 
 # Named daemon (multi-agent isolation)
 browserd --name session-abc &
 browserctl --daemon session-abc page open main --url https://app.example.com
 ```
+
+## `browserd` flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--headed` | headless | Start with a visible browser window |
+| `--name <id>` | auto | Name this daemon instance; if omitted and the default slot is taken, auto-picks `d1`, `d2`, ... |
+| `--log-level <level>` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
 
 ## Snapshot format (elements)
 
@@ -271,6 +314,7 @@ browserctl navigate main https://protected.example.com
 - **Use `ask`** when automation needs a human-supplied value (2FA code, CAPTCHA answer, confirmation) but doesn't need to hand over full browser control. Cleaner than `pause` for value injection.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
 - **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
+- **Use `session save/load`** to persist the full browser state across daemon restarts — saves cookies, localStorage, and open page URLs. Load it on a fresh daemon to skip login entirely.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Recording and refs
@@ -304,7 +348,97 @@ end
 `page(:name)` — returns a `PageProxy` for commands on an already-open page.
 `wait(selector, timeout: 30)` — poll until selector appears in the DOM; raises on timeout.
 
-PageProxy methods (all raise `WorkflowError` on daemon error):
+## Workflow DSL — full reference
+
+| Method | Description |
+|---|---|
+| `desc "text"` | Human-readable description shown by `workflow list` |
+| `param :name, required:, secret:, default:` | Declare an input parameter |
+| `step "label" { }` | Add a step — runs in order, halts workflow on failure |
+| `step "label", retry_count: N { }` | Retry the step up to N additional times on any error |
+| `step "label", timeout: S { }` | Fail the step if it exceeds S seconds |
+| `step "label", retry_count: N, timeout: S { }` | Both retry and timeout |
+| `compose "workflow"` | Inline all steps from another workflow at this point |
+| `invoke "workflow", **overrides` | Call another workflow by name, optionally overriding params |
+| `open_page(name, url: nil)` | Open a named page, optionally navigating to a URL |
+| `close_page(name)` | Close a named page |
+| `page(:name)` | Return a `PageProxy` for the named page |
+| `save_session(name)` | Snapshot current browser state (pages + cookies + localStorage) to a named session |
+| `load_session(name)` | Restore a saved session into the running daemon |
+| `list_sessions` | Return all saved session metadata |
+| `store :key, value` | Store a value for use in later steps (persists in daemon until it stops) |
+| `fetch :key` | Retrieve a value stored by an earlier step |
+| `ask "prompt"` | Print prompt to stderr, read a line from stdin, return it as a string |
+| `assert condition, "message"` | Raise `WorkflowError` if condition is false |
+
+### `store` and `fetch`
+
+Pass values between steps:
+
+```ruby
+step "read OTP" do
+  code = page(:inbox).evaluate("document.querySelector('.otp-code')?.innerText?.trim()")
+  store(:otp, code)
+end
+
+step "submit OTP" do
+  page(:app).fill("input#otp", fetch(:otp))
+  page(:app).click("button[type=submit]")
+end
+```
+
+### `invoke`
+
+Call another workflow by name, optionally overriding params. Circular invocation raises immediately:
+
+```ruby
+step "log in first" do
+  invoke "smoke_login", email: admin_email, password: admin_password
+end
+```
+
+### `compose`
+
+Inline all steps from another workflow at the point of the call:
+
+```ruby
+Browserctl.workflow "full_flow" do
+  compose "smoke_login"   # all steps from smoke_login inserted here
+  step "continue" do
+    page(:login).click(".next-button")
+  end
+end
+```
+
+### `ask` in workflow context
+
+```ruby
+step "enter 2FA" do
+  code = ask("Enter the 2FA code:")
+  page(:main).fill("#otp-input", code)
+  page(:main).click("#verify")
+end
+```
+
+### Step retry and timeout
+
+```ruby
+step "submit form", retry_count: 3 do
+  page(:main).click("button[type=submit]")
+end
+
+step "wait for results", timeout: 10 do
+  page(:main).wait(".results-list")
+end
+
+step "flaky call", retry_count: 2, timeout: 30 do
+  page(:main).evaluate("fetch('/api/data').then(r => r.json())")
+end
+```
+
+## PageProxy methods
+
+Methods available on `page(:name)` inside a workflow (all raise `WorkflowError` on daemon error):
 
 ```ruby
 page(:main).navigate(url)
@@ -329,8 +463,8 @@ page(:main).devtools
 
 ## Troubleshooting
 
-- `browserd is not running` → run `browserd &` first; check `~/.browserctl/browserd.log` for startup errors
-- `browserd already running (PID N)` → run `browserctl daemon stop` then restart
+- `browserd is not running` → run `browserd &` or `browserctl daemon start`; check `~/.browserctl/browserd.log` for startup errors
+- `default slot taken — starting as 'd1'` → connect with `browserctl --daemon d1 <command>`, or stop the existing daemon first
 - `no page named 'X'` → run `browserctl daemon status` to see what's open, then `browserctl page open X`
 - Selector not found → use `snapshot` to get valid selectors (elements format is the default)
 - Stale page → `browserctl navigate <page> <url>` to reload
