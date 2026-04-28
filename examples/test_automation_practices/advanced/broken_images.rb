@@ -16,8 +16,8 @@ Browserctl.workflow "test_automation_practices/advanced/broken_images" do
     widths = page(:main).evaluate(
       "[0,1,2].map(i => document.querySelector(`[data-test=\"image-${i}\"]`)?.naturalWidth ?? -1)"
     )
-    loaded  = widths.count { |w| w.positive? }
-    broken  = widths.count { |w| w == 0 }
+    loaded  = widths.count(&:positive?)
+    broken  = widths.count(&:zero?)
     assert loaded == 1, "expected exactly 1 valid image, got #{loaded} (widths: #{widths.inspect})"
     assert broken == 2, "expected exactly 2 broken images, got #{broken} (widths: #{widths.inspect})"
     page(:main).screenshot(path: screenshot_path)
