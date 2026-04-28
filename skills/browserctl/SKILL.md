@@ -173,7 +173,7 @@ end
 ```
 
 ```sh
-browserctl run /tmp/probe_login.rb
+browserctl workflow run /tmp/probe_login.rb
 ```
 
 **Step 3 — Harden into a named workflow**
@@ -206,11 +206,11 @@ end
 ```
 
 ```sh
-browserctl run smoke_login --email me@example.com --password secret
+browserctl workflow run smoke_login --email me@example.com --password secret
 ```
 
-List available: `browserctl workflows`
-Describe one:   `browserctl describe smoke_login`
+List available: `browserctl workflow list`
+Describe one:   `browserctl workflow describe smoke_login`
 
 Workflows in `./.browserctl/workflows/` are project-local.
 Workflows in `~/.browserctl/workflows/` are global.
