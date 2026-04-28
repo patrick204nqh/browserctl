@@ -4,7 +4,7 @@
 # Smoke test for --params file loading (Task 7.5).
 #
 # Run with:
-#   browserctl run examples/smoke/params_file.rb --params examples/smoke/params_file.yml
+#   browserctl workflow run examples/smoke/params_file.rb --params examples/smoke/params_file.yml
 #
 # The workflow logs in using credentials from the params file and asserts
 # the secure area is reached — proving the params were loaded and available.
@@ -17,7 +17,7 @@ Browserctl.workflow "smoke/params_file" do
   param :base_url, default: "https://the-internet.herokuapp.com"
 
   step "open login page" do
-    client.open_page("main", url: "#{base_url}/login")
+    open_page(:main, url: "#{base_url}/login")
   end
 
   step "fill credentials from params file" do

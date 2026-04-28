@@ -31,13 +31,13 @@ Enter
 Sleep 5s
 
 # ---------- open the login page ----------
-Type "bundle exec browserctl open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth"
+Type "bundle exec browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth"
 Sleep 400ms
 Enter
 Sleep 4s
 
 # ---------- snapshot ----------
-Type "bundle exec browserctl snap main"
+Type "bundle exec browserctl snapshot main"
 Sleep 400ms
 Enter
 Sleep 4s
@@ -59,19 +59,19 @@ Enter
 Sleep 4s
 
 # ---------- snapshot after login ----------
-Type "bundle exec browserctl snap main"
+Type "bundle exec browserctl snapshot main"
 Sleep 400ms
 Enter
 Sleep 4s
 
 # ---------- screenshot ----------
-Type "bundle exec browserctl shot main --out docs/assets/demo_auth.png"
+Type "bundle exec browserctl screenshot main --out docs/assets/demo_auth.png"
 Sleep 400ms
 Enter
 Sleep 3s
 
 # ---------- tear down ----------
-Type "bundle exec browserctl shutdown"
+Type "bundle exec browserctl daemon stop"
 Sleep 400ms
 Enter
 Sleep 3s

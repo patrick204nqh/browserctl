@@ -14,8 +14,8 @@ Browserctl.workflow "test_automation_practices/notifications" do
         default: File.expand_path(".browserctl/screenshots/test_automation_practices_notifications.png")
 
   step "open notifications page and record baseline" do
-    client.open_page("main", url: "#{base_url}/#/notifications")
-    page(:main).wait_for("[data-test='notification-container']", timeout: 5)
+    open_page(:main, url: "#{base_url}/#/notifications")
+    page(:main).wait("[data-test='notification-container']", timeout: 5)
     # Let any delayed on-load notifications finish appearing before we snapshot the baseline
     sleep 1
     store(:baseline, client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result])
@@ -24,7 +24,7 @@ Browserctl.workflow "test_automation_practices/notifications" do
   step "trigger success notification and verify count increased by 1" do
     base = fetch(:baseline)
     page(:main).click("[data-test='add-success']")
-    page(:main).wait_for("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
+    page(:main).wait("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
     count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
     assert count == base + 1, "expected #{base + 1} notifications after success, got: #{count}"
   end
@@ -49,7 +49,7 @@ Browserctl.workflow "test_automation_practices/notifications" do
     base = fetch(:baseline)
     page(:main).click("[data-test='add-error']")
     page(:main).click("[data-test='add-info']")
-    page(:main).wait_for("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
+    page(:main).wait("[data-test^='notification-']:not([data-test='notification-container'])", timeout: 5)
     count = client.evaluate("main", NOTIFICATION_ITEMS_JS)[:result]
     assert count == base + 2, "expected #{base + 2} notifications (error + info), got: #{count}"
     page(:main).screenshot(path: screenshot_path)

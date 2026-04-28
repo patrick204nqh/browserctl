@@ -7,7 +7,7 @@ Browserctl.workflow "test_automation_practices/key_press" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/test_automation_practices_key_press.png")
 
   step "open key press page" do
-    client.open_page("main", url: "#{base_url}/#/key-press")
+    open_page(:main, url: "#{base_url}/#/key-press")
   end
 
   step "dispatch key events and verify last-key display" do

@@ -7,7 +7,7 @@ Browserctl.workflow "the_internet/add_remove_elements" do
   param :screenshot_path, default: File.expand_path(".browserctl/screenshots/the_internet_add_remove_elements.png")
 
   step "open add/remove elements page" do
-    client.open_page("main", url: "#{base_url}/add_remove_elements/")
+    open_page(:main, url: "#{base_url}/add_remove_elements/")
   end
 
   step "add three elements" do

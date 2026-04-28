@@ -12,12 +12,12 @@ Browserctl.workflow "smoke/store_fetch" do
   param :base_url, default: "https://the-internet.herokuapp.com"
 
   step "open dynamic loading page" do
-    client.open_page("main", url: "#{base_url}/dynamic_loading/1")
+    open_page(:main, url: "#{base_url}/dynamic_loading/1")
   end
 
   step "click start and capture loaded text" do
     page(:main).click("div#start button")
-    page(:main).wait_for("div#finish", timeout: 10)
+    page(:main).wait("div#finish", timeout: 10)
     text = client.evaluate("main", "document.querySelector('div#finish h4')?.innerText?.trim()")[:result]
     assert text && !text.empty?, "expected loaded text, got: #{text.inspect}"
     store(:loaded_text, text)
