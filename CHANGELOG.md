@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/patrick204nqh/browserctl/compare/v0.6.0...v0.7.0) (2026-04-28)
+
+
+### Features
+
+* v0.7 interaction primitives (press/hover/upload/select/dialog/ask) + page_focus fix ([#47](https://github.com/patrick204nqh/browserctl/issues/47)) ([63daadc](https://github.com/patrick204nqh/browserctl/commit/63daadcfbd4e967fc539b714393d163fabfc86b2))
+
 ## [0.6.0](https://github.com/patrick204nqh/browserctl/compare/v0.5.0...v0.6.0) (2026-04-28)
 
 
