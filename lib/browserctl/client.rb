@@ -9,8 +9,8 @@ require_relative "recording"
 module Browserctl
   # Thin IPC client that wraps each browserd command as a Ruby method call.
   class Client
-    def initialize(socket_path = Browserctl.socket_path)
-      @socket_path = socket_path
+    def initialize(socket_path = nil)
+      @socket_path = socket_path || auto_discover_socket
     end
 
     def call(cmd, **params)
@@ -154,7 +154,7 @@ module Browserctl
     # Deletes all cookies for a named page.
     # @param name [String] logical page name
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def delete_cookies(name)       = call("delete_cookies", name: name)
+    def delete_cookies(name) = call("delete_cookies", name: name)
 
     # Exports all cookies for a named page to a JSON file.
     # File I/O is client-side; daemon provides the cookie data.
@@ -253,6 +253,15 @@ module Browserctl
     end
 
     private
+
+    def auto_discover_socket
+      default = Browserctl.socket_path
+      return default if File.exist?(default)
+
+      # Fall back to the first available auto-indexed daemon, or the default path
+      # (which will raise "browserd is not running" at connection time if absent).
+      Browserctl.all_daemon_sockets.first || default
+    end
 
     def communicate(payload)
       UNIXSocket.open(@socket_path) do |sock|

@@ -20,11 +20,17 @@ if opts[:name] && opts[:name] !~ /\A[a-zA-Z0-9_-]{1,64}\z/
   abort "Invalid daemon name #{opts[:name].inspect} — use only letters, digits, _ or -"
 end
 
-log_path = Browserctl.log_path(opts[:name])
+assigned_name = opts[:name] || Browserctl.next_daemon_name
+if assigned_name && !opts[:name]
+  warn "browserd: default slot taken — starting as '#{assigned_name}'"
+  warn "  to connect: browserctl --daemon #{assigned_name} <command>"
+end
+
+log_path = Browserctl.log_path(assigned_name)
 warn "browserd starting — log: #{log_path}"
 Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
 Browserctl::Server.new(
   headless: !opts[:headed],
-  socket_path: Browserctl.socket_path(opts[:name]),
-  pid_path: Browserctl.pid_path(opts[:name])
+  socket_path: Browserctl.socket_path(assigned_name),
+  pid_path: Browserctl.pid_path(assigned_name)
 ).run

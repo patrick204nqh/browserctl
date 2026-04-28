@@ -19,6 +19,25 @@ module Browserctl
     File.join(BROWSERCTL_DIR, name ? "#{name}.log" : "browserd.log")
   end
 
+  # Returns nil when the default (unnamed) slot is free; otherwise returns "d1", "d2", etc.
+  def self.next_daemon_name
+    return nil unless File.exist?(socket_path)
+
+    1.upto(99) do |i|
+      return "d#{i}" unless File.exist?(socket_path("d#{i}"))
+    end
+    raise "too many running daemons (limit: 99)"
+  end
+
+  def self.all_daemon_sockets
+    Dir[File.join(BROWSERCTL_DIR, "*.sock")]
+  end
+
+  def self.all_daemon_names
+    all_daemon_sockets.map { |f| File.basename(f, ".sock") }
+                      .map { |n| n == "browserd" ? nil : n }
+  end
+
   # Backward-compatible constants
   SOCKET_PATH = socket_path
   PID_PATH    = pid_path
