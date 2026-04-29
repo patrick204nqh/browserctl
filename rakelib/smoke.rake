@@ -9,10 +9,13 @@ SMOKE_FILES = %w[
   rakelib/smoke/session.rb
   rakelib/smoke/session_encrypted.rb
   rakelib/smoke/store_fetch.rb
+  rakelib/smoke/secret_resolvers.rb
 ].freeze
 
 desc "Run all smoke workflows. HEADED=1 for a visible browser."
 task :smoke do
+  ENV["BCTL_SMOKE_SECRET"] = "smoke-secret-ok"
+
   with_daemon(headed: ENV["HEADED"] == "1") do
     SMOKE_FILES.each do |file|
       puts "\n── #{file} ──"
