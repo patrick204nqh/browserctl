@@ -10,6 +10,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3](https://github.com/patrick204nqh/browserctl/compare/v0.8.2...v0.8.3) (2026-04-29)
+
+
+### Features
+
+* expired_if: on load_session — detect stale sessions and auto-recover ([#67](https://github.com/patrick204nqh/browserctl/issues/67)) ([c6a4674](https://github.com/patrick204nqh/browserctl/commit/c6a467439835373165b1323c4aad6144388533be))
+
+
+### Miscellaneous Chores
+
+* pin next release to 0.8.3 ([#69](https://github.com/patrick204nqh/browserctl/issues/69)) ([a017e3c](https://github.com/patrick204nqh/browserctl/commit/a017e3c3b464060ced2ecd4d76fa04049f40e46a))
+
 ## [0.8.2](https://github.com/patrick204nqh/browserctl/compare/v0.8.1...v0.8.2) (2026-04-29)
 
 
