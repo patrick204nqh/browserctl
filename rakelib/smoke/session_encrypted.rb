@@ -10,17 +10,15 @@
 # Run with:
 #   browserctl workflow run rakelib/smoke/session_encrypted.rb
 
+unless RUBY_PLATFORM.include?("darwin")
+  puts "  [skip] smoke/session_encrypted: macOS Keychain required — skipping on #{RUBY_PLATFORM}"
+  return
+end
+
 SESSION_NAME = "smoke-enc-#{Process.pid}".freeze
 
 Browserctl.workflow "smoke/session_encrypted" do
   desc "Smoke: encrypted session save, load, delete"
-
-  step "guard — skip on non-darwin" do
-    unless RUBY_PLATFORM.include?("darwin")
-      puts "  [skip] session encryption requires macOS Keychain — skipping on #{RUBY_PLATFORM}"
-      throw :abort
-    end
-  end
 
   step "setup — open page with state" do
     open_page(:sess, url: "https://example.com")

@@ -247,7 +247,10 @@ export GMAIL_PASSWORD="hunter2"
 `keychain://` — store the password once with the macOS `security` CLI. The reference format is `keychain://service/account`, where **service** is any label you choose and **account** is the username or identifier:
 
 ```sh
-# store
+# store (omit -w to be prompted — avoids the password landing in shell history)
+security add-generic-password -s "MyApp" -a "admin"
+
+# or pass it inline (convenient, but the value appears in ~/.zsh_history)
 security add-generic-password -s "MyApp" -a "admin" -w "hunter2"
 
 # verify it round-trips
