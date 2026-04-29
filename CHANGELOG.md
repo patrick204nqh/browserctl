@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/patrick204nqh/browserctl/compare/v0.7.0...v0.8.0) (2026-04-29)
+
+
+### Features
+
+* **v0.8:** secret resolver plugin system + load_session fallback ([#54](https://github.com/patrick204nqh/browserctl/issues/54)) ([69737bf](https://github.com/patrick204nqh/browserctl/commit/69737bf10528ad691a31abf916953325637af597))
+
 ## [0.7.0](https://github.com/patrick204nqh/browserctl/compare/v0.6.0...v0.7.0) (2026-04-28)
 
 
