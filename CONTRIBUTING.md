@@ -137,6 +137,18 @@ This project follows [Semantic Versioning](https://semver.org). release-please d
 - **Minor** (`0.x.0`) — at least one `feat:` commit
 - **Major** (`x.0.0`) — any `feat!:` or `BREAKING CHANGE:` footer
 
+### Overriding the version
+
+When the roadmap targets a specific version that differs from what the automatic bump would produce (e.g. a `feat:` that should stay within the current minor series), push a `chore:` commit to `main` with a `Release-As:` footer:
+
+```
+chore: pin next release to 0.8.3
+
+Release-As: 0.8.3
+```
+
+release-please will update the open Release PR to use that exact version. The override applies only to the next release — future releases resume normal semver calculation.
+
 ---
 
 ## Reporting Bugs
