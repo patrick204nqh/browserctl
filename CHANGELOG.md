@@ -10,6 +10,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1](https://github.com/patrick204nqh/browserctl/compare/v0.8.0...v0.8.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* fill test gaps and tighten DX for v0.8.1 encryption ([#59](https://github.com/patrick204nqh/browserctl/issues/59)) ([80ae8b3](https://github.com/patrick204nqh/browserctl/commit/80ae8b38620f182db02a971516cfb5295cfb4945))
+* session encryption at rest and passphrase-protected export ([#57](https://github.com/patrick204nqh/browserctl/issues/57)) ([e3185d9](https://github.com/patrick204nqh/browserctl/commit/e3185d95dad3dd373659ce3c1e5781d9a06ed7f1))
+
 ## [0.8.0](https://github.com/patrick204nqh/browserctl/compare/v0.7.0...v0.8.0) (2026-04-29)
 
 
