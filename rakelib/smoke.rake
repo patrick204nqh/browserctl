@@ -15,7 +15,6 @@ SMOKE_FILES = %w[
 desc "Run all smoke workflows. HEADED=1 for a visible browser."
 task :smoke do
   ENV["BCTL_SMOKE_SECRET"] = "smoke-secret-ok"
-  ENV.delete("BCTL_SMOKE_MISSING_VAR")
 
   with_daemon(headed: ENV["HEADED"] == "1") do
     SMOKE_FILES.each do |file|
