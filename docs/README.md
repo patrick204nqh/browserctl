@@ -24,6 +24,7 @@ Mental models before mechanics.
 | [Sessions and Pages](concepts/sessions-and-pages.md) | Why a daemon beats a script, and what named pages give you |
 | [Snapshots and Refs](concepts/snapshots-and-refs.md) | The compact JSON snapshot format and ref-based interaction |
 | [Human-in-the-Loop](concepts/hitl.md) | Pause/resume, challenge detection, the extensible blocker model |
+| [Secrets and Credentials](guides/writing-workflows.md#sourcing-secrets-with-secret_ref) | Secret resolver system — env://, keychain://, op://, and custom resolvers |
 
 ---
 
