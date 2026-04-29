@@ -65,11 +65,12 @@ No re-authentication. No cookie injection. The session is just alive.
 
 ## Saving and restoring sessions
 
-In-memory state is lost when the daemon stops. `session save` captures everything — open pages, cookies, and localStorage — to a plain JSON bundle on disk. `session load` restores it into a running daemon, including re-opening every saved page at its saved URL.
+In-memory state is lost when the daemon stops. `session save` captures everything — open pages, cookies, and localStorage — to disk. `session load` restores it into a running daemon, including re-opening every saved page at its saved URL.
 
 ```bash
 # After logging in and navigating to the right state:
-browserctl session save github_work
+browserctl session save github_work           # plaintext (0o600 perms)
+browserctl session save github_work --encrypt # AES-256-GCM, key in macOS Keychain
 
 # Next time, on a fresh daemon:
 browserd &
@@ -77,20 +78,24 @@ browserctl session load github_work
 # → pages are back, cookies are restored, localStorage is seeded
 ```
 
-Session files live in `~/.browserctl/sessions/<name>/` as readable JSON:
+Plaintext sessions live in `~/.browserctl/sessions/<name>/` as `0o600` JSON files. Encrypted sessions store `.enc` blobs instead — the decryption key is kept in macOS Keychain and retrieved transparently on load:
 
 ```
 ~/.browserctl/sessions/github_work/
-  metadata.json       # page names + URLs + timestamps
-  cookies.json        # all cookies from the shared daemon jar
-  local_storage.json  # localStorage by origin
+  metadata.json            # page names + URLs + timestamps (always plaintext)
+  cookies.json             # plaintext, or…
+  cookies.json.enc         # …AES-256-GCM blob when --encrypt was used
+  local_storage.json(.enc)
+  session_storage.json(.enc)
 ```
 
-To share a session or move it to another machine, export it as a zip:
+To share a session or move it to another machine, export it as a zip. Add `--encrypt` to protect the archive with a passphrase (prompted on export; detected automatically on import):
 
 ```bash
 browserctl session export github_work ~/sessions/github_work.zip
-browserctl session import ~/sessions/github_work.zip
+browserctl session export github_work ~/sessions/github_work.zip --encrypt
+
+browserctl session import ~/sessions/github_work.zip  # detects encryption automatically
 ```
 
 List and manage sessions:
