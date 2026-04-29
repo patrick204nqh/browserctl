@@ -78,7 +78,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] `browserctl inspect` — open DevTools UI for a named page
 - [x] `browserctl cookies` / `set_cookie` / `clear_cookies` / `export-cookies` / `import-cookies` — full cookie management including CF clearance replay
 
-### v0.4 — Distribution & Installability _(current)_
+### v0.4 — Distribution & Installability ✓ _(shipped)_
 **Goal:** Install with one command, anywhere.
 
 - [x] `.claude-plugin/marketplace.json` — marketplace index so `/plugin marketplace add` works
@@ -90,32 +90,42 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] `ping` response: add `protocol_version: "1"` as baseline for future negotiation
 - [x] Split `pause_resume.rb` → `pause.rb` + `resume.rb` (one-command-per-file rule)
 
-### v0.5 — Architecture & Protocol Lock
-**Goal:** A codebase that contributors can navigate, a daemon that operators can trust, and a wire protocol that external tools can depend on. The Fixed zone is sealed at this milestone — no wire command names or response fields change without a major version bump after this point.
+### v0.5 — Architecture & Protocol Lock ✓ _(shipped)_
+**Goal:** A codebase that contributors can navigate, a daemon that operators can trust, and a wire protocol that external tools can depend on. The Fixed zone is sealed — no wire command names or response fields change without a major version bump after this point.
 
-- [ ] API stability zones — `docs/reference/api-stability.md` sealing the Fixed zone contract _(drafted)_
-- [ ] Style guide — `docs/reference/style-guide.md` codifying naming conventions per layer _(drafted)_
-- [ ] RBS type signatures for all public API — documents the Stable zone contract
-- [ ] YARD documentation — inline reference for SDK consumers
-- [ ] `Browserctl::Error` hierarchy — typed error codes surfaced in daemon JSON responses
-- [ ] Extract `Browserctl::Detectors` module — challenge detection isolated from dispatch logic
-- [ ] Split `CommandDispatcher` into per-concern handler files
-- [ ] Thread-safe plugin registry — replace mutable constants with mutex-protected accessors
-- [ ] Promote `store` / `fetch` to wire protocol — currently WorkflowContext-only; must be Fixed before the lock
-- [ ] Security audit: socket permissions, workflow param sanitisation, screenshot path boundaries
-- [ ] Snapshot content boundaries — nonce-delimited `snap` output to prevent prompt injection from adversarial pages
-- [ ] Domain/action policy support — `BROWSERCTL_ALLOWED_DOMAINS` env var (or config) to gate navigation to approved origins
-- [ ] Compatibility matrix: Ruby 3.2–3.x, Chrome 120+
-- [ ] Benchmarks: snapshot latency, command throughput
+- [x] API stability zones — `docs/reference/api-stability.md` sealing the Fixed zone contract
+- [x] Style guide — `docs/reference/style-guide.md` codifying naming conventions per layer
+- [x] RBS type signatures — `sig/browserctl.rbs` documents the Stable zone contract
+- [x] `Browserctl::Error` hierarchy — typed error codes surfaced in daemon JSON responses
+- [x] Extract `Browserctl::Detectors` module — challenge detection isolated from dispatch logic
+- [x] Split server into per-concern handler files — `server/handlers/`
+- [x] Thread-safe workflow registry — `@registry_mutex` on `Browserctl.workflow`
+- [x] Promote `store` / `fetch` to wire protocol — `cmd_store` / `cmd_fetch` in daemon handlers
+- [x] Domain/action policy support — `BROWSERCTL_ALLOWED_DOMAINS` env var via `policy.rb`
+- [x] Cookie export/import commands
+- [ ] YARD documentation — deferred
+- [ ] Snapshot content boundaries — deferred
+- [ ] Compatibility matrix (Ruby 3.3+ only for now) — deferred
+- [ ] Benchmarks — deferred
 
-### v0.6 — Evidence & Reproduction
-**Goal:** Every session leaves a trail. Every bug is reproducible from code.
+### v0.6 — CLI Redesign & Storage ✓ _(shipped)_
+**Goal:** A consistent noun-verb CLI surface with first-class web storage control.
 
-- [ ] Evidence capture hooks — configurable auto-screenshot (on HITL pause, on step failure, per-step)
-- [ ] Session trace export — structured JSON log of every command; `browserctl export main`
-- [ ] `replay` command — step through a recorded workflow with live screenshots at each step
-- [ ] Extensible HITL detection modules — DataDome, 2FA prompts, consent banners as built-in detectors
-- [ ] `register_detector` plugin API — third-party detectors installable via plugin system
+- [x] Noun-verb command structure — `browserctl page open`, `browserctl session save`, `browserctl workflow run`
+- [x] `storage get/set/export/import/delete` — direct Web Storage access without custom scripts
+- [x] Daemon auto-index — second unnamed daemon auto-picks next available slot
+- [x] `page focus` command
+- [x] Full integration spec suite
+
+### v0.7 — Interaction Primitives ✓ _(shipped)_
+**Goal:** Complete the interaction surface — every common browser action available from the DSL and CLI.
+
+- [x] `press(key)` — keyboard event dispatch
+- [x] `hover(selector)` — mouse movement
+- [x] `upload(selector, path)` — file input control
+- [x] `select(selector, value)` — `<select>` element control
+- [x] `dialog_accept` / `dialog_dismiss` — alert, confirm, and prompt handling
+- [x] `ask(prompt)` — read a value from the operator at runtime
 
 ### v0.8 — Credentials & Session Durability
 **Goal:** Production-grade workflows without infrastructure boilerplate.
@@ -127,7 +137,16 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [ ] Session encryption at rest — `browserctl session save --encrypt` _(stretch)_
 - [ ] Export encryption — `browserctl session export --encrypt` with passphrase _(stretch)_
 
-### v0.7 — Platform
+### v0.9 — Evidence & Reproduction
+**Goal:** Every session leaves a trail. Every bug is reproducible from code.
+
+- [ ] Evidence capture hooks — configurable auto-screenshot (on HITL pause, on step failure, per-step)
+- [ ] Session trace export — structured JSON log of every command; `browserctl session export-trace`
+- [ ] `replay` command — step through a recorded workflow with live screenshots at each step
+- [ ] Extensible HITL detection modules — DataDome, 2FA prompts, consent banners as built-in detectors
+- [ ] `register_detector` plugin API — third-party detectors installable via plugin system
+
+### v0.10 — Platform
 **Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
 
 - [ ] Annotated session traces — export pause/resume sessions as fine-tuning data for browser agents
