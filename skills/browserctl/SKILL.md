@@ -122,12 +122,14 @@ browserctl storage delete login                                                 
 browserctl storage delete login --store session                                  # clear sessionStorage only
 
 # Session (save/restore full browser state: pages + cookies + localStorage)
-browserctl session save   myapp                          # snapshot current state
+browserctl session save   myapp                          # snapshot current state (plaintext, 0o600)
+browserctl session save   myapp --encrypt                # AES-256-GCM at rest, key in macOS Keychain
 browserctl session load   myapp                          # restore into running daemon
 browserctl session list                                  # list saved sessions
 browserctl session delete myapp                          # delete a saved session
 browserctl session export myapp /tmp/myapp.zip           # zip to portable archive
-browserctl session import /tmp/myapp.zip                 # unzip into sessions directory
+browserctl session export myapp /tmp/myapp.zip --encrypt # passphrase-protected zip (PBKDF2+AES-256-GCM)
+browserctl session import /tmp/myapp.zip                 # unzip; detects and decrypts automatically
 
 # Page management
 browserctl page list
@@ -366,7 +368,7 @@ end
 | `open_page(name, url: nil)` | Open a named page, optionally navigating to a URL |
 | `close_page(name)` | Close a named page |
 | `page(:name)` | Return a `PageProxy` for the named page |
-| `save_session(name)` | Snapshot current browser state (pages + cookies + localStorage) to a named session |
+| `save_session(name, encrypt: false)` | Snapshot current browser state to a named session; `encrypt: true` stores sensitive files as AES-256-GCM blobs with the key in macOS Keychain (darwin only) |
 | `load_session(name)` | Restore a saved session into the running daemon |
 | `load_session(name, fallback: "workflow_name")` | Restore session; if load fails, invoke the named fallback workflow then retry once. Use this instead of hand-rolling detect-expiry logic. |
 | `list_sessions` | Return all saved session metadata |
