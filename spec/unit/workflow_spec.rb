@@ -272,6 +272,55 @@ RSpec.describe "WorkflowContext#load_session with fallback:" do
   end
 end
 
+RSpec.describe "WorkflowContext#load_session with expired_if:" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  it "returns result immediately when expired_if returns false (session is live)" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    result = ctx.load_session("my-session", fallback: "login", expired_if: -> { false })
+    expect(result).to eq({ ok: true })
+  end
+
+  it "invokes fallback and reloads when expired_if returns true" do
+    load_count = 0
+    allow(client).to receive(:session_load).with("my-session") do
+      load_count += 1
+      { ok: true, load: load_count }
+    end
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("login")
+
+    expiry_calls = 0
+    expired_if = lambda do
+      expiry_calls += 1
+      expiry_calls == 1 # expired on first check, live after recovery
+    end
+
+    result = ctx.load_session("my-session", fallback: "login", expired_if: expired_if)
+    expect(ctx).to have_received(:invoke).with("login").once
+    expect(result).to eq({ ok: true, load: 2 })
+  end
+
+  it "raises WorkflowError when expired_if is true but no fallback provided" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+
+    expect { ctx.load_session("my-session", expired_if: -> { true }) }
+      .to raise_error(Browserctl::WorkflowError, /is expired; provide fallback: to auto-recover/)
+  end
+
+  it "raises WorkflowError when fallback runs but session is still expired" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("login")
+
+    expect { ctx.load_session("my-session", fallback: "login", expired_if: -> { true }) }
+      .to raise_error(Browserctl::WorkflowError,
+                      /still expired after running fallback 'login'/)
+  end
+end
+
 RSpec.describe Browserctl::WorkflowContext do
   let(:client) { instance_double(Browserctl::Client) }
 

@@ -68,21 +68,26 @@ module Browserctl
       res
     end
 
-    def load_session(session_name, fallback: nil)
+    def load_session(session_name, fallback: nil, expired_if: nil)
       res = @client.session_load(session_name)
-      return res unless res[:error]
 
-      raise WorkflowError, res[:error] unless fallback
+      if res[:error]
+        raise WorkflowError, res[:error] unless fallback
+
+        invoke(fallback.to_s)
+        res = reload_or_raise(session_name, fallback)
+      end
+
+      return res unless expired_if&.call
+
+      raise WorkflowError,
+            "session '#{session_name}' is expired; provide fallback: to auto-recover" unless fallback
 
       invoke(fallback.to_s)
-      res2 = @client.session_load(session_name)
-      if res2[:error]
-        msg = "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
-        unless Session.exist?(session_name)
-          msg += "\n  Hint: '#{fallback}' did not call save_session(\"#{session_name}\") — add it as the last step."
-        end
-        raise WorkflowError, msg
-      end
+      res2 = reload_or_raise(session_name, fallback)
+
+      raise WorkflowError,
+            "session '#{session_name}' still expired after running fallback '#{fallback}'" if expired_if.call
 
       res2
     end
@@ -107,6 +112,17 @@ module Browserctl
     end
 
     private
+
+    def reload_or_raise(session_name, fallback)
+      res = @client.session_load(session_name)
+      return res unless res[:error]
+
+      msg = "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+      unless Session.exist?(session_name)
+        msg += "\n  Hint: '#{fallback}' did not call save_session(\"#{session_name}\") — add it as the last step."
+      end
+      raise WorkflowError, msg
+    end
 
     def invoke_stack
       @invoke_stack ||= []
