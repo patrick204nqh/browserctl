@@ -159,6 +159,21 @@ RSpec.describe "Session encryption" do
         dir = Browserctl::Session.path("enc_test")
         expect(File.exist?(File.join(dir, "session_storage.json.enc"))).to be false
       end
+
+      it "writes .enc files with mode 0600" do
+        Browserctl::Session.save("enc_test",
+                                 metadata: metadata,
+                                 cookies: cookies,
+                                 local_storage: local_storage,
+                                 session_storage: session_storage,
+                                 encrypt: true)
+
+        dir = Browserctl::Session.path("enc_test")
+        %w[cookies.json.enc local_storage.json.enc session_storage.json.enc].each do |f|
+          mode = File.stat(File.join(dir, f)).mode & 0o777
+          expect(mode).to eq(0o600), "expected #{f} to be 0600, got #{mode.to_s(8)}"
+        end
+      end
     end
   end
 
@@ -217,6 +232,21 @@ RSpec.describe "Session encryption" do
       end
     end
 
+    context "when an .enc file is missing (corrupted session)" do
+      before do
+        enc_meta = metadata.merge(encrypted: true)
+        dir = File.join(@tmpdir, "corrupt_test")
+        FileUtils.mkdir_p(dir)
+        File.write(File.join(dir, "metadata.json"), JSON.generate(enc_meta))
+        # deliberately omit cookies.json.enc
+        allow(Browserctl::Session).to receive(:keychain_fetch).with("corrupt_test").and_return(key)
+      end
+
+      it "raises an error when a required .enc file is absent" do
+        expect { Browserctl::Session.load("corrupt_test") }.to raise_error(StandardError)
+      end
+    end
+
     context "when metadata has no encrypted field (plaintext session)" do
       before do
         Browserctl::Session.save("plain_test",
@@ -231,6 +261,48 @@ RSpec.describe "Session encryption" do
         expect(data[:cookies].first[:name]).to eq("auth")
         expect(data[:local_storage]["https://example.com"]["token"]).to eq("abc")
         expect(data[:metadata][:encrypted]).to be_nil
+      end
+    end
+  end
+
+  # --- prompt_passphrase confirm: true ---
+
+  describe "Browserctl::Commands::Session prompt_passphrase" do
+    around(&:run)
+
+    context "when BROWSERCTL_EXPORT_PASSPHRASE is set" do
+      around do |ex|
+        prev = ENV.delete("BROWSERCTL_EXPORT_PASSPHRASE")
+        ENV["BROWSERCTL_EXPORT_PASSPHRASE"] = "env-pass"
+        ex.run
+      ensure
+        ENV["BROWSERCTL_EXPORT_PASSPHRASE"] = prev
+      end
+
+      it "returns env var without prompting, regardless of confirm:" do
+        result = Browserctl::Commands::Session.send(:prompt_passphrase, confirm: true)
+        expect(result).to eq("env-pass")
+      end
+    end
+
+    context "when reading from stdin" do
+      before do
+        ENV.delete("BROWSERCTL_EXPORT_PASSPHRASE")
+        allow($stderr).to receive(:print)
+        allow($stderr).to receive(:puts)
+        allow($stdin).to receive(:noecho) { |&blk| blk.call($stdin) }
+      end
+
+      it "aborts when confirm passphrase does not match" do
+        allow($stdin).to receive(:gets).and_return("first\n", "second\n")
+        expect { Browserctl::Commands::Session.send(:prompt_passphrase, confirm: true) }
+          .to raise_error(SystemExit)
+      end
+
+      it "returns the passphrase when both entries match" do
+        allow($stdin).to receive(:gets).and_return("match\n", "match\n")
+        result = Browserctl::Commands::Session.send(:prompt_passphrase, confirm: true)
+        expect(result).to eq("match")
       end
     end
   end
