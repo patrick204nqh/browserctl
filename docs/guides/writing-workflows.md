@@ -181,9 +181,9 @@ end
 
 Sessions are stored as plain JSON files in `~/.browserctl/sessions/<name>/`. Use `list_sessions` to see all saved sessions.
 
-#### Recovering from an expired session
+#### Recovering from a missing session
 
-Pass `fallback:` to automatically invoke a named login workflow when the session is missing or fails to load, then retry:
+Pass `fallback:` to automatically invoke a named login workflow when the session file is missing or fails to load, then retry:
 
 ```ruby
 step "restore or login" do
@@ -205,6 +205,49 @@ step "restore or login" do
   end
 end
 ```
+
+#### Recovering from a server-side expired session
+
+The `fallback:` path above only fires when the **session file is missing**. If the session file exists but the authenticated state has expired server-side (rotated cookie, token TTL, server invalidation), the workflow loads the stale session without error and silently operates on a logged-out page.
+
+Pass `expired_if:` with a lambda that returns `true` when the session is stale. The lambda runs after the session is restored and has access to all DSL methods (`page`, `assert`, etc.).
+
+**Important:** `load_session` restores pages to their saved URLs, not to a specific URL you choose at load time. If your expiry check is URL-based, navigate first, then call `load_session`:
+
+```ruby
+step "restore or re-login" do
+  # navigate first so the URL check is meaningful
+  page(:main).navigate("https://app.example.com/dashboard")
+  load_session("myapp",
+    fallback: "login_myapp",
+    expired_if: -> { !page(:main).url.include?("/dashboard") })
+end
+```
+
+For a check that does not require navigation, use cookie or storage state:
+
+```ruby
+step "restore or re-login" do
+  load_session("myapp",
+    fallback: "login_myapp",
+    expired_if: -> { page(:main).evaluate("document.cookie").exclude?("session_id") })
+end
+```
+
+**Behaviour contract:**
+
+1. Load session from disk
+2. If the session was missing and the fallback ran, return immediately (skip the expiry check — the session was just created)
+3. Evaluate `expired_if` — if it returns `false`, return immediately (session is live)
+4. If `expired_if` returns `true`: invoke the fallback, reload the session, re-evaluate `expired_if`
+5. If still expired after fallback: raise `WorkflowError` with a clear message
+
+**Notes:**
+- `expired_if:` must be a lambda (`-> { }`) — plain `Proc` objects are rejected with `ArgumentError` because a bare `return` inside a Proc would unwind the wrong call frame
+- The lambda is called up to twice: once to detect expiry, once to confirm recovery after the fallback runs
+- If `expired_if` raises, it is wrapped in a `WorkflowError` with session context
+
+If `expired_if` is omitted, the check is skipped and the existing missing-session fallback behaviour applies unchanged.
 
 ### Sourcing secrets with `secret_ref:`
 
@@ -520,13 +563,23 @@ step "save session after login" do
 end
 ```
 
-To recover automatically when the session is missing or expired, pass `fallback:` with the name of a login workflow:
+To recover automatically when the session file is **missing**, pass `fallback:`:
 
 ```ruby
 step "restore or login" do
   load_session("myapp", fallback: "login_myapp")
-  # if the session doesn't exist or fails to load:
-  # → invokes "login_myapp", then retries the load once
+  # session file absent → invokes "login_myapp", then retries the load
+end
+```
+
+To also detect when a session file exists but the server-side auth has **expired**, add `expired_if:`. Navigate to the target page first so the URL check is meaningful:
+
+```ruby
+step "restore or re-login" do
+  page(:main).navigate("https://app.example.com/dashboard")
+  load_session("myapp",
+    fallback: "login_myapp",
+    expired_if: -> { !page(:main).url.include?("/dashboard") })
 end
 ```
 

@@ -137,6 +137,11 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] Session encryption at rest — `browserctl session save --encrypt`
 - [x] Export encryption — `browserctl session export --encrypt` with passphrase
 
+### v0.8.3 — Session Durability (patch)
+**Goal:** Close the remaining gap in the v0.8 session expiry recovery story.
+
+- [ ] `expired_if:` on `load_session` — detect server-side session expiry and auto-recover via fallback
+
 ### v0.9 — Evidence & Reproduction
 **Goal:** Every session leaves a trail. Every bug is reproducible from code.
 

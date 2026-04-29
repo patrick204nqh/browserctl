@@ -159,4 +159,87 @@ RSpec.describe "session commands", :integration do
       expect(res[:error]).to match(/not found/)
     end
   end
+
+  describe "load_session with expired_if:" do
+    require "browserctl/runner"
+
+    # Removes a workflow from the global registry by name.
+    def deregister(*names)
+      Browserctl.instance_variable_get(:@registry_mutex).synchronize do
+        names.each { |n| Browserctl.instance_variable_get(:@registry).delete(n) }
+      end
+    end
+
+    it "skips fallback when expired_if returns false (session is live)" do
+      # Save a session that contains the auth marker in localStorage.
+      @client.page_open("sess", url: "http://localhost:#{@port}/")
+      @client.storage_set("sess", "auth_valid", "1")
+      @client.session_save(session_name)
+      @client.page_close("sess")
+
+      fallback_ran = false
+      name         = session_name # captured before workflow block (instance_exec changes self)
+      main_wf      = "live_main_#{Process.pid}"
+      fallback_wf  = "live_fallback_#{Process.pid}"
+
+      Browserctl.workflow(fallback_wf) { step("noop") { fallback_ran = true } }
+      Browserctl.workflow(main_wf) do
+        step("load — session is live") do
+          load_session(name,
+                       fallback: fallback_wf,
+                       expired_if: -> { page(:sess).storage_get("auth_valid") != "1" })
+        end
+      end
+
+      Browserctl::Runner.new.run_workflow(main_wf)
+
+      expect(fallback_ran).to be false
+    ensure
+      deregister(main_wf, fallback_wf)
+      begin
+        @client.page_close("sess")
+      rescue StandardError
+        nil
+      end
+    end
+
+    it "invokes fallback and recovers when expired_if detects a stale session" do
+      # Save a session WITHOUT the auth marker — simulating a stale/logged-out save.
+      @client.page_open("sess", url: "http://localhost:#{@port}/")
+      @client.session_save(session_name) # auth_valid is absent
+      @client.page_close("sess")
+
+      fallback_ran = false
+      name         = session_name # captured by fallback closure
+      main_wf      = "expired_main_#{Process.pid}"
+      fallback_wf  = "expired_fallback_#{Process.pid}"
+
+      Browserctl.workflow(fallback_wf) do
+        step("re-auth") do
+          # Set the marker and re-save so the next session_load sees auth_valid=1.
+          page(:sess).storage_set("auth_valid", "1")
+          save_session(name)
+          fallback_ran = true
+        end
+      end
+      Browserctl.workflow(main_wf) do
+        step("load — session is stale") do
+          load_session(name,
+                       fallback: fallback_wf,
+                       expired_if: -> { page(:sess).storage_get("auth_valid") != "1" })
+        end
+      end
+
+      Browserctl::Runner.new.run_workflow(main_wf)
+
+      expect(fallback_ran).to be true
+    ensure
+      deregister(main_wf, fallback_wf)
+      begin
+        @client.page_close("sess")
+      rescue StandardError
+        nil
+      end
+    end
+  end
 end

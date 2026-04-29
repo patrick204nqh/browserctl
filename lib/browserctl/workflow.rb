@@ -68,23 +68,21 @@ module Browserctl
       res
     end
 
-    def load_session(session_name, fallback: nil)
+    def load_session(session_name, fallback: nil, expired_if: nil)
+      validate_expired_if!(expired_if)
+      fallback_name = fallback&.to_s
       res = @client.session_load(session_name)
-      return res unless res[:error]
 
-      raise WorkflowError, res[:error] unless fallback
+      if res[:error]
+        raise WorkflowError, res[:error] unless fallback_name
 
-      invoke(fallback.to_s)
-      res2 = @client.session_load(session_name)
-      if res2[:error]
-        msg = "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
-        unless Session.exist?(session_name)
-          msg += "\n  Hint: '#{fallback}' did not call save_session(\"#{session_name}\") — add it as the last step."
-        end
-        raise WorkflowError, msg
+        invoke(fallback_name)
+        return load_after_fallback(session_name, fallback_name)
       end
 
-      res2
+      return res if expired_if.nil? || !call_expired_if(expired_if, session_name)
+
+      recover_expired_session(session_name, fallback_name, expired_if)
     end
 
     def list_sessions
@@ -107,6 +105,48 @@ module Browserctl
     end
 
     private
+
+    def validate_expired_if!(expired_if)
+      return unless expired_if && !expired_if.lambda?
+
+      raise ArgumentError,
+            "expired_if: must be a lambda (-> { }), not a Proc — " \
+            "bare return inside a Proc unwinds the caller"
+    end
+
+    def call_expired_if(expired_if, session_name)
+      expired_if.call
+    rescue WorkflowError, StandardError => e
+      raise WorkflowError, "expired_if check failed for session '#{session_name}': #{e.message}"
+    end
+
+    def recover_expired_session(session_name, fallback_name, expired_if)
+      unless fallback_name
+        raise WorkflowError,
+              "session '#{session_name}' is expired; provide fallback: to auto-recover"
+      end
+
+      invoke(fallback_name)
+      res = load_after_fallback(session_name, fallback_name)
+
+      if call_expired_if(expired_if, session_name)
+        raise WorkflowError,
+              "session '#{session_name}' still expired after running fallback '#{fallback_name}'"
+      end
+
+      res
+    end
+
+    def load_after_fallback(session_name, fallback)
+      res = @client.session_load(session_name)
+      return res unless res[:error]
+
+      msg = "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+      unless Session.exist?(session_name)
+        msg += "\n  Hint: '#{fallback}' did not call save_session(\"#{session_name}\") — add it as the last step."
+      end
+      raise WorkflowError, msg
+    end
 
     def invoke_stack
       @invoke_stack ||= []

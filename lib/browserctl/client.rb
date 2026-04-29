@@ -270,8 +270,8 @@ module Browserctl
     # Saves the current browser state (cookies, localStorage, open pages) to a named session.
     # @param session_name [String] name for the saved session
     # @return [Hash] `{ ok: true, path:, pages: N, cookies: N }` or `{ error: }`
-    def session_save(session_name)
-      call("session_save", session_name: session_name)
+    def session_save(session_name, encrypt: false)
+      call("session_save", session_name: session_name, encrypt: encrypt)
     end
 
     # Restores a previously saved session into the running daemon.
