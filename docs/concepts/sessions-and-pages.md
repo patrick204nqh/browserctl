@@ -100,6 +100,27 @@ browserctl session list
 browserctl session delete github_work
 ```
 
+### Session security
+
+Session files contain cookies and localStorage values — which may include authentication tokens, session IDs, and other secrets. Two protections are in place by default:
+
+- `cookies.json` and `local_storage.json` are written with `0o600` permissions (owner read/write only)
+- `~/.browserctl/sessions/` is git-ignored when you run `browserctl init`
+
+**Keep session files out of repositories and shared directories.** A stolen session zip gives the holder all the authenticated access captured in that session.
+
+### Keeping credentials out of workflows
+
+Workflow `param` declarations can source secrets directly from your keychain or secret manager at runtime, so credentials never appear in CLI flags, shell history, or workflow files:
+
+```ruby
+param :password,  secret_ref: "keychain://MyApp/admin"   # macOS Keychain
+param :api_token, secret_ref: "op://Personal/Gmail/token" # 1Password
+param :ci_key,    secret_ref: "env://CI_SECRET_TOKEN"      # env var
+```
+
+Built-in resolvers cover `env://`, `keychain://` (macOS), and `op://` (1Password CLI). Third-party resolvers can be registered in `~/.browserctl/resolvers.rb`. See [Writing Workflows — Sourcing secrets with `secret_ref:`](../guides/writing-workflows.md#sourcing-secrets-with-secret_ref) for the full reference.
+
 ---
 
 ## localStorage and sessionStorage

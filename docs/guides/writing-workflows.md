@@ -181,6 +181,78 @@ end
 
 Sessions are stored as plain JSON files in `~/.browserctl/sessions/<name>/`. Use `list_sessions` to see all saved sessions.
 
+#### Recovering from an expired session
+
+Pass `fallback:` to automatically invoke a named login workflow when the session is missing or fails to load, then retry:
+
+```ruby
+step "restore or login" do
+  load_session("gmail_prod", fallback: "login_gmail")
+end
+```
+
+If `session_load` fails, browserctl calls `invoke("login_gmail")` and retries the load once. The fallback workflow is responsible for saving the refreshed session via `save_session`. If the session is still unavailable after the fallback runs, a `WorkflowError` is raised with a descriptive message.
+
+This replaces the common hand-rolled pattern:
+
+```ruby
+# before — every workflow had to do this manually
+step "restore or login" do
+  if list_sessions.none? { |s| s[:name] == "gmail_prod" }
+    invoke("login_gmail")
+  else
+    load_session("gmail_prod")
+  end
+end
+```
+
+### Sourcing secrets with `secret_ref:`
+
+Instead of passing credentials through CLI flags or environment variables, declare where a param's value should come from using `secret_ref:`:
+
+```ruby
+param :password,  secret_ref: "keychain://MyApp/admin"
+param :api_token, secret_ref: "op://Personal/Gmail/api_token"
+param :ci_key,    secret_ref: "env://CI_SECRET_TOKEN"
+```
+
+The value is resolved at workflow runtime — never stored in the workflow file, never passed on the command line. `secret_ref:` always implies `secret: true`, so the value is automatically masked from session recordings regardless of the `secret:` keyword.
+
+**Built-in URI schemes:**
+
+| Scheme | Source | Reference format |
+|---|---|---|
+| `env://` | Environment variable | `env://VAR_NAME` |
+| `keychain://` | macOS Keychain (via `security` CLI) | `keychain://service/account` |
+| `op://` | 1Password CLI (`op read`) | `op://vault/item/field` — native 1Password URI format |
+
+`keychain://` requires macOS with the `security` command. `op://` requires the [1Password CLI](https://developer.1password.com/docs/cli/) (`op`) to be installed and signed in. Both resolvers raise `SecretResolverError` with a clear message if the item is not found or the tool is unavailable.
+
+**Adding a resolver for another secret manager:**
+
+Create `~/.browserctl/resolvers.rb` (loaded automatically at daemon startup):
+
+```ruby
+# ~/.browserctl/resolvers.rb
+class BitwardenResolver < Browserctl::SecretResolvers::Base
+  def self.scheme = "bw"
+
+  def resolve(reference)
+    result, status = Open3.capture2("bw", "get", "password", reference)
+    raise Browserctl::SecretResolverError, "Bitwarden item not found: #{reference}" unless status.success?
+    result.chomp
+  end
+end
+
+Browserctl::SecretResolverRegistry.register(BitwardenResolver)
+```
+
+Then use it like any built-in:
+
+```ruby
+param :vault_secret, secret_ref: "bw://My Item Name"
+```
+
 ### `page(:name)`
 
 Returns a `PageProxy` for a named browser page. The page must already be open (via `open_page` or `browserctl page open`) before calling methods on it.
@@ -394,6 +466,16 @@ end
 
 step "save session after login" do
   save_session("myapp")
+end
+```
+
+To recover automatically when the session is missing or expired, pass `fallback:` with the name of a login workflow:
+
+```ruby
+step "restore or login" do
+  load_session("myapp", fallback: "login_myapp")
+  # if the session doesn't exist or fails to load:
+  # → invokes "login_myapp", then retries the load once
 end
 ```
 

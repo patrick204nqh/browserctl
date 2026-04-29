@@ -242,7 +242,7 @@ Once the probe passes, move it to `.browserctl/workflows/`, add params, and run 
 Browserctl.workflow "smoke_login" do
   desc "Log in and verify dashboard redirect"
   param :email,    required: true
-  param :password, required: true, secret: true
+  param :password, secret_ref: "keychain://MyApp/password"   # resolves from OS keychain at runtime
   param :base_url, default: "https://app.example.com"
 
   step "open page" do
@@ -315,6 +315,8 @@ browserctl navigate main https://protected.example.com
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
 - **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
 - **Use `session save/load`** to persist the full browser state across daemon restarts — saves cookies, localStorage, and open page URLs. Load it on a fresh daemon to skip login entirely.
+- **Use `secret_ref:` for credentials** — `param :password, secret_ref: "op://vault/item/field"` resolves the value from your keychain or secret manager at runtime. Never pass credentials as CLI flags or hardcode them in workflow files. `secret_ref:` always implies `secret: true`.
+- **Use `load_session` with `fallback:`** instead of hand-rolling expiry detection — `load_session("myapp", fallback: "login_myapp")` handles the detect-expiry → re-login → retry cycle automatically.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Recording and refs
@@ -353,7 +355,8 @@ end
 | Method | Description |
 |---|---|
 | `desc "text"` | Human-readable description shown by `workflow list` |
-| `param :name, required:, secret:, default:` | Declare an input parameter |
+| `param :name, required:, secret:, default:` | Declare an input parameter; `secret: true` masks the value from recordings |
+| `param :name, secret_ref: "scheme://ref"` | Resolve the param's value from an external secret manager at runtime; implies `secret: true`. Built-in schemes: `env://VAR`, `keychain://service/account` (macOS), `op://vault/item/field` (1Password CLI). Third-party resolvers registered in `~/.browserctl/resolvers.rb`. |
 | `step "label" { }` | Add a step — runs in order, halts workflow on failure |
 | `step "label", retry_count: N { }` | Retry the step up to N additional times on any error |
 | `step "label", timeout: S { }` | Fail the step if it exceeds S seconds |
@@ -365,6 +368,7 @@ end
 | `page(:name)` | Return a `PageProxy` for the named page |
 | `save_session(name)` | Snapshot current browser state (pages + cookies + localStorage) to a named session |
 | `load_session(name)` | Restore a saved session into the running daemon |
+| `load_session(name, fallback: "workflow_name")` | Restore session; if load fails, invoke the named fallback workflow then retry once. Use this instead of hand-rolling detect-expiry logic. |
 | `list_sessions` | Return all saved session metadata |
 | `store :key, value` | Store a value for use in later steps (persists in daemon until it stops) |
 | `fetch :key` | Retrieve a value stored by an earlier step |
