@@ -173,6 +173,81 @@ RSpec.describe "WorkflowContext#ask" do
   end
 end
 
+RSpec.describe "secret_ref param resolution" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  before { Browserctl::SecretResolverRegistry.reset! }
+  after  { Browserctl::SecretResolverRegistry.reset! }
+
+  let(:fake_resolver_class) do
+    Class.new(Browserctl::SecretResolvers::Base) do
+      def self.scheme = "fakescheme"
+      def resolve(reference) = "resolved-#{reference}"
+    end
+  end
+
+  it "resolves secret_ref via SecretResolverRegistry at param resolution time" do
+    Browserctl::SecretResolverRegistry.register(fake_resolver_class)
+    received = nil
+    defn = Browserctl::WorkflowDefinition.new("test")
+    defn.param(:api_key, secret_ref: "fakescheme://MY_KEY")
+    defn.step("s") { received = api_key }
+
+    defn.call({}, client)
+    expect(received).to eq("resolved-MY_KEY")
+  end
+
+  it "forces secret: true on ParamDef when secret_ref is present, regardless of explicit secret: false" do
+    defn = Browserctl::WorkflowDefinition.new("test")
+    defn.param(:token, secret_ref: "fakescheme://TOKEN", secret: false)
+    expect(defn.param_defs[:token].secret).to be true
+  end
+end
+
+RSpec.describe "WorkflowContext#load_session with fallback:" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  it "returns session result when load succeeds on first attempt" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true, session: "data" })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    result = ctx.load_session("my-session", fallback: :setup_workflow)
+    expect(result).to eq({ ok: true, session: "data" })
+  end
+
+  it "invokes fallback workflow and retries when session load fails" do
+    call_count = 0
+    allow(client).to receive(:session_load).with("my-session") do
+      call_count += 1
+      call_count == 1 ? { error: "not found" } : { ok: true, session: "data" }
+    end
+
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("setup_workflow")
+
+    result = ctx.load_session("my-session", fallback: :setup_workflow)
+    expect(ctx).to have_received(:invoke).with("setup_workflow").once
+    expect(result).to eq({ ok: true, session: "data" })
+  end
+
+  it "raises WorkflowError with clear message when fallback cannot recover" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ error: "not found" })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("setup_workflow")
+
+    expect { ctx.load_session("my-session", fallback: :setup_workflow) }
+      .to raise_error(Browserctl::WorkflowError,
+                      "session 'my-session' still unavailable after running fallback 'setup_workflow'")
+  end
+
+  it "raises WorkflowError without fallback as today" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ error: "not found" })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+
+    expect { ctx.load_session("my-session") }
+      .to raise_error(Browserctl::WorkflowError, "not found")
+  end
+end
+
 RSpec.describe Browserctl::WorkflowContext do
   let(:client) { instance_double(Browserctl::Client) }
 

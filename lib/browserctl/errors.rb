@@ -22,4 +22,7 @@ module Browserctl
   class DomainNotAllowed < Error; def self.default_code = "domain_not_allowed" end
   class TimeoutError     < Error; def self.default_code = "timeout"            end
   class KeyNotFound      < Error; def self.default_code = "key_not_found"      end
+
+  class WorkflowError < StandardError; end
+  class SecretResolverError < WorkflowError; end
 end
