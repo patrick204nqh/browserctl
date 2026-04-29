@@ -15,7 +15,7 @@ RSpec.describe Browserctl::SecretResolvers::MacOSKeychain do
   describe "#resolve" do
     it "raises SecretResolverError on malformed reference (no /)" do
       expect { resolver.resolve("no-slash") }
-        .to raise_error(Browserctl::SecretResolverError, /keychain reference must be 'service\/account'/)
+        .to raise_error(Browserctl::SecretResolverError, %r{keychain reference must be 'service/account'})
     end
 
     context "when security command fails" do
@@ -24,7 +24,7 @@ RSpec.describe Browserctl::SecretResolvers::MacOSKeychain do
         allow(Open3).to receive(:capture2).and_return(["", status])
 
         expect { resolver.resolve("my-service/my-account") }
-          .to raise_error(Browserctl::SecretResolverError, /keychain item not found: my-service\/my-account/)
+          .to raise_error(Browserctl::SecretResolverError, %r{keychain item not found: my-service/my-account})
       end
     end
 

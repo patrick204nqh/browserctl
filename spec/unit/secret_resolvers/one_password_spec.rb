@@ -19,7 +19,7 @@ RSpec.describe Browserctl::SecretResolvers::OnePassword do
         allow(Open3).to receive(:capture2).and_return(["", status])
 
         expect { resolver.resolve("vault/item/field") }
-          .to raise_error(Browserctl::SecretResolverError, /1Password item not found: op:\/\/vault\/item\/field/)
+          .to raise_error(Browserctl::SecretResolverError, %r{1Password item not found: op://vault/item/field})
       end
     end
 

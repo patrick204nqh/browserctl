@@ -75,7 +75,10 @@ module Browserctl
 
       invoke(fallback.to_s)
       res2 = @client.session_load(session_name)
-      raise WorkflowError, "session '#{session_name}' still unavailable after running fallback '#{fallback}'" if res2[:error]
+      if res2[:error]
+        raise WorkflowError,
+              "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+      end
 
       res2
     end
@@ -180,7 +183,8 @@ module Browserctl
 
     def param(name, required: false, secret: false, default: nil, secret_ref: nil)
       secret = true if secret_ref
-      @param_defs[name] = ParamDef.new(name: name, required: required, secret: secret, default: default, secret_ref: secret_ref)
+      @param_defs[name] =
+        ParamDef.new(name: name, required: required, secret: secret, default: default, secret_ref: secret_ref)
     end
 
     def step(label, retry_count: 0, timeout: nil, &block)

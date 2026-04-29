@@ -24,7 +24,7 @@ RSpec.describe Browserctl::SecretResolverRegistry do
   let(:raising_resolver_class) do
     Class.new(Browserctl::SecretResolvers::Base) do
       def self.scheme = "raises"
-      def resolve(_reference) = raise(RuntimeError, "unexpected failure")
+      def resolve(_reference) = raise("unexpected failure")
     end
   end
 
@@ -49,13 +49,13 @@ RSpec.describe Browserctl::SecretResolverRegistry do
     it "raises SecretResolverError when available? returns false" do
       described_class.register(unavailable_resolver_class)
       expect { described_class.resolve("unavail://foo") }
-        .to raise_error(Browserctl::SecretResolverError, /'unavail:\/\/' resolver is not available/)
+        .to raise_error(Browserctl::SecretResolverError, %r{'unavail://' resolver is not available})
     end
 
     it "wraps non-SecretResolverError in SecretResolverError" do
       described_class.register(raising_resolver_class)
       expect { described_class.resolve("raises://something") }
-        .to raise_error(Browserctl::SecretResolverError, /secret resolution failed for "raises:\/\/something"/)
+        .to raise_error(Browserctl::SecretResolverError, %r{secret resolution failed for "raises://something"})
     end
   end
 end

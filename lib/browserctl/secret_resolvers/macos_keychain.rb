@@ -13,7 +13,10 @@ module Browserctl
 
       def resolve(reference)
         service, account = reference.split("/", 2)
-        raise SecretResolverError, "keychain reference must be 'service/account', got: #{reference.inspect}" if account.nil?
+        if account.nil?
+          raise SecretResolverError,
+                "keychain reference must be 'service/account', got: #{reference.inspect}"
+        end
 
         result, status = Open3.capture2("security", "find-generic-password",
                                         "-a", account, "-s", service, "-w")
