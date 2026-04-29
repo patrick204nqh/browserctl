@@ -32,7 +32,8 @@ module Browserctl
                         created_at: now, updated_at: now, pages: pages_meta },
             cookies: cookies,
             local_storage: local_storage,
-            session_storage: {}
+            session_storage: {},
+            encrypt: req[:encrypt] || false
           )
           { ok: true, path: Browserctl::Session.path(req[:session_name]),
             pages: pages_meta.length, cookies: cookies.length }

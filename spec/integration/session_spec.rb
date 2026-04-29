@@ -178,13 +178,14 @@ RSpec.describe "session commands", :integration do
       @client.page_close("sess")
 
       fallback_ran = false
+      name         = session_name # captured before workflow block (instance_exec changes self)
       main_wf      = "live_main_#{Process.pid}"
       fallback_wf  = "live_fallback_#{Process.pid}"
 
       Browserctl.workflow(fallback_wf) { step("noop") { fallback_ran = true } }
       Browserctl.workflow(main_wf) do
         step("load — session is live") do
-          load_session(session_name,
+          load_session(name,
                        fallback: fallback_wf,
                        expired_if: -> { page(:sess).storage_get("auth_valid") != "1" })
         end
