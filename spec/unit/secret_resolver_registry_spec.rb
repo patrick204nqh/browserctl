@@ -52,6 +52,17 @@ RSpec.describe Browserctl::SecretResolverRegistry do
         .to raise_error(Browserctl::SecretResolverError, %r{'unavail://' resolver is not available})
     end
 
+    it "includes env:// hint when keychain:// resolver is unavailable" do
+      keychain_class = Class.new(Browserctl::SecretResolvers::Base) do
+        def self.scheme = "keychain"
+        def available? = false
+        def resolve(_reference) = "nope"
+      end
+      described_class.register(keychain_class)
+      expect { described_class.resolve("keychain://MyApp/admin") }
+        .to raise_error(Browserctl::SecretResolverError, %r{Use env://YOUR_VAR_NAME})
+    end
+
     it "wraps non-SecretResolverError in SecretResolverError" do
       described_class.register(raising_resolver_class)
       expect { described_class.resolve("raises://something") }

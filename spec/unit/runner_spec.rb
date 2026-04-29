@@ -95,4 +95,35 @@ RSpec.describe Browserctl::Runner do
         .to raise_error(RuntimeError, /not found/)
     end
   end
+
+  describe "#describe_workflow" do
+    before do
+      Browserctl.workflow("describe_test") do
+        desc "test workflow"
+        param :email, required: true
+        param :password, secret_ref: "keychain://MyApp/admin"
+        param :api_token, secret_ref: "env://API_TOKEN"
+        param :note, default: "hello"
+        step("step one") { nil }
+      end
+    end
+
+    after do
+      Browserctl.instance_variable_get(:@registry_mutex).synchronize do
+        Browserctl.instance_variable_get(:@registry).delete("describe_test")
+      end
+    end
+
+    it "includes secret_ref in param output when declared" do
+      result = runner.describe_workflow("describe_test")
+      expect(result[:params][:password][:secret_ref]).to eq("keychain://MyApp/admin")
+      expect(result[:params][:api_token][:secret_ref]).to eq("env://API_TOKEN")
+    end
+
+    it "omits secret_ref key for plain params" do
+      result = runner.describe_workflow("describe_test")
+      expect(result[:params][:email]).not_to have_key(:secret_ref)
+      expect(result[:params][:note]).not_to have_key(:secret_ref)
+    end
+  end
 end

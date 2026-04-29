@@ -229,14 +229,38 @@ RSpec.describe "WorkflowContext#load_session with fallback:" do
     expect(result).to eq({ ok: true, session: "data" })
   end
 
-  it "raises WorkflowError with clear message when fallback cannot recover" do
+  it "raises WorkflowError with hint when fallback ran but never called save_session" do
     allow(client).to receive(:session_load).with("my-session").and_return({ error: "not found" })
+    allow(Browserctl::Session).to receive(:exist?).with("my-session").and_return(false)
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("setup_workflow")
+
+    error = nil
+    begin
+      ctx.load_session("my-session", fallback: :setup_workflow)
+    rescue Browserctl::WorkflowError => e
+      error = e
+    end
+
+    expect(error).not_to be_nil
+    expect(error.message).to match(/still unavailable after running fallback 'setup_workflow'/)
+    expect(error.message).to match(/Hint: 'setup_workflow' did not call save_session\("my-session"\)/)
+  end
+
+  it "raises WorkflowError without hint when session dir exists but load still fails" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ error: "decryption failed" })
+    allow(Browserctl::Session).to receive(:exist?).with("my-session").and_return(true)
     ctx = Browserctl::WorkflowContext.new({}, client)
     allow(ctx).to receive(:invoke).with("setup_workflow")
 
     expect { ctx.load_session("my-session", fallback: :setup_workflow) }
-      .to raise_error(Browserctl::WorkflowError,
-                      "session 'my-session' still unavailable after running fallback 'setup_workflow'")
+      .to raise_error(Browserctl::WorkflowError, /still unavailable after running fallback 'setup_workflow'/)
+
+    begin
+      ctx.load_session("my-session", fallback: :setup_workflow)
+    rescue Browserctl::WorkflowError => e
+      expect(e.message).not_to include("Hint:")
+    end
   end
 
   it "raises WorkflowError without fallback as today" do

@@ -16,9 +16,13 @@ module Browserctl
       scheme, reference = secret_ref.split("://", 2)
       resolver = @mutex.synchronize { @registry[scheme] }
       raise SecretResolverError, "unknown secret resolver scheme '#{scheme}'" unless resolver
+
       unless resolver.available?
-        raise SecretResolverError,
-              "'#{scheme}://' resolver is not available in this environment"
+        msg = "'#{scheme}://' resolver is not available in this environment"
+        if scheme == "keychain"
+          msg += "\n  Use env://YOUR_VAR_NAME to source secrets from environment variables instead."
+        end
+        raise SecretResolverError, msg
       end
 
       resolver.resolve(reference)

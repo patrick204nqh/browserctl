@@ -4,6 +4,7 @@ require "timeout"
 require_relative "client"
 require_relative "errors"
 require_relative "secret_resolvers"
+require_relative "session"
 
 module Browserctl
   ParamDef = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
@@ -76,8 +77,11 @@ module Browserctl
       invoke(fallback.to_s)
       res2 = @client.session_load(session_name)
       if res2[:error]
-        raise WorkflowError,
-              "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+        msg = "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+        unless Session.exist?(session_name)
+          msg += "\n  Hint: '#{fallback}' did not call save_session(\"#{session_name}\") — add it as the last step."
+        end
+        raise WorkflowError, msg
       end
 
       res2
