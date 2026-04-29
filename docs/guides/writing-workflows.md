@@ -228,6 +228,54 @@ The value is resolved at workflow runtime — never stored in the workflow file,
 
 `keychain://` requires macOS with the `security` command. `op://` requires the [1Password CLI](https://developer.1password.com/docs/cli/) (`op`) to be installed and signed in. Both resolvers raise `SecretResolverError` with a clear message if the item is not found or the tool is unavailable.
 
+**How to store the secret (one-time setup):**
+
+`env://` — export the variable in your shell before running the workflow:
+
+```sh
+export GMAIL_PASSWORD="hunter2"
+browserctl workflow run my_workflow.rb
+```
+
+Or add it to your shell profile (`~/.zshrc`, `~/.bashrc`) or a project-local `.envrc` (loaded by [direnv](https://direnv.net)) so it's available without exporting each time:
+
+```sh
+# .envrc  (project root, git-ignored)
+export GMAIL_PASSWORD="hunter2"
+```
+
+`keychain://` — store the password once with the macOS `security` CLI. The reference format is `keychain://service/account`, where **service** is any label you choose and **account** is the username or identifier:
+
+```sh
+# store
+security add-generic-password -s "MyApp" -a "admin" -w "hunter2"
+
+# verify it round-trips
+security find-generic-password -s "MyApp" -a "admin" -w
+```
+
+Then in your workflow:
+
+```ruby
+param :password, secret_ref: "keychain://MyApp/admin"
+```
+
+At runtime browserctl calls `security find-generic-password` transparently — no prompt, no value in the workflow file.
+
+`op://` — the reference is the native 1Password CLI format. Sign in once, then point `secret_ref:` at the item:
+
+```sh
+# sign in (one-time per session)
+op signin
+
+# verify the reference resolves
+op read "op://Personal/Gmail/password"
+```
+
+```ruby
+param :password, secret_ref: "op://Personal/Gmail/password"
+```
+
 **Adding a resolver for another secret manager:**
 
 Create `~/.browserctl/resolvers.rb` (loaded automatically at daemon startup):
