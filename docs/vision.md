@@ -130,10 +130,10 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.8 — Credentials & Session Durability
 **Goal:** Production-grade workflows without infrastructure boilerplate.
 
-- [ ] Secret resolver plugin system — `param :password, secret_ref: "op://vault/item/field"`
-- [ ] Built-in resolvers: `env://`, `keychain://` (macOS), `op://` (1Password CLI)
-- [ ] User-defined resolvers via `~/.browserctl/resolvers.rb`
-- [ ] `load_session` with `fallback:` — automatic session expiry recovery
+- [x] Secret resolver plugin system — `param :password, secret_ref: "op://vault/item/field"`
+- [x] Built-in resolvers: `env://`, `keychain://` (macOS), `op://` (1Password CLI)
+- [x] User-defined resolvers via `~/.browserctl/resolvers.rb`
+- [x] `load_session` with `fallback:` — automatic session expiry recovery
 - [x] Session encryption at rest — `browserctl session save --encrypt`
 - [x] Export encryption — `browserctl session export --encrypt` with passphrase
 

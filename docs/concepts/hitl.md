@@ -67,7 +67,7 @@ Cloudflare is just the first detector. The detection layer is designed to grow �
 
 The philosophy is: **surface the signal, let the workflow decide.** browserctl doesn't try to auto-solve challenges (fragile, constantly broken by vendor updates, often illegal). It identifies that the situation requires attention and hands it off cleanly.
 
-A `register_detector` plugin API is planned for v0.7 — third-party detectors will be registerable without modifying the core. For now, additional detection logic can be added via the plugin system using `register_command`.
+A `register_detector` plugin API is planned for a future release — third-party detectors will be registerable without modifying the core. For now, additional detection logic can be added via the plugin system using `register_command`.
 
 ---
 
