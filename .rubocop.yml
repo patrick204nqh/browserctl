@@ -37,6 +37,7 @@ Metrics/BlockLength:
     - "spec/**/*"
     - "examples/**/*"
     - "Rakefile"
+    - "rakelib/**/*"
 
 Naming/PredicateMethod:
   AllowedMethods:
