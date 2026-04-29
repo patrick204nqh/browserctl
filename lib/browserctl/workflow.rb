@@ -68,7 +68,7 @@ module Browserctl
       res
     end
 
-    def load_session(session_name, fallback: nil, expired_if: nil) # rubocop:disable Metrics/MethodLength
+    def load_session(session_name, fallback: nil, expired_if: nil)
       validate_expired_if!(expired_if)
       fallback_name = fallback&.to_s
       res = @client.session_load(session_name)
