@@ -60,8 +60,8 @@ module Browserctl
       res
     end
 
-    def save_session(session_name)
-      res = @client.session_save(session_name)
+    def save_session(session_name, encrypt: false)
+      res = @client.session_save(session_name, encrypt: encrypt)
       raise WorkflowError, res[:error] if res[:error]
 
       res

@@ -67,7 +67,7 @@ module Browserctl
         dest = File.expand_path(dest)
 
         if encrypt
-          passphrase = prompt_passphrase
+          passphrase = prompt_passphrase(confirm: true)
           encrypt_export(session_dir, name, dest, passphrase)
         else
           pid = Process.spawn("zip", "-r", dest, name, chdir: File.join(Browserctl::BROWSERCTL_DIR, "sessions"))
@@ -98,15 +98,21 @@ module Browserctl
 
       # --- private helpers ---
 
-      def self.prompt_passphrase
-        if ENV["BROWSERCTL_EXPORT_PASSPHRASE"]
-          ENV["BROWSERCTL_EXPORT_PASSPHRASE"]
-        else
-          $stderr.print "Passphrase: "
-          pass = $stdin.noecho(&:gets).to_s.chomp
+      def self.prompt_passphrase(confirm: false)
+        return ENV["BROWSERCTL_EXPORT_PASSPHRASE"] if ENV["BROWSERCTL_EXPORT_PASSPHRASE"]
+
+        $stderr.print "Passphrase: "
+        pass = $stdin.noecho(&:gets).to_s.chomp
+        $stderr.puts
+
+        if confirm
+          $stderr.print "Confirm passphrase: "
+          confirm_pass = $stdin.noecho(&:gets).to_s.chomp
           $stderr.puts
-          pass
+          abort "Passphrases do not match." unless pass == confirm_pass
         end
+
+        pass
       end
       private_class_method :prompt_passphrase
 
