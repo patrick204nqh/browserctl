@@ -20,7 +20,7 @@
 
 SESSION_LIVE    = "smoke-expired-if-live-#{Process.pid}".freeze
 SESSION_STALE   = "smoke-expired-if-stale-#{Process.pid}".freeze
-FALLBACK_WF     = "smoke/session_expired_if/fallback".freeze
+FALLBACK_WF     = "smoke/session_expired_if/fallback"
 
 # ---------------------------------------------------------------------------
 # Fallback workflow — simulates re-authentication by setting the auth marker

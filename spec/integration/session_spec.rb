@@ -195,17 +195,21 @@ RSpec.describe "session commands", :integration do
       expect(fallback_ran).to be false
     ensure
       deregister(main_wf, fallback_wf)
-      @client.page_close("sess") rescue nil
+      begin
+        @client.page_close("sess")
+      rescue StandardError
+        nil
+      end
     end
 
     it "invokes fallback and recovers when expired_if detects a stale session" do
       # Save a session WITHOUT the auth marker — simulating a stale/logged-out save.
       @client.page_open("sess", url: "http://localhost:#{@port}/")
-      @client.session_save(session_name)   # auth_valid is absent
+      @client.session_save(session_name) # auth_valid is absent
       @client.page_close("sess")
 
       fallback_ran = false
-      name         = session_name           # captured by fallback closure
+      name         = session_name # captured by fallback closure
       main_wf      = "expired_main_#{Process.pid}"
       fallback_wf  = "expired_fallback_#{Process.pid}"
 
@@ -230,7 +234,11 @@ RSpec.describe "session commands", :integration do
       expect(fallback_ran).to be true
     ensure
       deregister(main_wf, fallback_wf)
-      @client.page_close("sess") rescue nil
+      begin
+        @client.page_close("sess")
+      rescue StandardError
+        nil
+      end
     end
   end
 end
