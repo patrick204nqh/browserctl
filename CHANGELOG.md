@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2](https://github.com/patrick204nqh/browserctl/compare/v0.8.1...v0.8.2) (2026-04-29)
+
+
+### Bug Fixes
+
+* v0.8.2 UX polish — describe secret_ref, fallback hint, cross-platform encrypt guidance ([#65](https://github.com/patrick204nqh/browserctl/issues/65)) ([2fe5ea4](https://github.com/patrick204nqh/browserctl/commit/2fe5ea4da0997dc2ab2c3a0696fc819e3fffca40))
+
 ## [0.8.1](https://github.com/patrick204nqh/browserctl/compare/v0.8.0...v0.8.1) (2026-04-29)
 
 
