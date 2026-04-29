@@ -210,35 +210,42 @@ end
 
 The `fallback:` path above only fires when the **session file is missing**. If the session file exists but the authenticated state has expired server-side (rotated cookie, token TTL, server invalidation), the workflow loads the stale session without error and silently operates on a logged-out page.
 
-Pass `expired_if:` with a lambda that returns `true` when the session is stale:
+Pass `expired_if:` with a lambda that returns `true` when the session is stale. The lambda runs after the session is restored and has access to all DSL methods (`page`, `assert`, etc.).
+
+**Important:** `load_session` restores pages to their saved URLs, not to a specific URL you choose at load time. If your expiry check is URL-based, navigate first, then call `load_session`:
 
 ```ruby
 step "restore or re-login" do
-  load_session("myapp",
-    fallback: "login_myapp",
-    expired_if: -> { !page(:main).url.include?("/dashboard") })
-end
-```
-
-**Behaviour contract:**
-
-1. Load session from disk
-2. Evaluate `expired_if` — if it returns `false`, return immediately (session is live)
-3. If `expired_if` returns `true`: invoke the fallback, reload the session, re-evaluate `expired_if`
-4. If still expired after fallback: raise `WorkflowError` with a clear message
-
-The `expired_if` lambda runs in the workflow context, so `page(:name)`, `assert`, and other DSL methods are available inside it.
-
-**Example — URL-based liveness check:**
-
-```ruby
-step "navigate and verify session" do
+  # navigate first so the URL check is meaningful
   page(:main).navigate("https://app.example.com/dashboard")
   load_session("myapp",
     fallback: "login_myapp",
     expired_if: -> { !page(:main).url.include?("/dashboard") })
 end
 ```
+
+For a check that does not require navigation, use cookie or storage state:
+
+```ruby
+step "restore or re-login" do
+  load_session("myapp",
+    fallback: "login_myapp",
+    expired_if: -> { page(:main).evaluate("document.cookie").exclude?("session_id") })
+end
+```
+
+**Behaviour contract:**
+
+1. Load session from disk
+2. If the session was missing and the fallback ran, return immediately (skip the expiry check — the session was just created)
+3. Evaluate `expired_if` — if it returns `false`, return immediately (session is live)
+4. If `expired_if` returns `true`: invoke the fallback, reload the session, re-evaluate `expired_if`
+5. If still expired after fallback: raise `WorkflowError` with a clear message
+
+**Notes:**
+- `expired_if:` must be a lambda (`-> { }`) — plain `Proc` objects are rejected with `ArgumentError` because a bare `return` inside a Proc would unwind the wrong call frame
+- The lambda is called up to twice: once to detect expiry, once to confirm recovery after the fallback runs
+- If `expired_if` raises, it is wrapped in a `WorkflowError` with session context
 
 If `expired_if` is omitted, the check is skipped and the existing missing-session fallback behaviour applies unchanged.
 
@@ -565,7 +572,7 @@ step "restore or login" do
 end
 ```
 
-To also detect when a session file exists but the server-side auth has **expired**, add `expired_if:`:
+To also detect when a session file exists but the server-side auth has **expired**, add `expired_if:`. Navigate to the target page first so the URL check is meaningful:
 
 ```ruby
 step "restore or re-login" do

@@ -275,6 +275,15 @@ end
 RSpec.describe "WorkflowContext#load_session with expired_if:" do
   let(:client) { instance_double(Browserctl::Client) }
 
+  it "raises ArgumentError when expired_if is a Proc, not a lambda" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    bare_proc = proc { false }
+
+    expect { ctx.load_session("my-session", expired_if: bare_proc) }
+      .to raise_error(ArgumentError, /must be a lambda/)
+  end
+
   it "returns result immediately when expired_if returns false (session is live)" do
     allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
     ctx = Browserctl::WorkflowContext.new({}, client)
@@ -318,6 +327,35 @@ RSpec.describe "WorkflowContext#load_session with expired_if:" do
     expect { ctx.load_session("my-session", fallback: "login", expired_if: -> { true }) }
       .to raise_error(Browserctl::WorkflowError,
                       /still expired after running fallback 'login'/)
+  end
+
+  it "wraps expired_if exceptions as WorkflowError with session context" do
+    allow(client).to receive(:session_load).with("my-session").and_return({ ok: true })
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    boom = -> { raise "page not open" }
+
+    expect { ctx.load_session("my-session", expired_if: boom) }
+      .to raise_error(Browserctl::WorkflowError, /expired_if check failed for session 'my-session'/)
+  end
+
+  it "skips expiry check when session was just recovered from missing-file fallback" do
+    call_count = 0
+    allow(client).to receive(:session_load).with("my-session") do
+      call_count += 1
+      call_count == 1 ? { error: "not found" } : { ok: true }
+    end
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    allow(ctx).to receive(:invoke).with("login")
+
+    invocations = 0
+    expired_if = lambda do
+      invocations += 1
+      true # would always say expired, but should never be called
+    end
+
+    ctx.load_session("my-session", fallback: "login", expired_if: expired_if)
+    expect(ctx).to have_received(:invoke).with("login").once
+    expect(invocations).to eq(0)
   end
 end
 
