@@ -7,6 +7,14 @@ require "browserctl/client"
 Browserctl.logger = Logger.new(File::NULL)
 
 module BrowserctlHelpers
+  def with_env(vars)
+    old = vars.keys.to_h { |k| [k, ENV.fetch(k, nil)] }
+    vars.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+    yield
+  ensure
+    old.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+  end
+
   def start_daemon(headed: false, name: nil)
     socket = Browserctl.socket_path(name)
     pid_f  = Browserctl.pid_path(name)

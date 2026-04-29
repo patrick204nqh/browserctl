@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "spec_helper"
 require "tmpdir"
 require "json"
 require "browserctl/session"
@@ -271,23 +272,18 @@ RSpec.describe "Session encryption" do
     around(&:run)
 
     context "when BROWSERCTL_EXPORT_PASSPHRASE is set" do
-      around do |ex|
-        prev = ENV.delete("BROWSERCTL_EXPORT_PASSPHRASE")
-        ENV["BROWSERCTL_EXPORT_PASSPHRASE"] = "env-pass"
-        ex.run
-      ensure
-        ENV["BROWSERCTL_EXPORT_PASSPHRASE"] = prev
-      end
-
       it "returns env var without prompting, regardless of confirm:" do
-        result = Browserctl::Commands::Session.send(:prompt_passphrase, confirm: true)
-        expect(result).to eq("env-pass")
+        with_env("BROWSERCTL_EXPORT_PASSPHRASE" => "env-pass") do
+          result = Browserctl::Commands::Session.send(:prompt_passphrase, confirm: true)
+          expect(result).to eq("env-pass")
+        end
       end
     end
 
     context "when reading from stdin" do
+      around { |ex| with_env("BROWSERCTL_EXPORT_PASSPHRASE" => nil) { ex.run } }
+
       before do
-        ENV.delete("BROWSERCTL_EXPORT_PASSPHRASE")
         allow($stderr).to receive(:print)
         allow($stderr).to receive(:puts)
         allow($stdin).to receive(:noecho) { |&blk| blk.call($stdin) }
