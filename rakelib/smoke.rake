@@ -8,6 +8,7 @@ SMOKE_FILES = %w[
   rakelib/smoke/cookies_storage.rb
   rakelib/smoke/session.rb
   rakelib/smoke/session_encrypted.rb
+  rakelib/smoke/session_expired_if.rb
   rakelib/smoke/store_fetch.rb
   rakelib/smoke/secret_resolvers.rb
 ].freeze
