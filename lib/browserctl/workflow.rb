@@ -2,11 +2,11 @@
 
 require "timeout"
 require_relative "client"
+require_relative "errors"
+require_relative "secret_resolvers"
 
 module Browserctl
-  class WorkflowError < StandardError; end
-
-  ParamDef = Struct.new(:name, :required, :secret, :default, keyword_init: true)
+  ParamDef = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
   StepResult = Struct.new(:name, :ok, :error, keyword_init: true)
   StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
 
@@ -67,11 +67,20 @@ module Browserctl
       res
     end
 
-    def load_session(session_name)
+    def load_session(session_name, fallback: nil)
       res = @client.session_load(session_name)
-      raise WorkflowError, res[:error] if res[:error]
+      return res unless res[:error]
 
-      res
+      raise WorkflowError, res[:error] unless fallback
+
+      invoke(fallback.to_s)
+      res2 = @client.session_load(session_name)
+      if res2[:error]
+        raise WorkflowError,
+              "session '#{session_name}' still unavailable after running fallback '#{fallback}'"
+      end
+
+      res2
     end
 
     def list_sessions
@@ -172,8 +181,10 @@ module Browserctl
       @description = text
     end
 
-    def param(name, required: false, secret: false, default: nil)
-      @param_defs[name] = ParamDef.new(name: name, required: required, secret: secret, default: default)
+    def param(name, required: false, secret: false, default: nil, secret_ref: nil)
+      secret = true if secret_ref
+      @param_defs[name] =
+        ParamDef.new(name: name, required: required, secret: secret, default: default, secret_ref: secret_ref)
     end
 
     def step(label, retry_count: 0, timeout: nil, &block)
@@ -223,7 +234,11 @@ module Browserctl
 
     def resolve_params(provided)
       @param_defs.each_with_object({}) do |(name, defn), out|
-        val = provided[name] || defn.default
+        val = if defn.secret_ref
+                SecretResolverRegistry.resolve(defn.secret_ref)
+              else
+                provided[name] || defn.default
+              end
         raise WorkflowError, "required param '#{name}' missing" if defn.required && val.nil?
 
         out[name] = val
