@@ -36,6 +36,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 7. **Unix composability** — every command is one-line, pipeable, scriptable
 8. **Protocol over implementation** — the JSON-RPC wire format is stable and language-agnostic
 9. **Zero magic, full control** — no auto-waiting policies you can't see; every operation is explicit
+10. **Credentials stay yours** — secrets resolve from your keychain or secret manager at runtime; they are never written to recordings, session files, or logs
 
 ---
 
@@ -115,6 +116,16 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [ ] `replay` command — step through a recorded workflow with live screenshots at each step
 - [ ] Extensible HITL detection modules — DataDome, 2FA prompts, consent banners as built-in detectors
 - [ ] `register_detector` plugin API — third-party detectors installable via plugin system
+
+### v0.8 — Credentials & Session Durability
+**Goal:** Production-grade workflows without infrastructure boilerplate.
+
+- [ ] Secret resolver plugin system — `param :password, secret_ref: "op://vault/item/field"`
+- [ ] Built-in resolvers: `env://`, `keychain://` (macOS), `op://` (1Password CLI)
+- [ ] User-defined resolvers via `~/.browserctl/resolvers.rb`
+- [ ] `load_session` with `fallback:` — automatic session expiry recovery
+- [ ] Session encryption at rest — `browserctl session save --encrypt` _(stretch)_
+- [ ] Export encryption — `browserctl session export --encrypt` with passphrase _(stretch)_
 
 ### v0.7 — Platform
 **Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
