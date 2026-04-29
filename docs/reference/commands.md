@@ -284,7 +284,7 @@ Use `--ref <id>` with `fill` and `click` to interact without writing selectors. 
 | `close_page(name)` | Close a named page |
 | `page(:name)` | Return a `PageProxy` for the named page |
 | `save_session(name, encrypt: false)` | Save the current browser state; `encrypt: true` uses macOS Keychain (darwin only) |
-| `load_session(name, fallback: nil)` | Restore a saved session; `fallback:` names a workflow to run and retry if the session is missing |
+| `load_session(name, fallback: nil, expired_if: nil)` | Restore a saved session; `fallback:` names a workflow to run and retry if the session is missing or expired; `expired_if:` is a lambda called after restore — if it returns `true`, the fallback is invoked to re-authenticate |
 | `list_sessions` | Return all saved session metadata |
 | `invoke "workflow", **overrides` | Call another workflow by name |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
@@ -315,6 +315,8 @@ Methods available on `page(:name)` inside a workflow:
 | `hover(selector)` | Move the mouse to the centre of the matched element |
 | `upload(selector, path)` | Set a file input's value to a file path |
 | `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
+| `dialog_accept(text: nil)` | Pre-register a one-shot handler to accept the next JS dialog; `text` is used for `prompt` dialogs |
+| `dialog_dismiss` | Pre-register a one-shot handler to dismiss the next JS dialog |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 

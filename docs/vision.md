@@ -140,7 +140,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.8.3 — Session Durability (patch)
 **Goal:** Close the remaining gap in the v0.8 session expiry recovery story.
 
-- [ ] `expired_if:` on `load_session` — detect server-side session expiry and auto-recover via fallback
+- [x] `expired_if:` on `load_session` — detect server-side session expiry and auto-recover via fallback
 
 ### v0.9 — Evidence & Reproduction
 **Goal:** Every session leaves a trail. Every bug is reproducible from code.
@@ -170,16 +170,4 @@ What "ready" means: the Fixed and Stable zones carry an explicit compatibility p
 
 ## What browserctl Is Not
 
-- Not a test framework (use Capybara for that)
-- Not a scraping library (use Nokogiri/Mechanize for HTML-only work)
-- Not a general-purpose RPA platform (no GUI recorder, no cloud SaaS)
-- Not a replacement for Playwright in CI test suites
-- Not a cloud browser service — the daemon runs on your machine, period
-
-browserctl occupies the space between `curl` and Playwright: **interactive, stateful, composable browser control from the command line and from code**.
-
----
-
-## The One-Line Pitch
-
-> The browser you delegate to your agents — with a pause button for the parts that still need you.
+See [Product — What It Is Not](product.md#what-it-is-not).

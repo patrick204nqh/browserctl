@@ -48,20 +48,7 @@ The workflow unblocks and continues:
 
 ## How challenge detection works
 
-`navigate` and `snapshot` inspect the page body for known Cloudflare signals and include a `challenge:` boolean in their response:
-
-| Signal | Meaning |
-|--------|---------|
-| `cf-challenge-running` | Challenge widget is active |
-| `cf_chl_opt` | Cloudflare challenge options object |
-| `__cf_chl_f_tk` | Challenge token field |
-| `Just a moment...` | Cloudflare interstitial page title |
-| URL contains `challenge-platform` | Challenge platform redirect |
-
-```ruby
-res = client.navigate("main", url)
-res[:challenge]   # => true when any signal is present
-```
+`navigate` and `snapshot` inspect the page body for known Cloudflare signals and include a `challenge:` boolean in their response. See [HITL — Detection](../concepts/hitl.md#detection-knowing-when-to-pause) for the full signal table.
 
 ---
 
@@ -90,28 +77,7 @@ end
 
 ## Capturing and reusing clearance
 
-After solving a challenge, the browser holds a `cf_clearance` cookie. Capture it to skip re-solving in future sessions:
-
-```bash
-browserctl cookie list main | jq '.cookies[] | select(.name == "cf_clearance")'
-# → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
-```
-
-Restore it in a new session:
-
-```bash
-browserctl page open main
-browserctl cookie set main cf_clearance "xyz..." --domain .example.com
-browserctl navigate main https://example.com   # no challenge
-```
-
-Or from Ruby:
-
-```ruby
-client.set_cookie("main", "cf_clearance", "xyz...", ".example.com")
-```
-
-> `cf_clearance` cookies expire (typically 30 minutes to a few hours). When they age out, Cloudflare will serve a new challenge.
+After solving a challenge you can capture the `cf_clearance` cookie and inject it into future sessions to skip re-solving. See [HITL — Capturing and reusing clearance](../concepts/hitl.md#capturing-and-reusing-clearance) for the full pattern.
 
 ---
 

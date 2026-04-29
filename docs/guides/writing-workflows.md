@@ -388,6 +388,8 @@ Circular invocation (`a → b → a`) raises immediately.
 | `hover(selector)` | Move the mouse to the centre of the matched element |
 | `upload(selector, path)` | Set a file input's value to a file path |
 | `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
+| `dialog_accept(text: nil)` | Pre-register a one-shot handler to accept the next JS dialog; `text` is used for `prompt` dialogs |
+| `dialog_dismiss` | Pre-register a one-shot handler to dismiss the next JS dialog |
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 

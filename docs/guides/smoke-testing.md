@@ -192,8 +192,6 @@ Covers: `evaluate`
 
 Asserts the default dropdown has no selection, then selects Option 1 and Option 2 in sequence via JavaScript, verifying the selected text after each change.
 
-> **Note:** browserctl has no native `select` command. Use `evaluate` to set `select.value` directly — this is the recommended pattern for dropdown interaction.
-
 ```
   [ok]   open dropdown page
   [ok]   assert default is unselected
@@ -247,7 +245,7 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
 | Click buttons and links | All examples — `page(:main).click(selector)` |
 | Assert current URL | `the_internet/login.rb` — `page(:main).url` |
 | Read DOM state via JS | `checkboxes.rb`, `dropdown.rb`, `add_remove_elements.rb` — `client.evaluate("main", expression)[:result]` |
-| Set DOM state via JS | `dropdown.rb` — `client.evaluate("main", "document.querySelector('select#dropdown').value = '1'")` |
+| Set `<select>` element | `dropdown.rb` — `page(:main).select("select#dropdown", "1")` |
 | Dispatch synthetic events via JS | `key_press.rb` — `client.evaluate("main", "document.dispatchEvent(new KeyboardEvent(...))")` |
 | Wait for async element | `dynamic_loading.rb` — `page(:main).wait(selector, timeout:)` |
 | Poll for async element | `dynamic_elements.rb` — `page(:main).wait(selector, timeout:)` |
