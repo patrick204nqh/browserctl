@@ -39,7 +39,12 @@ module Browserctl
     def self.prepare_encryption(session_name, metadata, encrypt)
       return [nil, metadata] unless encrypt
 
-      raise Browserctl::Error, "session encryption requires macOS Keychain (darwin only)" unless keychain_available?
+      unless keychain_available?
+        raise Browserctl::Error,
+              "session encryption requires macOS Keychain (darwin only)\n  " \
+              "For Linux/CI, omit --encrypt and rely on 0o600 file permissions,\n  " \
+              "or use BROWSERCTL_EXPORT_PASSPHRASE with session export --encrypt for portable archives."
+      end
 
       key = SecureRandom.bytes(32)
       keychain_store(session_name, key)

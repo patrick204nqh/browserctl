@@ -109,7 +109,11 @@ module Browserctl
     end
 
     def format_params(defn)
-      defn.param_defs.transform_values { |p| { required: p.required, secret: p.secret, default: p.default } }
+      defn.param_defs.transform_values do |p|
+        entry = { required: p.required, secret: p.secret, default: p.default }
+        entry[:secret_ref] = p.secret_ref if p.secret_ref
+        entry
+      end
     end
   end
 end
