@@ -5,7 +5,7 @@
 <h1 align="center">browserctl</h1>
 
 <p align="center">
-  A browser daemon that keeps sessions alive between commands — for AI agents and iterative dev workflows.
+  The browser you delegate to your agents — with a pause button for the parts that still need you.
 </p>
 
 <p align="center">
@@ -26,29 +26,6 @@ browserctl fill main --ref e1 --value me@example.com    # interact by ref, no se
 browserctl click main --ref e2
 browserctl daemon stop
 ```
-
----
-
-## See it in action
-
-<table align="center"><tr>
-<td align="center" width="50%">
-
-**Terminal**<br/>
-<sub>CLI commands, live output, session persistence proof</sub>
-
-<img src="docs/assets/terminal.gif" alt="browserctl terminal demo"/>
-
-</td>
-<td align="center" width="50%">
-
-**Browser**<br/>
-<sub>What the browser sees as those commands run</sub>
-
-<img src="docs/assets/browser_demo.gif" alt="browserctl browser demo"/>
-
-</td>
-</tr></table>
 
 ---
 
@@ -82,6 +59,29 @@ browserctl daemon stop
 ```
 
 → [Full Getting Started guide](docs/getting-started.md)
+
+---
+
+## See it in action
+
+<table align="center"><tr>
+<td align="center" width="50%">
+
+**Terminal**<br/>
+<sub>CLI commands, live output, session persistence proof</sub>
+
+<img src="docs/assets/terminal.gif" alt="browserctl terminal demo"/>
+
+</td>
+<td align="center" width="50%">
+
+**Browser**<br/>
+<sub>What the browser sees as those commands run</sub>
+
+<img src="docs/assets/browser_demo.gif" alt="browserctl browser demo"/>
+
+</td>
+</tr></table>
 
 ---
 
