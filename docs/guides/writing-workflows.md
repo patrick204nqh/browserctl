@@ -133,6 +133,22 @@ end
 
 `fetch` raises `WorkflowError` with a descriptive message if the key was never stored. Values are stored in the daemon's KV store and persist for as long as the daemon is running — a later `workflow run` that connects to the same daemon can read a value stored by an earlier run. Values are lost when the daemon stops.
 
+> **Use plain Ruby for step-to-step data; use `store`/`fetch` for cross-run data.**
+>
+> Inside a workflow, `@variable = value` works in every step block and is local to this run:
+>
+> ```ruby
+> step "capture OTP" do
+>   @otp = page(:inbox).evaluate("document.querySelector('.otp').textContent")
+> end
+>
+> step "submit OTP" do
+>   page(:app).fill("input#otp", @otp)
+> end
+> ```
+>
+> `store`/`fetch` call the daemon's KV store — values **persist after the workflow finishes** and are readable by any later workflow run against the same daemon. Use them for cross-run sharing, not within a single run.
+
 ---
 
 ### `assert`
@@ -212,17 +228,21 @@ The `fallback:` path above only fires when the **session file is missing**. If t
 
 Pass `expired_if:` with a lambda that returns `true` when the session is stale. The lambda runs after the session is restored and has access to all DSL methods (`page`, `assert`, etc.).
 
-**Important:** `load_session` restores pages to their saved URLs, not to a specific URL you choose at load time. If your expiry check is URL-based, navigate first, then call `load_session`:
+**Important:** `load_session` restores pages to their saved URLs, not to a specific URL you choose at load time. If your expiry check is URL-based, navigate *inside* the lambda:
 
 ```ruby
 step "restore or re-login" do
-  # navigate first so the URL check is meaningful
-  page(:main).navigate("https://app.example.com/dashboard")
   load_session("myapp",
     fallback: "login_myapp",
-    expired_if: -> { !page(:main).url.include?("/dashboard") })
+    expired_if: -> {
+      page(:main).navigate("https://app.example.com/dashboard")
+      !page(:main).url.include?("/dashboard")
+    }
+  )
 end
 ```
+
+The navigation must happen inside the lambda — it runs after `load_session` restores saved URLs.
 
 For a check that does not require navigation, use cookie or storage state:
 
@@ -355,6 +375,47 @@ Returns a `PageProxy` for a named browser page. The page must already be open (v
 page(:login).fill("input[name=email]", email)
 page(:login).click("button[type=submit]")
 ```
+
+## Composing workflows (`compose`)
+
+`compose` splices another workflow's steps into the current workflow **at definition time**. The inlined steps run in the calling workflow's param scope.
+
+```ruby
+Browserctl.workflow "login" do
+  param :email, required: true
+  param :password, required: true, secret: true
+
+  step "open login page" do
+    open_page(:main, url: "https://app.example.com/login")
+  end
+
+  step "submit credentials" do
+    page(:main).fill("input[name=email]", email)
+    page(:main).fill("input[name=password]", password)
+    page(:main).click("button[type=submit]")
+  end
+end
+
+Browserctl.workflow "checkout_with_login" do
+  param :email, required: true
+  param :password, required: true, secret: true
+
+  compose "login"   # inlines login's two steps here
+
+  step "navigate to checkout" do
+    page(:main).navigate("https://app.example.com/checkout")
+  end
+end
+```
+
+| | `compose` | `invoke` |
+|---|---|---|
+| When it runs | At workflow definition time | At runtime, inside a step block |
+| Where to call it | Top level of the `workflow` block | Inside a `step` block |
+| Param scope | Shares calling workflow's params | Can pass/override params |
+| Use for | Structural reuse (bake steps in) | Parameterised delegation |
+
+> `compose` must be called at the workflow definition level — not inside a `step` block. Use `invoke` for runtime delegation.
 
 ### `invoke`
 
