@@ -58,12 +58,11 @@ Browserctl.workflow "session_reuse" do
 
   step "restore session or log in" do
     load_session("session_reuse_demo",
-      fallback: "session_reuse/login_once",
-      expired_if: -> {
-        page(:main).navigate("#{app_url}/secure")
-        !page(:main).url.include?("/secure")
-      }
-    )
+                 fallback: "session_reuse/login_once",
+                 expired_if: lambda {
+                   page(:main).navigate("#{app_url}/secure")
+                   !page(:main).url.include?("/secure")
+                 })
     puts "  ✓ Session ready — authenticated as #{username}"
   end
 
