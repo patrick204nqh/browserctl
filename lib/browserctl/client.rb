@@ -234,7 +234,7 @@ module Browserctl
     # @param name [String] logical page name
     # @param key [String] key name e.g. "Enter", "Tab", "Escape", "ArrowDown"
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def press(name, key)          = call("press",  name: name, key: key)
+    def press(name, key) = call("press", name: name, key: key)
 
     # Moves the mouse to the centre of the element matched by selector.
     # @param name [String] logical page name

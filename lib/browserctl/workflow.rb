@@ -216,7 +216,8 @@ module Browserctl
       unwrap @client.storage_set(@name, key, value, store: store)
     end
 
-    def press(key)               = unwrap @client.press(@name, key)
+    def press(key) = unwrap @client.press(@name, key)
+
     def hover(selector = nil, ref: nil)
       unwrap @client.hover(@name, selector, ref: ref)
     end
@@ -228,6 +229,7 @@ module Browserctl
     def select(selector = nil, value = nil, ref: nil)
       unwrap @client.select(@name, selector, value, ref: ref)
     end
+
     def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
     def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 

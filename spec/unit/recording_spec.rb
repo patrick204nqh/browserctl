@@ -163,7 +163,7 @@ RSpec.describe Browserctl::Commands::Record do
   describe "record start" do
     it "emits JSON with ok and name on start" do
       allow(Browserctl::Recording).to receive(:start)
-      output = capture_stdout { described_class.run(["start", "my-rec"]) }
+      output = capture_stdout { described_class.run(%w[start my-rec]) }
       parsed = JSON.parse(output)
       expect(parsed["ok"]).to be true
       expect(parsed["name"]).to eq("my-rec")

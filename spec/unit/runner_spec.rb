@@ -144,9 +144,9 @@ RSpec.describe Browserctl::Commands::Workflow do
     it "emits JSON with workflows array" do
       runner = instance_double(Browserctl::Runner)
       allow(runner).to receive(:list_workflows).and_return([
-        { name: "login", desc: "Log in to the app" },
-        { name: "checkout", desc: "Run checkout flow" }
-      ])
+                                                             { name: "login", desc: "Log in to the app" },
+                                                             { name: "checkout", desc: "Run checkout flow" }
+                                                           ])
       output = capture_stdout { described_class.run(runner, ["list"]) }
       parsed = JSON.parse(output)
       expect(parsed["workflows"]).to be_an(Array)

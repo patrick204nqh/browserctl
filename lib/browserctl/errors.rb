@@ -21,8 +21,8 @@ module Browserctl
   class PathNotAllowed   < Error; def self.default_code = "path_not_allowed"   end
   class DomainNotAllowed < Error; def self.default_code = "domain_not_allowed" end
   class TimeoutError     < Error; def self.default_code = "timeout"            end
-  class KeyNotFound           < Error; def self.default_code = "key_not_found"           end
-  class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable"    end
+  class KeyNotFound < Error; def self.default_code = "key_not_found" end
+  class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable" end
 
   class WorkflowError < StandardError; end
   class SecretResolverError < WorkflowError; end
