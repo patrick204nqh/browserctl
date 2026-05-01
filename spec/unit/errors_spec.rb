@@ -52,3 +52,34 @@ RSpec.describe Browserctl::KeyNotFound do
     expect(described_class.new("x").code).to eq("key_not_found")
   end
 end
+
+RSpec.describe Browserctl::DaemonUnavailableError do
+  it "has code daemon_unavailable" do
+    expect(described_class.new("x").code).to eq("daemon_unavailable")
+  end
+end
+
+RSpec.describe "daemon ping JSON error path" do
+  require "browserctl/commands/daemon"
+  require "stringio"
+
+  it "emits JSON with ok:false and daemon:offline and exits 1 when daemon is unavailable" do
+    client = instance_double(Browserctl::Client)
+    allow(client).to receive(:ping).and_raise(Browserctl::DaemonUnavailableError, "browserd is not running")
+
+    original = $stdout
+    $stdout = StringIO.new
+    begin
+      expect do
+        Browserctl::Commands::Daemon.run(client, ["ping"])
+      end.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+      output = $stdout.string
+    ensure
+      $stdout = original
+    end
+
+    parsed = JSON.parse(output)
+    expect(parsed["ok"]).to be false
+    expect(parsed["daemon"]).to eq("offline")
+  end
+end

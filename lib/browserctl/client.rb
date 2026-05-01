@@ -18,7 +18,7 @@ module Browserctl
       Recording.append(cmd, **params) if result[:ok]
       result
     rescue Errno::ENOENT, Errno::ECONNREFUSED
-      raise "browserd is not running — start it with: browserd"
+      raise DaemonUnavailableError, "browserd is not running — start it with: browserd"
     end
 
     # Opens or focuses a named browser page.
