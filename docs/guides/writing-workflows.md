@@ -370,26 +370,7 @@ Circular invocation (`a → b → a`) raises immediately.
 
 ## PageProxy methods
 
-| Method | Description |
-|---|---|
-| `navigate(url)` | Navigate the page to a URL |
-| `fill(selector, value)` | Fill an input field |
-| `click(selector)` | Click an element |
-| `wait(selector, timeout: 30)` | Wait until selector appears (default 30s) |
-| `url` | Return the current page URL as a string |
-| `evaluate(expression)` | Evaluate a JS expression and return the result |
-| `snapshot(**opts)` | Return a DOM snapshot |
-| `screenshot(**opts)` | Take a screenshot |
-| `storage_get(key, store: "local")` | Read a localStorage or sessionStorage key |
-| `storage_set(key, value, store: "local")` | Write a localStorage or sessionStorage key |
-| `delete_cookies` | Delete all cookies for this page |
-| `devtools` | Return the Chrome DevTools URL for this page |
-| `press(key)` | Fire a `keydown` + `keyup` event for the given key |
-| `hover(selector)` | Move the mouse to the centre of the matched element |
-| `upload(selector, path)` | Set a file input's value to a file path |
-| `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
-| `dialog_accept(text: nil)` | Pre-register a one-shot handler to accept the next JS dialog; `text` is used for `prompt` dialogs |
-| `dialog_dismiss` | Pre-register a one-shot handler to dismiss the next JS dialog |
+For the full list of `PageProxy` methods (including `ref:` keyword support on `fill`, `click`, `hover`, `upload`, and `select`), see [Command Reference → PageProxy methods](../reference/commands.md#pageproxy-methods).
 
 All methods raise `WorkflowError` on a daemon error, which fails the current step.
 
@@ -612,21 +593,6 @@ end
 
 ### Human-in-the-loop inside a workflow
 
-When a step hits a wall that needs human action, pause the session and resume when the human is done:
-
-```ruby
-step "navigate to protected page" do
-  res = client.navigate("main", target_url)
-  if res[:challenge]
-    puts "→ Challenge detected. Solve it in the browser, then: browserctl resume main"
-    client.pause("main")
-    loop do
-      snap = client.snapshot("main", format: "html")
-      break unless snap[:challenge]
-      sleep 3
-    end
-  end
-end
-```
+When a step hits a wall that needs human action, pause the session and resume when the human is done. See the full runnable example in [Human-in-the-Loop — The polling loop](../concepts/hitl.md#the-polling-loop).
 
 See [Handling Challenges](handling-challenges.md) for a full runnable example.

@@ -54,22 +54,7 @@ The workflow unblocks and continues:
 
 ## The HITL pattern in code
 
-```ruby
-step "navigate to target URL" do
-  res = client.navigate("main", url)
-
-  if res[:challenge]
-    client.pause("main")
-
-    # poll until the human solves the challenge
-    loop do
-      snap = client.snapshot("main", format: "html")
-      break unless snap[:challenge]
-      sleep 3
-    end
-  end
-end
-```
+See the full runnable example in [Human-in-the-Loop — The polling loop](../concepts/hitl.md#the-polling-loop).
 
 `pause` blocks all further commands on the named page via a `ConditionVariable`. When `browserctl resume main` is called from any terminal, the CV is signalled and the polling loop proceeds to the `break` check.
 
