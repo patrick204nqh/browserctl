@@ -44,8 +44,13 @@ module Browserctl
     end
 
     def ferrum_options
-      { timeout: 30, process_timeout: 30,
-        browser_options: { "no-sandbox" => nil, "disable-dev-shm-usage" => nil, "disable-gpu" => nil } }
+      opts = { timeout: 30, process_timeout: 30,
+               browser_options: { "disable-dev-shm-usage" => nil, "disable-gpu" => nil } }
+      if ENV["CI"] || ENV["BROWSERCTL_NO_SANDBOX"]
+        Browserctl.logger.warn "no-sandbox enabled (CI or BROWSERCTL_NO_SANDBOX set)"
+        opts[:browser_options]["no-sandbox"] = nil
+      end
+      opts
     end
 
     def init_state
@@ -125,7 +130,7 @@ module Browserctl
 
     def quietly
       yield
-    rescue Exception
+    rescue StandardError
       nil
     end
   end

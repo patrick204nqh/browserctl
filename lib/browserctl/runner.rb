@@ -67,7 +67,8 @@ module Browserctl
     end
 
     def fetch_workflow(name)
-      return Browserctl.lookup_workflow(name.to_s) if Browserctl.lookup_workflow(name.to_s)
+      wf = Browserctl.lookup_workflow(name.to_s)
+      return wf if wf
 
       validate_name!(name)
       load_workflow_file(name)

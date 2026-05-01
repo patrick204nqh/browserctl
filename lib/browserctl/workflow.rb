@@ -291,7 +291,7 @@ module Browserctl
       (defn.retry_count + 1).times do
         execute_block(ctx, defn)
         return StepResult.new(name: defn.label, ok: true)
-      rescue WorkflowError, StandardError => e
+      rescue StandardError => e
         last_error = e
       end
       StepResult.new(name: defn.label, ok: false, error: last_error.message)

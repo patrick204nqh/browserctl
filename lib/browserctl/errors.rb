@@ -24,6 +24,6 @@ module Browserctl
   class KeyNotFound < Error; def self.default_code = "key_not_found" end
   class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable" end
 
-  class WorkflowError < StandardError; end
-  class SecretResolverError < WorkflowError; end
+  class WorkflowError < Error; def self.default_code = "workflow_error" end
+  class SecretResolverError < WorkflowError; def self.default_code = "secret_resolver_error" end
 end

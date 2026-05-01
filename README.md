@@ -54,6 +54,11 @@ browserctl click main --ref e3
 browserctl url main
 browserctl snapshot main --diff   # only what changed
 
+# Session persistence: save now, pick up later
+browserctl session save my-session
+# On a fresh daemon tomorrow: `browserctl session load my-session`
+# → tabs restored, cookies intact, no re-login needed
+
 # 7. Done
 browserctl daemon stop
 ```
@@ -119,11 +124,19 @@ Most automation tools are stateless — every script spins up a fresh browser an
 
 **Requirements:** Ruby >= 3.3 · Chrome or Chromium installed
 
+**macOS (Homebrew — recommended)**
+
+```bash
+brew install patrick204nqh/tap/browserctl
+```
+
+**RubyGems**
+
 ```bash
 gem install browserctl
 ```
 
-Or in your `Gemfile`:
+Or in your `Gemfile` (for projects using the client API directly):
 
 ```ruby
 gem "browserctl"
@@ -182,10 +195,13 @@ The daemon shuts itself down after 30 minutes of inactivity.
 | | |
 |---|---|
 | [Getting Started](docs/getting-started.md) | Install, first session, first snapshot |
+| [Agent Integration](docs/guides/agent-integration.md) | Call browserctl from Python, shell, or Anthropic tool-use agents |
 | [Concepts](docs/concepts/) | Sessions, snapshots, human-in-the-loop |
 | [Guides](docs/guides/) | Writing workflows, handling challenges, smoke testing |
+| [Examples](examples/) | Runnable scripts: session reuse, Cloudflare HITL, and more |
 | [Command Reference](docs/reference/commands.md) | Every command and flag |
 | [API Stability](docs/reference/api-stability.md) | Wire protocol contract and stability zones |
+| [CHANGELOG](CHANGELOG.md) | Release history |
 | [Product](docs/product.md) | What browserctl is and who it's for |
 | [Vision & Roadmap](docs/vision.md) | Philosophy and release roadmap |
 | [vs. agent-browser](docs/vs-agent-browser.md) | How browserctl differs from Vercel's agent-browser |
@@ -219,3 +235,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md)
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Built by [Patrick](https://github.com/patrick204nqh) — I built this because I was building AI agents that needed authenticated web sessions, and every automation tool I tried restarted the browser between runs.

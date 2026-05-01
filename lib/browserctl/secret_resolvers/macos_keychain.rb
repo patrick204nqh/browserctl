@@ -8,7 +8,7 @@ module Browserctl
       def self.scheme = "keychain"
 
       def available?
-        RUBY_PLATFORM.include?("darwin") && system("which security > /dev/null 2>&1")
+        RUBY_PLATFORM.include?("darwin") && system("which", "security", out: File::NULL, err: File::NULL)
       end
 
       def resolve(reference)
