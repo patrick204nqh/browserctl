@@ -1,6 +1,6 @@
 # browserctl vs. vercel-labs/agent-browser
 
-> agent-browser details are based on the project's public documentation and README as of writing. Check the [upstream repo](https://github.com/vercel-labs/agent-browser) for the latest.
+> Last updated: 2026-05-01. agent-browser details are based on the project's public documentation and README as of writing. Check the [upstream repo](https://github.com/vercel-labs/agent-browser) for the latest.
 
 Both projects exist to solve the same root problem: AI agents need stateful, persistent browser sessions. The way each project answers that problem reveals fundamentally different philosophies.
 

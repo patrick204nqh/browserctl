@@ -155,3 +155,11 @@ Both `snapshot` and `navigate` include a `challenge` field in their response whe
 ```
 
 This is the entry point for the [HITL](hitl.md) pattern — if `challenge` is true, the workflow can pause and hand control to a human. The detection is built in; the response is up to the workflow.
+
+---
+
+## What next?
+
+- [Human-in-the-Loop](hitl.md) — how to pause, hand off to a human, and resume
+- [Writing Workflows](../guides/writing-workflows.md) — embed snapshots and ref interactions in a reusable Ruby workflow
+- [Command Reference](../reference/commands.md) — full `snapshot` flag documentation

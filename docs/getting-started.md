@@ -20,11 +20,19 @@ which chromium || which google-chrome || which chrome
 
 ## Install
 
+**macOS (Homebrew — recommended)**
+
+```bash
+brew install patrick204nqh/tap/browserctl
+```
+
+**RubyGems**
+
 ```bash
 gem install browserctl
 ```
 
-Or add to your `Gemfile`:
+Or add to your `Gemfile` (for projects using the client API directly):
 
 ```ruby
 gem "browserctl"

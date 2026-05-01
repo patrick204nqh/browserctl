@@ -33,6 +33,7 @@ Narrative how-tos for real tasks.
 
 | | |
 |---|---|
+| [Agent Integration](guides/agent-integration.md) | Using browserctl from Python, shell, and Anthropic tool-use agents |
 | [Writing Workflows](guides/writing-workflows.md) | Automate multi-step flows with the Ruby DSL |
 | [Secrets and Credentials](guides/writing-workflows.md#sourcing-secrets-with-secret_ref) | Secret resolver system — env://, keychain://, op://, and custom resolvers |
 | [Handling Challenges](guides/handling-challenges.md) | Cloudflare, 2FA, and the pause/resume pattern in practice |

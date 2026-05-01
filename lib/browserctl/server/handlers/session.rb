@@ -75,7 +75,7 @@ module Browserctl
 
           { ok: true, cookies: cookie_count, pages: data[:metadata][:pages].length,
             local_storage_keys: ls_key_count }
-        rescue RuntimeError => e
+        rescue Browserctl::Error, ArgumentError, JSON::ParserError, RuntimeError => e
           { error: e.message }
         end
 

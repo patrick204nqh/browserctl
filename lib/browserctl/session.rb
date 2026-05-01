@@ -162,7 +162,7 @@ module Browserctl
     private_class_method :keychain_fetch
 
     def self.keychain_available?
-      RUBY_PLATFORM.include?("darwin") && system("which security > /dev/null 2>&1")
+      RUBY_PLATFORM.include?("darwin") && system("which", "security", out: File::NULL, err: File::NULL)
     end
     private_class_method :keychain_available?
 
@@ -187,7 +187,7 @@ module Browserctl
     private_class_method :decrypt_json
 
     def self.write_json(path, data)
-      File.write(path, JSON.generate(data))
+      File.open(path, "w", 0o600) { |f| f.write(JSON.generate(data)) }
     end
     private_class_method :write_json
 

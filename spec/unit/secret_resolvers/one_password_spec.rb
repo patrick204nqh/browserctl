@@ -7,7 +7,7 @@ RSpec.describe Browserctl::SecretResolvers::OnePassword do
 
   describe "#available?" do
     it "returns false when op is not in PATH" do
-      allow(resolver).to receive(:system).with("which op > /dev/null 2>&1").and_return(false)
+      allow(resolver).to receive(:system).with("which", "op", out: File::NULL, err: File::NULL).and_return(false)
       expect(resolver.available?).to be false
     end
   end

@@ -18,6 +18,7 @@ Gem::Specification.new do |s| # rubocop:disable Metrics/BlockLength
     "source_code_uri" => s.homepage,
     "changelog_uri" => "#{s.homepage}/blob/main/CHANGELOG.md",
     "bug_tracker_uri" => "#{s.homepage}/issues",
+    "documentation_uri" => "#{s.homepage}/tree/main/docs",
     "rubygems_mfa_required" => "true"
   }
 

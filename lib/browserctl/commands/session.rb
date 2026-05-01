@@ -61,6 +61,7 @@ module Browserctl
         name    = args.shift or abort "usage: browserctl session export <name> <path> [--encrypt]"
         dest    = args.shift or abort "usage: browserctl session export <name> <path> [--encrypt]"
 
+        Browserctl::Session.validate_name!(name)
         session_dir = File.join(Browserctl::BROWSERCTL_DIR, "sessions", name)
         abort "session '#{name}' not found" unless Dir.exist?(session_dir)
 
