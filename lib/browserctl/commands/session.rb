@@ -85,6 +85,8 @@ module Browserctl
         sessions_dir = File.join(Browserctl::BROWSERCTL_DIR, "sessions")
         FileUtils.mkdir_p(sessions_dir)
 
+        before = Dir[File.join(sessions_dir, "*/")].map { |p| File.basename(p) }
+
         if encrypted_zip?(zip_path)
           passphrase = prompt_passphrase
           decrypt_import(zip_path, sessions_dir, passphrase)
@@ -93,7 +95,10 @@ module Browserctl
           Process.wait(pid)
         end
 
-        puts({ ok: true }.to_json)
+        after = Dir[File.join(sessions_dir, "*/")].map { |p| File.basename(p) }
+        name = (after - before).first
+
+        puts({ ok: true, name: name }.to_json)
       end
 
       # --- private helpers ---

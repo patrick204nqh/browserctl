@@ -24,7 +24,6 @@ Mental models before mechanics.
 | [Sessions and Pages](concepts/sessions-and-pages.md) | Why a daemon beats a script, and what named pages give you |
 | [Snapshots and Refs](concepts/snapshots-and-refs.md) | The compact JSON snapshot format and ref-based interaction |
 | [Human-in-the-Loop](concepts/hitl.md) | Pause/resume, challenge detection, the extensible blocker model |
-| [Secrets and Credentials](guides/writing-workflows.md#sourcing-secrets-with-secret_ref) | Secret resolver system — env://, keychain://, op://, and custom resolvers |
 
 ---
 
@@ -35,6 +34,7 @@ Narrative how-tos for real tasks.
 | | |
 |---|---|
 | [Writing Workflows](guides/writing-workflows.md) | Automate multi-step flows with the Ruby DSL |
+| [Secrets and Credentials](guides/writing-workflows.md#sourcing-secrets-with-secret_ref) | Secret resolver system — env://, keychain://, op://, and custom resolvers |
 | [Handling Challenges](guides/handling-challenges.md) | Cloudflare, 2FA, and the pause/resume pattern in practice |
 | [Smoke Testing](guides/smoke-testing.md) | Ready-to-run examples against the-internet.herokuapp.com |
 

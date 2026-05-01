@@ -2,7 +2,9 @@
 
 require "tmpdir"
 require "json"
+require "stringio"
 require "browserctl/session"
+require "browserctl/commands/session"
 
 RSpec.describe Browserctl::Session do
   before do
@@ -120,6 +122,35 @@ RSpec.describe Browserctl::Session do
                                            local_storage: local_storage, session_storage: {})
       mode = File.stat(File.join(described_class.path("test_session"), "local_storage.json")).mode & 0o777
       expect(mode).to eq(0o600)
+    end
+  end
+end
+
+RSpec.describe "session import name detection" do
+  it "includes the session name in the JSON response" do
+    Dir.mktmpdir do |tmp|
+      sessions_dir = File.join(tmp, "sessions")
+      FileUtils.mkdir_p(sessions_dir)
+
+      # Create a minimal session zip: sessions/mysession/metadata.json
+      session_content_dir = File.join(tmp, "mysession")
+      FileUtils.mkdir_p(session_content_dir)
+      File.write(File.join(session_content_dir, "metadata.json"), '{"pages":[]}')
+      zip_path = File.join(tmp, "mysession.zip")
+      system("zip -r #{zip_path} mysession", chdir: tmp, out: File::NULL, err: File::NULL)
+
+      stub_const("Browserctl::BROWSERCTL_DIR", tmp)
+
+      # capture stdout, run import
+      original_stdout = $stdout
+      $stdout = StringIO.new
+      Browserctl::Commands::Session.run(double("client"), ["import", zip_path])
+      output = $stdout.string
+      $stdout = original_stdout
+
+      parsed = JSON.parse(output)
+      expect(parsed["ok"]).to be true
+      expect(parsed["name"]).to eq("mysession")
     end
   end
 end

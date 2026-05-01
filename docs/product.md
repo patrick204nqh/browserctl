@@ -84,10 +84,12 @@ Browserctl.workflow :verify_checkout do
 
   step "confirm checkout reached" do
     page(:main).wait("[data-test=checkout-header]", timeout: 15)
-    page(:main).screenshot(out: "evidence/checkout.png")
+    page(:main).screenshot(path: "evidence/checkout.png")
   end
 end
 ```
+
+> The DSL supports both CSS selectors (as above) and snapshot refs — use `page(:main).fill(nil, email, ref: "e1")` after snapshotting to interact without knowing the page structure in advance. Refs are preferred in AI-agent workflows.
 
 Workflows are plain Ruby. They compose, retry, timeout, and share steps. Params are typed. Secrets are never written to recordings.
 

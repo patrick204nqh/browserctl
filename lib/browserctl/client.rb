@@ -18,7 +18,7 @@ module Browserctl
       Recording.append(cmd, **params) if result[:ok]
       result
     rescue Errno::ENOENT, Errno::ECONNREFUSED
-      raise "browserd is not running — start it with: browserd"
+      raise DaemonUnavailableError, "browserd is not running — start it with: browserd"
     end
 
     # Opens or focuses a named browser page.
@@ -234,27 +234,41 @@ module Browserctl
     # @param name [String] logical page name
     # @param key [String] key name e.g. "Enter", "Tab", "Escape", "ArrowDown"
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def press(name, key)          = call("press",  name: name, key: key)
+    def press(name, key) = call("press", name: name, key: key)
 
     # Moves the mouse to the centre of the element matched by selector.
     # @param name [String] logical page name
     # @param selector [String] CSS selector
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def hover(name, selector)     = call("hover",  name: name, selector: selector)
+    def hover(name, selector = nil, ref: nil)
+      raise ArgumentError, "hover: provide selector or ref:" unless selector || ref
+
+      call("hover", name: name, selector: selector, ref: ref)
+    end
 
     # Sets a file-input element to the given file path.
     # @param name [String] logical page name
-    # @param selector [String] CSS selector for the file input
-    # @param path [String] absolute or relative file path
+    # @param selector [String, nil] CSS selector for the file input
+    # @param path [String, nil] absolute or relative file path
+    # @param ref [String, nil] element ref from a prior snapshot
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def upload(name, selector, path) = call("upload", name: name, selector: selector, path: path)
+    def upload(name, selector = nil, path = nil, ref: nil)
+      raise ArgumentError, "upload: provide selector or ref:" unless selector || ref
+
+      call("upload", name: name, selector: selector, ref: ref, path: path)
+    end
 
     # Sets a <select> element's value and fires a change event.
     # @param name [String] logical page name
-    # @param selector [String] CSS selector for the select element
-    # @param value [String] option value to select
+    # @param selector [String, nil] CSS selector for the select element
+    # @param value [String, nil] option value to select
+    # @param ref [String, nil] element ref from a prior snapshot
     # @return [Hash] `{ ok: true }` or `{ error: }`
-    def select(name, selector, value) = call("select", name: name, selector: selector, value: value)
+    def select(name, selector = nil, value = nil, ref: nil)
+      raise ArgumentError, "select: provide selector or ref:" unless selector || ref
+
+      call("select", name: name, selector: selector, ref: ref, value: value)
+    end
 
     # Pre-registers a one-shot handler to accept the next JS dialog on a page.
     # @param name [String] logical page name

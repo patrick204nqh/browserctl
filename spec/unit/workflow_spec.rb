@@ -357,6 +357,13 @@ RSpec.describe "WorkflowContext#load_session with expired_if:" do
     expect(ctx).to have_received(:invoke).with("login").once
     expect(invocations).to eq(0)
   end
+
+  it "raises ArgumentError when expired_if: lambda takes arguments" do
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    expect do
+      ctx.load_session("s", expired_if: ->(_page) { false })
+    end.to raise_error(ArgumentError, /expired_if.*zero arguments/)
+  end
 end
 
 RSpec.describe Browserctl::WorkflowContext do
@@ -421,6 +428,78 @@ RSpec.describe Browserctl::WorkflowContext do
       ctx.instance_variable_set(:@invoke_stack, ["loop_a"])
 
       expect { ctx.invoke("loop_a") }.to raise_error(Browserctl::WorkflowError, /circular/)
+    end
+  end
+end
+
+RSpec.describe "WorkflowContext compose guard" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  it "raises WorkflowError with a helpful message when compose is called inside a step block" do
+    defn = Browserctl::WorkflowDefinition.new("test")
+    defn.step("bad") do
+      compose "other_workflow"
+    end
+
+    expect { defn.call({}, client) }.to raise_error(
+      Browserctl::WorkflowError,
+      /compose.*definition level.*invoke/i
+    )
+  end
+end
+
+RSpec.describe "PageProxy ref-based interaction" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  describe "#fill" do
+    it "passes ref: to client when ref: is given" do
+      expect(client).to receive(:fill).with("main", nil, "hello", ref: "e1").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.fill(nil, "hello", ref: "e1")
+    end
+
+    it "passes selector positionally when no ref given" do
+      expect(client).to receive(:fill).with("main", "input#email", "hello", ref: nil).and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.fill("input#email", "hello")
+    end
+  end
+
+  describe "#click" do
+    it "passes ref: to client when ref: is given" do
+      expect(client).to receive(:click).with("main", nil, ref: "e3").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.click(nil, ref: "e3")
+    end
+
+    it "passes selector positionally when no ref given" do
+      expect(client).to receive(:click).with("main", "button#submit", ref: nil).and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.click("button#submit")
+    end
+  end
+
+  describe "#hover" do
+    it "passes ref: to client" do
+      expect(client).to receive(:hover).with("main", nil, ref: "e4").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.hover(nil, ref: "e4")
+    end
+  end
+
+  describe "#upload" do
+    it "passes ref: to client" do
+      expect(client).to receive(:upload).with("main", nil, "/tmp/file.pdf", ref: "e5").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.upload(nil, "/tmp/file.pdf", ref: "e5")
+    end
+  end
+
+  describe "#select" do
+    it "passes ref: to client" do
+      expect(client).to receive(:select).with("main", nil, "AU", ref: "e6").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.select(nil, "AU", ref: "e6")
     end
   end
 end

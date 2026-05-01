@@ -43,14 +43,16 @@ Page is always the first argument after the verb.
 | `resume <page>` | Resume automation after manual action |
 | `devtools <page>` | Open Chrome DevTools for a named page |
 | `press <page> <key>` | Fire a `keydown` + `keyup` event for the given key |
-| `hover <page> <selector>` | Move the mouse cursor to the centre of the matched element |
-| `upload <page> <selector> <file>` | Set a `<input type="file">` element's value to a file path |
-| `select <page> <selector> <value>` | Set a `<select>` element's value and fire a `change` event |
+| `hover <page> <selector>` or `hover <page> --ref <id>` | Move the mouse cursor to the centre of the matched element |
+| `upload <page> <selector> <file>` or `upload <page> --ref <id> <file>` | Set a `<input type="file">` element's value to a file path |
+| `select <page> <selector> <value>` or `select <page> --ref <id> <value>` | Set a `<select>` element's value and fire a `change` event |
 | `dialog accept <page> [text]` | Pre-register a one-shot handler to accept the next JS dialog |
 | `dialog dismiss <page>` | Pre-register a one-shot handler to dismiss the next JS dialog |
-| `ask <prompt>` | Pause and prompt the human for a value via stdin |
+| `ask <prompt>` | Pause and prompt the human for a value via stdin (orchestration-level — takes no `<page>` argument; reads from operator stdin) |
 
 `navigate` and `snapshot` responses include `"challenge": true` when a Cloudflare interstitial is detected. See [Handling Challenges](../guides/handling-challenges.md).
+
+> `navigate` steers an already-open page. Use `page open --url` to create a new tab and navigate in one step.
 
 ### `press <page> <key>`
 
@@ -300,8 +302,8 @@ Methods available on `page(:name)` inside a workflow:
 | Method | Description |
 |---|---|
 | `navigate(url)` | Navigate to a URL |
-| `fill(selector, value)` | Fill an input by CSS selector |
-| `click(selector)` | Click an element by CSS selector |
+| `fill(selector = nil, value = nil, ref: nil)` | Fill an input by selector or ref |
+| `click(selector = nil, ref: nil)` | Click an element by selector or ref |
 | `wait(selector, timeout: 30)` | Wait until selector appears (default 30s) |
 | `url` | Return the current page URL |
 | `evaluate(expression)` | Evaluate a JS expression and return the result |
@@ -312,9 +314,9 @@ Methods available on `page(:name)` inside a workflow:
 | `delete_cookies` | Delete all cookies for the page |
 | `devtools` | Return the Chrome DevTools URL for this page |
 | `press(key)` | Fire a `keydown` + `keyup` event for the given key |
-| `hover(selector)` | Move the mouse to the centre of the matched element |
-| `upload(selector, path)` | Set a file input's value to a file path |
-| `select(selector, value)` | Set a `<select>` element's value and fire a `change` event |
+| `hover(selector = nil, ref: nil)` | Move mouse to element by selector or ref |
+| `upload(selector = nil, path = nil, ref: nil)` | Set file input by selector or ref |
+| `select(selector = nil, value = nil, ref: nil)` | Set select element by selector or ref |
 | `dialog_accept(text: nil)` | Pre-register a one-shot handler to accept the next JS dialog; `text` is used for `prompt` dialogs |
 | `dialog_dismiss` | Pre-register a one-shot handler to dismiss the next JS dialog |
 

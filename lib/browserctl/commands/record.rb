@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 require "optimist"
 require "browserctl/recording"
 
@@ -29,8 +30,7 @@ module Browserctl
           abort "Invalid recording name #{name.inspect} — use only letters, digits, _ or -" \
             unless name =~ /\A[a-zA-Z0-9_-]{1,64}\z/
           Recording.start(name)
-          puts "Recording started: #{name}"
-          puts "Run browser commands, then: browserctl record stop"
+          puts JSON.generate({ ok: true, name: name })
         end
 
         def run_stop(args)
@@ -42,13 +42,12 @@ module Browserctl
           out  = opts[:out] || File.join(".browserctl/workflows", "#{name}.rb")
           FileUtils.mkdir_p(File.dirname(out))
           Recording.generate_workflow(name, output_path: out)
-          puts "Workflow saved: #{out}"
-          puts "Run with: browserctl workflow run #{name}"
+          puts JSON.generate({ ok: true, name: name, path: out })
         end
 
         def run_status
           active = Recording.active
-          puts active ? "Active recording: #{active}" : "No active recording."
+          puts JSON.generate({ active: active })
         end
       end
     end

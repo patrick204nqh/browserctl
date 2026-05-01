@@ -85,8 +85,11 @@ browserctl record status                     # check if a recording is active
 # Keyboard and mouse
 browserctl press  main Enter                             # fire keydown+keyup (Enter, Tab, Escape, ArrowDown, ...)
 browserctl hover  main "#menu-trigger"                  # move mouse to element centre
+browserctl hover  main --ref e3                          # move mouse to ref element
 browserctl select main "select#country" "AU"            # set <select> value + fire change event
+browserctl select main --ref e4 "AU"                    # set <select> by ref
 browserctl upload main "#resume-input" /path/file.pdf   # set file input to a local file
+browserctl upload main --ref e5 /path/file.pdf          # set file input by ref
 
 # Dialogs — register handler BEFORE the action that triggers the dialog
 browserctl dialog accept  main                          # accept the next alert/confirm/prompt
@@ -138,6 +141,7 @@ browserctl page focus login    # bring tab to front (headed mode only)
 
 # Daemon
 browserctl daemon ping    # → { ok: true, pid: N, protocol_version: "2" }
+                          #   or { ok: false, daemon: "offline", error: "..." } if not running
 browserctl daemon status  # → { daemon: "online", pid: N, pages: [{name:, url:}] }
 browserctl daemon start [--headed] [--name NAME]
 browserctl daemon stop
@@ -305,7 +309,7 @@ browserctl navigate main https://protected.example.com
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
 - **Prefer discrete commands** (`fill`, `click`, `press`, `select`, `hover`, `upload`) over `eval` for actions. Use `eval` only when no discrete command fits (e.g. reading computed DOM state, complex JS assertions).
 - **Use `snapshot`** for any page you haven't seen before — the default `elements` format gives valid selectors and ref IDs without reading raw HTML.
-- **Use `--ref` for interactions** — after a `snapshot`, prefer `--ref eN` over CSS selectors. Refs are valid until the next `snapshot` call — re-snapshot if you need fresh refs after page changes.
+- **Use `--ref` for interactions** — after a `snapshot`, prefer `--ref eN` over CSS selectors for `fill`, `click`, `hover`, `select`, and `upload`. Refs are valid until the next `snapshot` call — re-snapshot if you need fresh refs after page changes.
 - **Use `snapshot --diff`** to detect DOM changes efficiently — avoids re-processing the full DOM after each action.
 - **Use `wait`** when you need to wait for an element that appears asynchronously — more efficient than polling `snapshot`.
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
@@ -363,7 +367,7 @@ end
 | `step "label", retry_count: N { }` | Retry the step up to N additional times on any error |
 | `step "label", timeout: S { }` | Fail the step if it exceeds S seconds |
 | `step "label", retry_count: N, timeout: S { }` | Both retry and timeout |
-| `compose "workflow"` | Inline all steps from another workflow at this point |
+| `compose "workflow"` | Inline all steps from another workflow at this point. Must be called at the workflow definition level — calling it inside a `step` block raises `WorkflowError`. Use `invoke` inside steps instead. |
 | `invoke "workflow", **overrides` | Call another workflow by name, optionally overriding params |
 | `open_page(name, url: nil)` | Open a named page, optionally navigating to a URL |
 | `close_page(name)` | Close a named page |
@@ -371,6 +375,7 @@ end
 | `save_session(name, encrypt: false)` | Snapshot current browser state to a named session; `encrypt: true` stores sensitive files as AES-256-GCM blobs with the key in macOS Keychain (darwin only) |
 | `load_session(name)` | Restore a saved session into the running daemon |
 | `load_session(name, fallback: "workflow_name")` | Restore session; if load fails, invoke the named fallback workflow then retry once. Use this instead of hand-rolling detect-expiry logic. |
+| `load_session(name, fallback: "workflow_name", expired_if: -> { ... })` | Same as above, but also calls the lambda after restore; if it returns `true`, the fallback workflow is invoked and the session is re-established. Use when the server can invalidate sessions without changing cookies (e.g. server-side logout, expired JWT in localStorage). |
 | `list_sessions` | Return all saved session metadata |
 | `store :key, value` | Store a value for use in later steps (persists in daemon until it stops) |
 | `fetch :key` | Retrieve a value stored by an earlier step |
@@ -448,12 +453,12 @@ Methods available on `page(:name)` inside a workflow (all raise `WorkflowError` 
 
 ```ruby
 page(:main).navigate(url)
-page(:main).fill(selector, value)
-page(:main).click(selector)
-page(:main).press(key)                   # "Enter", "Tab", "Escape", "ArrowDown", ...
-page(:main).hover(selector)              # move mouse to element centre
-page(:main).upload(selector, path)       # set <input type="file"> to a local file
-page(:main).select(selector, value)      # set <select> value + fire change event
+page(:main).fill(selector = nil, value = nil, ref: nil)
+page(:main).click(selector = nil, ref: nil)
+page(:main).press(key)                                   # "Enter", "Tab", "Escape", "ArrowDown", ...
+page(:main).hover(selector = nil, ref: nil)              # move mouse to element centre
+page(:main).upload(selector = nil, path = nil, ref: nil) # set <input type="file"> to a local file
+page(:main).select(selector = nil, value = nil, ref: nil) # set <select> value + fire change event
 page(:main).dialog_accept(text: nil)     # register one-shot: accept next alert/confirm/prompt
 page(:main).dialog_dismiss               # register one-shot: dismiss next confirm
 page(:main).wait(selector, timeout: 30)

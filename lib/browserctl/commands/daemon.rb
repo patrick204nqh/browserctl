@@ -14,7 +14,13 @@ module Browserctl
       def self.run(client, args)
         sub = args.shift or abort USAGE
         case sub
-        when "ping"   then print_result(client.ping)
+        when "ping"
+          begin
+            print_result(client.ping)
+          rescue Browserctl::DaemonUnavailableError => e
+            puts JSON.generate({ ok: false, daemon: "offline", error: e.message })
+            exit 1
+          end
         when "status" then run_status(client)
         when "start"  then run_start(args)
         when "stop"   then print_result(client.shutdown)
@@ -36,9 +42,7 @@ module Browserctl
           protocol_version: ping[:protocol_version],
           pages: page_info
         )
-      rescue RuntimeError => e
-        raise unless e.message.include?("browserd is not running")
-
+      rescue Browserctl::DaemonUnavailableError => e
         puts JSON.pretty_generate(daemon: "offline", error: e.message)
         exit 1
       end
@@ -67,7 +71,7 @@ module Browserctl
           next unless status&.dig(:ok)
 
           { name: display_name, pid: status[:pid], pages: (client.page_list[:pages] || []).length }
-        rescue RuntimeError
+        rescue Browserctl::DaemonUnavailableError, RuntimeError
           nil
         end.compact
         puts({ daemons: rows }.to_json)

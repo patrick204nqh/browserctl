@@ -112,8 +112,8 @@ agent-browser provides a WebSocket-based dashboard with a live browser viewport,
 | **HITL** | First-class — `pause`/`resume` primitive | Not implemented |
 | **Blocker detection** | Built-in (Cloudflare), extensible | Not surfaced |
 | **Workflow layer** | Ruby DSL, compose, record, replay | None |
-| **Prompt injection safety** | Not yet | Content boundaries (nonce-wrapped output) |
+| **Prompt injection safety** | `nonce` field on every snapshot response (Fixed zone) | Content boundaries (nonce-wrapped output) |
 | **Command surface** | ~20 commands | 100+ commands |
-| **Live preview** | DevTools via `inspect` | WebSocket viewport streaming |
+| **Live preview** | DevTools via `devtools` | WebSocket viewport streaming |
 
 browserctl is not trying to be the browser-for-every-framework. It is the browser for agents that work alongside humans, run on your machine, and need to handle the web as it actually is — not as a clean, bot-friendly surface.

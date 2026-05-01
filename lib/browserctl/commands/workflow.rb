@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "cli_output"
 
 module Browserctl
@@ -52,7 +53,7 @@ module Browserctl
 
       def self.run_list(runner)
         list = runner.list_workflows
-        list.each { |w| puts "#{w[:name].ljust(24)} #{w[:desc]}" }
+        puts JSON.generate({ workflows: list.map { |w| { name: w[:name], desc: w[:desc] } } })
       end
 
       def self.run_describe(runner, args)

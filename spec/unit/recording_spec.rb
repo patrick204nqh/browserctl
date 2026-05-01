@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 require "tmpdir"
+require "stringio"
+require "json"
 require "browserctl/recording"
+require "browserctl/commands/record"
 
 RSpec.describe Browserctl::Recording do
   around do |example|
@@ -143,6 +146,56 @@ RSpec.describe Browserctl::Recording do
       described_class.append("navigate", name: "main", url: "https://example.com/clean")
       ruby = described_class.generate_workflow("redact_test")
       expect(ruby).not_to include("# NOTE: sensitive query params were redacted")
+    end
+  end
+end
+
+RSpec.describe Browserctl::Commands::Record do
+  def capture_stdout
+    original = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original
+  end
+
+  describe "record start" do
+    it "emits JSON with ok and name on start" do
+      allow(Browserctl::Recording).to receive(:start)
+      output = capture_stdout { described_class.run(%w[start my-rec]) }
+      parsed = JSON.parse(output)
+      expect(parsed["ok"]).to be true
+      expect(parsed["name"]).to eq("my-rec")
+    end
+  end
+
+  describe "record stop" do
+    it "emits JSON with ok, name, and path on stop" do
+      allow(Browserctl::Recording).to receive(:stop).and_return("my-workflow")
+      allow(Browserctl::Recording).to receive(:generate_workflow)
+      allow(FileUtils).to receive(:mkdir_p)
+      output = capture_stdout { described_class.run(["stop"]) }
+      parsed = JSON.parse(output)
+      expect(parsed["ok"]).to be true
+      expect(parsed["name"]).to eq("my-workflow")
+      expect(parsed["path"]).to include("my-workflow")
+    end
+  end
+
+  describe "record status" do
+    it "emits JSON with active name when recording" do
+      allow(Browserctl::Recording).to receive(:active).and_return("my-rec")
+      output = capture_stdout { described_class.run(["status"]) }
+      parsed = JSON.parse(output)
+      expect(parsed["active"]).to eq("my-rec")
+    end
+
+    it "emits JSON with null active when no recording" do
+      allow(Browserctl::Recording).to receive(:active).and_return(nil)
+      output = capture_stdout { described_class.run(["status"]) }
+      parsed = JSON.parse(output)
+      expect(parsed["active"]).to be_nil
     end
   end
 end

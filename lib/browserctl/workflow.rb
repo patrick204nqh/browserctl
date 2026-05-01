@@ -104,14 +104,28 @@ module Browserctl
       raise WorkflowError, msg unless condition
     end
 
+    def compose(*)
+      raise WorkflowError,
+            "`compose` must be called at the workflow definition level, not inside a step block. " \
+            "Did you mean `invoke`?"
+    end
+
     private
 
     def validate_expired_if!(expired_if)
-      return unless expired_if && !expired_if.lambda?
+      return unless expired_if
+
+      unless expired_if.lambda?
+        raise ArgumentError,
+              "expired_if: must be a lambda (-> { }), not a Proc — " \
+              "bare return inside a Proc unwinds the caller"
+      end
+
+      return if expired_if.arity.zero?
 
       raise ArgumentError,
-            "expired_if: must be a lambda (-> { }), not a Proc — " \
-            "bare return inside a Proc unwinds the caller"
+            "expired_if: lambda must take zero arguments (got #{expired_if.arity}) — " \
+            "use -> { page(:name).url... } to access pages via the workflow context"
     end
 
     def call_expired_if(expired_if, session_name)
@@ -176,9 +190,16 @@ module Browserctl
       @client = client
     end
 
-    def navigate(url)             = unwrap @client.navigate(@name, url)
-    def fill(sel, val)            = unwrap @client.fill(@name, sel, val)
-    def click(sel)                = unwrap @client.click(@name, sel)
+    def navigate(url) = unwrap @client.navigate(@name, url)
+
+    def fill(selector = nil, value = nil, ref: nil)
+      unwrap @client.fill(@name, selector, value, ref: ref)
+    end
+
+    def click(selector = nil, ref: nil)
+      unwrap @client.click(@name, selector, ref: ref)
+    end
+
     def snapshot(**)              = unwrap @client.snapshot(@name, **)
     def screenshot(**)            = unwrap @client.screenshot(@name, **)
     def wait(sel, timeout: 30)    = unwrap @client.wait(@name, sel, timeout: timeout)
@@ -195,10 +216,20 @@ module Browserctl
       unwrap @client.storage_set(@name, key, value, store: store)
     end
 
-    def press(key)               = unwrap @client.press(@name, key)
-    def hover(selector)          = unwrap @client.hover(@name, selector)
-    def upload(selector, path)   = unwrap @client.upload(@name, selector, path)
-    def select(selector, value)  = unwrap @client.select(@name, selector, value)
+    def press(key) = unwrap @client.press(@name, key)
+
+    def hover(selector = nil, ref: nil)
+      unwrap @client.hover(@name, selector, ref: ref)
+    end
+
+    def upload(selector = nil, path = nil, ref: nil)
+      unwrap @client.upload(@name, selector, path, ref: ref)
+    end
+
+    def select(selector = nil, value = nil, ref: nil)
+      unwrap @client.select(@name, selector, value, ref: ref)
+    end
+
     def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
     def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 
