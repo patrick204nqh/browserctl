@@ -84,7 +84,7 @@ Browserctl.workflow :verify_checkout do
 
   step "confirm checkout reached" do
     page(:main).wait("[data-test=checkout-header]", timeout: 15)
-    page(:main).screenshot(out: "evidence/checkout.png")
+    page(:main).screenshot(path: "evidence/checkout.png")
   end
 end
 ```
