@@ -16,15 +16,18 @@ module Browserctl
 
         def cmd_hover(req)
           with_page(req[:name]) do |session|
+            sel = resolve_selector_from(session, req)
+            return sel if sel.is_a?(Hash)
+
             coords = session.page.evaluate(
               "(function(sel) {   " \
               "var el = document.querySelector(sel);   " \
               "if (!el) return null;   " \
               "var r = el.getBoundingClientRect();   " \
               "return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; " \
-              "})(#{req[:selector].to_json})"
+              "})(#{sel.to_json})"
             )
-            return { error: "selector not found: #{req[:selector]}" } unless coords
+            return { error: "selector not found: #{sel}" } unless coords
 
             session.page.mouse.move(x: coords["x"], y: coords["y"])
             { ok: true }
@@ -36,8 +39,11 @@ module Browserctl
           return { error: "file not found: #{path}" } unless File.exist?(path)
 
           with_page(req[:name]) do |session|
-            el = session.page.at_css(req[:selector])
-            return { error: "selector not found: #{req[:selector]}" } unless el
+            sel = resolve_selector_from(session, req)
+            return sel if sel.is_a?(Hash)
+
+            el = session.page.at_css(sel)
+            return { error: "selector not found: #{sel}" } unless el
 
             el.select_file(path)
             { ok: true }
@@ -46,8 +52,11 @@ module Browserctl
 
         def cmd_select(req)
           with_page(req[:name]) do |session|
-            el = session.page.at_css(req[:selector])
-            return { error: "selector not found: #{req[:selector]}" } unless el
+            sel = resolve_selector_from(session, req)
+            return sel if sel.is_a?(Hash)
+
+            el = session.page.at_css(sel)
+            return { error: "selector not found: #{sel}" } unless el
 
             el.evaluate(
               "this.value = #{req[:value].to_json}; " \

@@ -108,4 +108,54 @@ RSpec.describe "interaction handlers" do
       expect(res[:error]).to match(/selector not found/)
     end
   end
+
+  describe "hover with ref" do
+    it "resolves selector from ref_registry and moves mouse" do
+      mouse = double("mouse")
+      page  = double("page", mouse: mouse)
+      make_page(page)
+      pages["p"].ref_registry = { "e4" => "#dropdown" }
+      allow(page).to receive(:evaluate)
+        .with(a_string_including("getBoundingClientRect"))
+        .and_return({ "x" => 100.0, "y" => 200.0 })
+      expect(mouse).to receive(:move).with(x: 100.0, y: 200.0)
+      res = dispatcher.dispatch({ cmd: "hover", name: "p", ref: "e4" })
+      expect(res).to eq({ ok: true })
+    end
+
+    it "returns error for unknown ref" do
+      page = double("page")
+      make_page(page)
+      pages["p"].ref_registry = {}
+      res = dispatcher.dispatch({ cmd: "hover", name: "p", ref: "e99" })
+      expect(res[:error]).to match(/ref 'e99' not found/)
+    end
+  end
+
+  describe "upload with ref" do
+    it "resolves selector from ref_registry" do
+      page = double("page")
+      make_page(page)
+      pages["p"].ref_registry = { "e5" => "#file-input" }
+      el = double("el")
+      allow(page).to receive(:at_css).with("#file-input").and_return(el)
+      expect(el).to receive(:select_file).with(anything)
+      # Use a real file path — use __FILE__ (this spec file itself)
+      res = dispatcher.dispatch({ cmd: "upload", name: "p", ref: "e5", path: __FILE__ })
+      expect(res).to eq({ ok: true })
+    end
+  end
+
+  describe "select with ref" do
+    it "resolves selector from ref_registry" do
+      page = double("page")
+      make_page(page)
+      pages["p"].ref_registry = { "e6" => "#country" }
+      el = double("el")
+      allow(page).to receive(:at_css).with("#country").and_return(el)
+      allow(el).to receive(:evaluate)
+      res = dispatcher.dispatch({ cmd: "select", name: "p", ref: "e6", value: "AU" })
+      expect(res).to eq({ ok: true })
+    end
+  end
 end
