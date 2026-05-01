@@ -191,8 +191,13 @@ module Browserctl
     end
 
     def navigate(url)             = unwrap @client.navigate(@name, url)
-    def fill(sel, val)            = unwrap @client.fill(@name, sel, val)
-    def click(sel)                = unwrap @client.click(@name, sel)
+    def fill(selector = nil, value = nil, ref: nil)
+      unwrap @client.fill(@name, selector, value, ref: ref)
+    end
+
+    def click(selector = nil, ref: nil)
+      unwrap @client.click(@name, selector, ref: ref)
+    end
     def snapshot(**)              = unwrap @client.snapshot(@name, **)
     def screenshot(**)            = unwrap @client.screenshot(@name, **)
     def wait(sel, timeout: 30)    = unwrap @client.wait(@name, sel, timeout: timeout)

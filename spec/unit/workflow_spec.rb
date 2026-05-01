@@ -447,3 +447,35 @@ RSpec.describe "WorkflowContext compose guard" do
     )
   end
 end
+
+RSpec.describe "PageProxy ref-based interaction" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  describe "#fill" do
+    it "passes ref: to client when ref: is given" do
+      expect(client).to receive(:fill).with("main", nil, "hello", ref: "e1").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.fill(nil, "hello", ref: "e1")
+    end
+
+    it "passes selector positionally when no ref given" do
+      expect(client).to receive(:fill).with("main", "input#email", "hello", ref: nil).and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.fill("input#email", "hello")
+    end
+  end
+
+  describe "#click" do
+    it "passes ref: to client when ref: is given" do
+      expect(client).to receive(:click).with("main", nil, ref: "e3").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.click(nil, ref: "e3")
+    end
+
+    it "passes selector positionally when no ref given" do
+      expect(client).to receive(:click).with("main", "button#submit", ref: nil).and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.click("button#submit")
+    end
+  end
+end
