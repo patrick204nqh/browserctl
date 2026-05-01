@@ -7,6 +7,8 @@ This guide gets you from zero to a working browser session in about five minutes
 - Ruby >= 3.3
 - Chrome or Chromium on your `PATH`
 
+> On macOS, Chrome installed as a `.app` bundle (the standard installer) is not on your PATH — `browserd` locates it automatically via its default install path, so no PATH configuration is needed.
+
 Check:
 
 ```bash
@@ -38,7 +40,7 @@ gem "browserctl"
 browserd &
 ```
 
-For a visible browser window (useful when debugging, or when you need to interact manually):
+For a visible browser window — required if you need to solve Cloudflare challenges or 2FA prompts manually, or if you want to watch interactions in real time:
 
 ```bash
 browserd --headed &
@@ -58,7 +60,7 @@ browserctl daemon ping
 Open a browser tab and give it a name:
 
 ```bash
-browserctl page open main --url https://example.com
+browserctl page open main --url https://the-internet.herokuapp.com/login
 ```
 
 The name (`main`) is what you'll use to address this tab in every subsequent command. Call it anything — `login`, `dashboard`, `session-1`.
@@ -79,31 +81,35 @@ You'll get a compact JSON array of every interactable element on the page, each 
 [
   {
     "ref": "e1",
-    "tag": "a",
-    "text": "More information...",
-    "selector": "body > div > p > a",
-    "attrs": { "href": "https://www.iana.org/domains/reserved" }
+    "tag": "input",
+    "placeholder": "Username",
+    "selector": "input[name='username']",
+    "attrs": { "type": "text", "name": "username" }
+  },
+  {
+    "ref": "e2",
+    "tag": "input",
+    "placeholder": "Password",
+    "selector": "input[name='password']",
+    "attrs": { "type": "password", "name": "password" }
+  },
+  {
+    "ref": "e3",
+    "tag": "button",
+    "text": "Login",
+    "selector": "button[type='submit']",
+    "attrs": { "type": "submit" }
   }
 ]
 ```
 
 These ref IDs are how you interact with elements without writing CSS selectors.
 
+> **Note:** Ref IDs are valid for the current page state only. Always take a fresh snapshot before interacting — refs change when the page updates.
+
 ---
 
-## 4. Navigate and interact
-
-Navigate to a different URL on the same named page:
-
-```bash
-browserctl navigate main https://the-internet.herokuapp.com/login
-```
-
-Snapshot again to discover the form fields:
-
-```bash
-browserctl snapshot main
-```
+## 4. Fill and submit
 
 Fill and submit using refs:
 
@@ -121,7 +127,7 @@ browserctl url main
 
 ---
 
-## 5. Observe results
+## 5. Check the result
 
 Take a screenshot:
 
@@ -145,6 +151,8 @@ browserctl daemon stop
 
 The daemon stops and the browser closes. Your session state is gone — next time you'll start fresh.
 
+> To preserve state across restarts, save and restore it: see [Session save/load](reference/commands.md#session).
+
 > The daemon also shuts itself down automatically after 30 minutes of inactivity.
 
 ---
@@ -165,3 +173,28 @@ You just drove a live browser from the command line with no scripts and no selec
 
 **Look things up**
 - [Command Reference](reference/commands.md) — every command and flag
+
+---
+
+## Troubleshooting
+
+### `browserd` is not running
+
+If any command returns an error like `browserd is not running`, or:
+
+```json
+{ "ok": false, "daemon": "offline", "error": "browserd is not running — start it with: browserd" }
+```
+
+Start the daemon:
+
+```bash
+browserd &
+```
+
+Confirm it's running:
+
+```bash
+browserctl daemon ping
+# → {"ok":true,"pid":12345,"protocol_version":"2"}
+```
