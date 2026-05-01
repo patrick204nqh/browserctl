@@ -2,8 +2,10 @@
 
 require "spec_helper"
 require "browserctl/runner"
+require "browserctl/commands/workflow"
 require "tmpdir"
 require "json"
+require "stringio"
 
 RSpec.describe Browserctl::Runner do
   subject(:runner) { described_class.new }
@@ -124,6 +126,31 @@ RSpec.describe Browserctl::Runner do
       result = runner.describe_workflow("describe_test")
       expect(result[:params][:email]).not_to have_key(:secret_ref)
       expect(result[:params][:note]).not_to have_key(:secret_ref)
+    end
+  end
+end
+
+RSpec.describe Browserctl::Commands::Workflow do
+  def capture_stdout
+    original = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original
+  end
+
+  describe ".run list" do
+    it "emits JSON with workflows array" do
+      runner = instance_double(Browserctl::Runner)
+      allow(runner).to receive(:list_workflows).and_return([
+        { name: "login", desc: "Log in to the app" },
+        { name: "checkout", desc: "Run checkout flow" }
+      ])
+      output = capture_stdout { described_class.run(runner, ["list"]) }
+      parsed = JSON.parse(output)
+      expect(parsed["workflows"]).to be_an(Array)
+      expect(parsed["workflows"].first["name"]).to eq("login")
     end
   end
 end
