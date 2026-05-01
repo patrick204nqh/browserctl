@@ -78,6 +78,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] `browserctl inspect` — open DevTools UI for a named page
 - [x] `browserctl cookies` / `set_cookie` / `clear_cookies` / `export-cookies` / `import-cookies` — full cookie management including CF clearance replay
 
+> _(All commands in this section were renamed in v0.6: `inspect` → `devtools`; `cookies`/`set_cookie`/`clear_cookies`/`export-cookies`/`import-cookies` → `cookie list`/`cookie set`/`cookie delete`/`cookie export`/`cookie import`.)_
+
 ### v0.4 — Distribution & Installability ✓ _(shipped)_
 **Goal:** Install with one command, anywhere.
 

@@ -89,6 +89,8 @@ Browserctl.workflow :verify_checkout do
 end
 ```
 
+> The DSL supports both CSS selectors (as above) and snapshot refs — use `page(:main).fill(nil, email, ref: "e1")` after snapshotting to interact without knowing the page structure in advance. Refs are preferred in AI-agent workflows.
+
 Workflows are plain Ruby. They compose, retry, timeout, and share steps. Params are typed. Secrets are never written to recordings.
 
 ---
