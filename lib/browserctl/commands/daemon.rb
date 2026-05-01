@@ -71,7 +71,7 @@ module Browserctl
           next unless status&.dig(:ok)
 
           { name: display_name, pid: status[:pid], pages: (client.page_list[:pages] || []).length }
-        rescue RuntimeError
+        rescue Browserctl::DaemonUnavailableError, RuntimeError
           nil
         end.compact
         puts({ daemons: rows }.to_json)
