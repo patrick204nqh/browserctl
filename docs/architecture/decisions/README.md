@@ -9,3 +9,7 @@
 | [0005](0005-ruby-dsl-for-workflows.md) | Ruby DSL for workflow authoring | accepted | 2026-04-20 |
 | [0006](0006-ai-optimized-snapshot-format.md) | AI-optimized DOM snapshot format | accepted | 2026-04-20 |
 | [0007](0007-daemon-idle-ttl.md) | 30-minute idle TTL for auto-shutdown | accepted | 2026-04-20 |
+| [0008](0008-session-persistence.md) | Snapshot-based session persistence | accepted | 2026-05-01 |
+| [0009](0009-error-handling-strategy.md) | Uniform JSON-RPC error format with per-thread isolation | accepted | 2026-05-01 |
+| [0010](0010-concurrency-model.md) | Thread-per-client with layered mutexes | accepted | 2026-05-01 |
+| [0011](0011-screenshot-format.md) | PNG default for screenshots with path-scoped safety | accepted | 2026-05-01 |
