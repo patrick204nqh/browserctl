@@ -10,6 +10,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4](https://github.com/patrick204nqh/browserctl/compare/v0.8.3...v0.8.4) (2026-05-01)
+
+
+### Bug Fixes
+
+* onboarding UX/DX improvements before v0.8.4 ([#73](https://github.com/patrick204nqh/browserctl/issues/73)) ([876dc58](https://github.com/patrick204nqh/browserctl/commit/876dc58c8408ffa5b4c861529db9f9d656204770))
+* OSS review improvements — security, community, and docs ([#76](https://github.com/patrick204nqh/browserctl/issues/76)) ([8e532f9](https://github.com/patrick204nqh/browserctl/commit/8e532f97d257b254fff601b7d2f5a38682f7795a))
+* **test:** clear localStorage before stale session save to prevent test pollution ([#72](https://github.com/patrick204nqh/browserctl/issues/72)) ([170b7be](https://github.com/patrick204nqh/browserctl/commit/170b7be68d4c4e366ad59c042500c3030886d70c))
+* UX/DX and docs improvements (M1–M4) ([#70](https://github.com/patrick204nqh/browserctl/issues/70)) ([747c17e](https://github.com/patrick204nqh/browserctl/commit/747c17e8821a0d1dde798ea8717ce3dd6cc33c63))
+
 ## [0.8.3](https://github.com/patrick204nqh/browserctl/compare/v0.8.2...v0.8.3) (2026-04-29)
 
 
