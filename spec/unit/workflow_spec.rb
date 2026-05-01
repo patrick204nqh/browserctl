@@ -360,9 +360,9 @@ RSpec.describe "WorkflowContext#load_session with expired_if:" do
 
   it "raises ArgumentError when expired_if: lambda takes arguments" do
     ctx = Browserctl::WorkflowContext.new({}, client)
-    expect {
-      ctx.load_session("s", expired_if: ->(page) { false })
-    }.to raise_error(ArgumentError, /expired_if.*zero arguments/)
+    expect do
+      ctx.load_session("s", expired_if: ->(_page) { false })
+    end.to raise_error(ArgumentError, /expired_if.*zero arguments/)
   end
 end
 

@@ -121,11 +121,11 @@ module Browserctl
               "bare return inside a Proc unwinds the caller"
       end
 
-      unless expired_if.arity == 0
-        raise ArgumentError,
-              "expired_if: lambda must take zero arguments (got #{expired_if.arity}) — " \
-              "use -> { page(:name).url... } to access pages via the workflow context"
-      end
+      return if expired_if.arity.zero?
+
+      raise ArgumentError,
+            "expired_if: lambda must take zero arguments (got #{expired_if.arity}) — " \
+            "use -> { page(:name).url... } to access pages via the workflow context"
     end
 
     def call_expired_if(expired_if, session_name)
