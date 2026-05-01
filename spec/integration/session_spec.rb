@@ -205,7 +205,9 @@ RSpec.describe "session commands", :integration do
 
     it "invokes fallback and recovers when expired_if detects a stale session" do
       # Save a session WITHOUT the auth marker — simulating a stale/logged-out save.
+      # Explicitly clear the key so prior-test localStorage pollution can't cause a false pass.
       @client.page_open("sess", url: "http://localhost:#{@port}/")
+      @client.storage_delete("sess", stores: "local")
       @client.session_save(session_name) # auth_valid is absent
       @client.page_close("sess")
 
