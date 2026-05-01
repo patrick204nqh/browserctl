@@ -190,7 +190,8 @@ module Browserctl
       @client = client
     end
 
-    def navigate(url)             = unwrap @client.navigate(@name, url)
+    def navigate(url) = unwrap @client.navigate(@name, url)
+
     def fill(selector = nil, value = nil, ref: nil)
       unwrap @client.fill(@name, selector, value, ref: ref)
     end
@@ -198,6 +199,7 @@ module Browserctl
     def click(selector = nil, ref: nil)
       unwrap @client.click(@name, selector, ref: ref)
     end
+
     def snapshot(**)              = unwrap @client.snapshot(@name, **)
     def screenshot(**)            = unwrap @client.screenshot(@name, **)
     def wait(sel, timeout: 30)    = unwrap @client.wait(@name, sel, timeout: timeout)
@@ -215,9 +217,17 @@ module Browserctl
     end
 
     def press(key)               = unwrap @client.press(@name, key)
-    def hover(selector)          = unwrap @client.hover(@name, selector)
-    def upload(selector, path)   = unwrap @client.upload(@name, selector, path)
-    def select(selector, value)  = unwrap @client.select(@name, selector, value)
+    def hover(selector = nil, ref: nil)
+      unwrap @client.hover(@name, selector, ref: ref)
+    end
+
+    def upload(selector = nil, path = nil, ref: nil)
+      unwrap @client.upload(@name, selector, path, ref: ref)
+    end
+
+    def select(selector = nil, value = nil, ref: nil)
+      unwrap @client.select(@name, selector, value, ref: ref)
+    end
     def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
     def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 

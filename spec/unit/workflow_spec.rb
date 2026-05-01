@@ -478,4 +478,28 @@ RSpec.describe "PageProxy ref-based interaction" do
       proxy.click("button#submit")
     end
   end
+
+  describe "#hover" do
+    it "passes ref: to client" do
+      expect(client).to receive(:hover).with("main", nil, ref: "e4").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.hover(nil, ref: "e4")
+    end
+  end
+
+  describe "#upload" do
+    it "passes ref: to client" do
+      expect(client).to receive(:upload).with("main", nil, "/tmp/file.pdf", ref: "e5").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.upload(nil, "/tmp/file.pdf", ref: "e5")
+    end
+  end
+
+  describe "#select" do
+    it "passes ref: to client" do
+      expect(client).to receive(:select).with("main", nil, "AU", ref: "e6").and_return({ ok: true })
+      proxy = Browserctl::PageProxy.new("main", client)
+      proxy.select(nil, "AU", ref: "e6")
+    end
+  end
 end
