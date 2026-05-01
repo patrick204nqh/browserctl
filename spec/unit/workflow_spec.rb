@@ -357,6 +357,13 @@ RSpec.describe "WorkflowContext#load_session with expired_if:" do
     expect(ctx).to have_received(:invoke).with("login").once
     expect(invocations).to eq(0)
   end
+
+  it "raises ArgumentError when expired_if: lambda takes arguments" do
+    ctx = Browserctl::WorkflowContext.new({}, client)
+    expect {
+      ctx.load_session("s", expired_if: ->(page) { false })
+    }.to raise_error(ArgumentError, /expired_if.*zero arguments/)
+  end
 end
 
 RSpec.describe Browserctl::WorkflowContext do
@@ -422,5 +429,21 @@ RSpec.describe Browserctl::WorkflowContext do
 
       expect { ctx.invoke("loop_a") }.to raise_error(Browserctl::WorkflowError, /circular/)
     end
+  end
+end
+
+RSpec.describe "WorkflowContext compose guard" do
+  let(:client) { instance_double(Browserctl::Client) }
+
+  it "raises WorkflowError with a helpful message when compose is called inside a step block" do
+    defn = Browserctl::WorkflowDefinition.new("test")
+    defn.step("bad") do
+      compose "other_workflow"
+    end
+
+    expect { defn.call({}, client) }.to raise_error(
+      Browserctl::WorkflowError,
+      /compose.*definition level.*invoke/i
+    )
   end
 end

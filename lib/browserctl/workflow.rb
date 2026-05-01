@@ -104,14 +104,28 @@ module Browserctl
       raise WorkflowError, msg unless condition
     end
 
+    def compose(*)
+      raise WorkflowError,
+            "`compose` must be called at the workflow definition level, not inside a step block. " \
+            "Did you mean `invoke`?"
+    end
+
     private
 
     def validate_expired_if!(expired_if)
-      return unless expired_if && !expired_if.lambda?
+      return unless expired_if
 
-      raise ArgumentError,
-            "expired_if: must be a lambda (-> { }), not a Proc — " \
-            "bare return inside a Proc unwinds the caller"
+      unless expired_if.lambda?
+        raise ArgumentError,
+              "expired_if: must be a lambda (-> { }), not a Proc — " \
+              "bare return inside a Proc unwinds the caller"
+      end
+
+      unless expired_if.arity == 0
+        raise ArgumentError,
+              "expired_if: lambda must take zero arguments (got #{expired_if.arity}) — " \
+              "use -> { page(:name).url... } to access pages via the workflow context"
+      end
     end
 
     def call_expired_if(expired_if, session_name)
