@@ -20,14 +20,14 @@ Browserctl.workflow "the_internet/login" do
 
   step "verify secure area" do
     assert page(:main).url.include?("/secure"), "expected redirect to /secure"
-    flash = client.evaluate("main", "document.querySelector('.flash.success')?.innerText?.trim()")[:result]
+    flash = page(:main).evaluate("document.querySelector('.flash.success')?.innerText?.trim()")
     assert flash&.include?("You logged into a secure area!"), "expected success flash, got: #{flash.inspect}"
     page(:main).screenshot(path: screenshot_path)
   end
 
   step "logout and verify" do
     page(:main).click("a[href='/logout']")
-    flash = client.evaluate("main", "document.querySelector('.flash.success')?.innerText?.trim()")[:result]
+    flash = page(:main).evaluate("document.querySelector('.flash.success')?.innerText?.trim()")
     assert flash&.include?("You logged out"), "expected logout flash, got: #{flash.inspect}"
   end
 end

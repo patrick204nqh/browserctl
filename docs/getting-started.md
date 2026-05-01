@@ -143,17 +143,62 @@ browserctl snapshot main --diff
 
 ---
 
-## 6. Shut down
+## 6. Save your session (optional)
+
+If you want to pick up exactly where you left off next time — same tabs, same cookies, same auth — save your session before stopping:
+
+```bash
+browserctl session save my-first-session
+```
+
+Restore it on a fresh daemon:
+
+```bash
+browserd &
+browserctl session load my-first-session
+# → pages re-opened, cookies restored, localStorage seeded
+```
+
+---
+
+## 7. Shut down
 
 ```bash
 browserctl daemon stop
 ```
 
-The daemon stops and the browser closes. Your session state is gone — next time you'll start fresh.
-
-> To preserve state across restarts, save and restore it: see [Session save/load](reference/commands.md#session).
+The daemon stops and the browser closes. Unsaved session state is gone — next time you'll start fresh unless you saved above.
 
 > The daemon also shuts itself down automatically after 30 minutes of inactivity.
+
+---
+
+## 8. Your first workflow (optional)
+
+CLI commands are great for one-off exploration. Workflows let you save a sequence of steps as a reusable Ruby script:
+
+```ruby
+# .browserctl/workflows/hello.rb
+Browserctl.workflow "hello" do
+  desc "Open a page, print its title"
+
+  step "open page" do
+    open_page(:main, url: "https://example.com")
+  end
+
+  step "print title" do
+    title = page(:main).evaluate("document.title")
+    puts "  → #{title}"
+  end
+end
+```
+
+```bash
+browserctl workflow run hello
+# → Example Domain
+```
+
+That's the complete mental model: `open_page` opens a tab, `page(:name)` addresses it, `evaluate` runs JavaScript on it. Everything else in the [Writing Workflows](guides/writing-workflows.md) guide builds on these three primitives.
 
 ---
 

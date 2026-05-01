@@ -19,12 +19,12 @@ browserctl workflow run examples/the_internet/dynamic_loading.rb
 browserctl workflow run examples/the_internet/add_remove_elements.rb
 
 # test-automation-practices examples
-browserctl workflow run examples/test_automation_practices/login.rb
-browserctl workflow run examples/test_automation_practices/login_negative.rb
-browserctl workflow run examples/test_automation_practices/dynamic_elements.rb
-browserctl workflow run examples/test_automation_practices/checkboxes.rb
-browserctl workflow run examples/test_automation_practices/notifications.rb
-browserctl workflow run examples/test_automation_practices/key_press.rb
+browserctl workflow run examples/test_automation_practices/auth/login.rb
+browserctl workflow run examples/test_automation_practices/auth/login_negative.rb
+browserctl workflow run examples/test_automation_practices/dynamic/dynamic_elements.rb
+browserctl workflow run examples/test_automation_practices/forms/checkboxes.rb
+browserctl workflow run examples/test_automation_practices/dialogs/notifications.rb
+browserctl workflow run examples/test_automation_practices/interactions/key_press.rb
 
 browserctl daemon stop
 ```
@@ -46,7 +46,7 @@ Each example saves a screenshot to `docs/assets/` on completion. Screenshots are
 
 Target: `https://moatazeldebsy.github.io/test-automation-practices` — a self-hosted React SPA that can also be run locally with `npm run dev`. All interactive elements carry `data-test` attributes for stable targeting.
 
-### `test_automation_practices/login.rb` — Login and Logout
+### `test_automation_practices/auth/login.rb` — Login and Logout
 
 Covers: `fill`, `click`, `wait`, `evaluate`
 
@@ -65,7 +65,7 @@ Fills the public test credentials into the auth form, submits, waits for the suc
 
 ---
 
-### `test_automation_practices/login_negative.rb` — Invalid Credentials
+### `test_automation_practices/auth/login_negative.rb` — Invalid Credentials
 
 Covers: `fill`, `click`, `wait`, `evaluate`
 
@@ -81,7 +81,7 @@ Submits wrong credentials and asserts the error element appears while no success
 
 ---
 
-### `test_automation_practices/dynamic_elements.rb` — Dynamic Content Loading
+### `test_automation_practices/dynamic/dynamic_elements.rb` — Dynamic Content Loading
 
 Covers: `click`, `wait`, `wait`, `evaluate`
 
@@ -99,7 +99,7 @@ Asserts no dynamic items exist before triggering a reload, clicks the reload but
 
 ---
 
-### `test_automation_practices/checkboxes.rb` — Checkbox State Management
+### `test_automation_practices/forms/checkboxes.rb` — Checkbox State Management
 
 Covers: `click`, `evaluate`
 
@@ -117,7 +117,7 @@ Reads initial state (all unchecked), toggles one checkbox individually, then use
 
 ---
 
-### `test_automation_practices/notifications.rb` — Toast Notifications
+### `test_automation_practices/dialogs/notifications.rb` — Toast Notifications
 
 Covers: `click`, `wait`, `evaluate`
 
@@ -134,7 +134,7 @@ Triggers a success notification and waits for it using a `data-test` attribute p
 
 ---
 
-### `test_automation_practices/key_press.rb` — Keyboard Event Capture
+### `test_automation_practices/interactions/key_press.rb` — Keyboard Event Capture
 
 Covers: `evaluate`, `store`, `fetch`
 
@@ -165,7 +165,6 @@ Navigates to the login page, fills in the public test credentials, submits the f
   [ok]   fill and submit credentials
   [ok]   verify secure area
   [ok]   logout and verify
-  [ok]   capture screenshot
 ```
 
 ---
@@ -240,16 +239,16 @@ Clicks "Add Element" three times, asserts three delete buttons are present, remo
 
 | Pattern | Where it appears |
 |---------|-----------------|
-| Open a named page with initial URL | All examples — `client.open_page("main", url: ...)` |
-| Fill form inputs | `login.rb` — `page(:main).fill(selector, value)` |
+| Open a named page with initial URL | All examples — `open_page(:main, url: ...)` |
+| Fill form inputs | `auth/login.rb` — `page(:main).fill(selector, value)` |
 | Click buttons and links | All examples — `page(:main).click(selector)` |
 | Assert current URL | `the_internet/login.rb` — `page(:main).url` |
-| Read DOM state via JS | `checkboxes.rb`, `dropdown.rb`, `add_remove_elements.rb` — `client.evaluate("main", expression)[:result]` |
-| Set `<select>` element | `dropdown.rb` — `page(:main).select("select#dropdown", "1")` |
-| Dispatch synthetic events via JS | `key_press.rb` — `client.evaluate("main", "document.dispatchEvent(new KeyboardEvent(...))")` |
-| Wait for async element | `dynamic_loading.rb` — `page(:main).wait(selector, timeout:)` |
-| Poll for async element | `dynamic_elements.rb` — `page(:main).wait(selector, timeout:)` |
-| Attribute prefix selector | `notifications.rb` — `[data-test^="notification-"]` for dynamic IDs |
-| Share state across steps | `key_press.rb` — `store(:key, value)` / `fetch(:key)` |
-| Negative-path assertion | `login_negative.rb` — assert error shown, success absent |
+| Read DOM state via JS | `forms/checkboxes.rb`, `the_internet/dropdown.rb` — `page(:main).evaluate(expression)` |
+| Set `<select>` element | `the_internet/dropdown.rb` — `page(:main).select("select#dropdown", "1")` |
+| Dispatch synthetic events via JS | `interactions/key_press.rb` — `page(:main).evaluate("document.dispatchEvent(new KeyboardEvent(...))")` |
+| Wait for async element | `the_internet/dynamic_loading.rb` — `page(:main).wait(selector, timeout:)` |
+| Poll for async element | `dynamic/dynamic_elements.rb` — `page(:main).wait(selector, timeout:)` |
+| Attribute prefix selector | `dialogs/notifications.rb` — `[data-test^="notification-"]` for dynamic IDs |
+| Share state across steps | `interactions/key_press.rb` — `store(:key, value)` / `fetch(:key)` |
+| Negative-path assertion | `auth/login_negative.rb` — assert error shown, success absent |
 | Assert with message | All examples — `assert condition, "message"` |
