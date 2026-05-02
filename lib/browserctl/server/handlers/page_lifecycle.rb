@@ -8,7 +8,7 @@ module Browserctl
 
         def cmd_page_open(req)
           session = @global_mutex.synchronize do
-            @pages[req[:name]] ||= PageSession.new(@browser.create_page)
+            @pages[req[:name]] ||= PageSession.new(@driver.create_page)
           end
           session.page.go_to(req[:url]) if req[:url]
           { ok: true, name: req[:name] }
@@ -25,9 +25,7 @@ module Browserctl
         end
 
         def cmd_page_focus(req)
-          unless @browser.options.headless == false
-            return { error: "page focus requires headed mode — start browserd with --headed" }
-          end
+          return { error: "page focus requires headed mode — start browserd with --headed" } unless @driver.headed?
 
           with_page(req[:name]) do |session|
             session.page.activate

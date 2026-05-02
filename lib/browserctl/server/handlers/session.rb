@@ -47,7 +47,7 @@ module Browserctl
             if existing
               existing.page.go_to(page_data[:url])
             else
-              new_page = @browser.create_page
+              new_page = @driver.create_page
               new_page.go_to(page_data[:url])
               @global_mutex.synchronize { @pages[page_name.to_s] = PageSession.new(new_page) }
             end
@@ -61,7 +61,7 @@ module Browserctl
           data[:local_storage].each do |origin, keys|
             next if keys.empty?
 
-            tmp_page = @browser.create_page
+            tmp_page = @driver.create_page
             begin
               tmp_page.go_to(origin)
               keys.each do |k, v|

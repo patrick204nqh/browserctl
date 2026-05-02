@@ -73,9 +73,9 @@ module Browserctl
     SCREENSHOT_ROOTS = [SCREENSHOT_DIR, File.expand_path(".")].freeze
     SCREENSHOT_EXTS  = %w[.png .jpg .jpeg].freeze
 
-    def initialize(pages, browser, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
+    def initialize(pages, driver, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
       @pages            = pages
-      @browser          = browser
+      @driver           = driver
       @snapshot_builder = snapshot_builder
       @global_mutex     = global_mutex
       @kv_store         = {}

@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require "ferrum"
 require "socket"
 require "json"
 require "fileutils"
 require "timeout"
 require_relative "constants"
 require_relative "logger"
+require_relative "driver"
 require_relative "server/command_dispatcher"
 require_relative "server/idle_watcher"
 require_relative "server/page_session"
 
 module Browserctl
   class Server
-    def initialize(headless: true, socket_path: SOCKET_PATH, pid_path: PID_PATH)
+    def initialize(headless: true, browser: "chrome", socket_path: SOCKET_PATH, pid_path: PID_PATH)
       @socket_path = socket_path
       @pid_path    = pid_path
-      prepare_runtime(headless)
-      @dispatcher = CommandDispatcher.new(@pages, @browser, global_mutex: @mutex)
+      prepare_runtime(headless, browser)
+      @dispatcher = CommandDispatcher.new(@pages, @driver, global_mutex: @mutex)
     end
 
     def run
@@ -33,24 +33,10 @@ module Browserctl
 
     private
 
-    def prepare_runtime(headless)
+    def prepare_runtime(headless, browser)
       FileUtils.mkdir_p(File.dirname(@socket_path))
-      @browser = init_browser(headless)
+      @driver = Driver::CDP.new(headless: headless, browser: browser)
       init_state
-    end
-
-    def init_browser(headless)
-      Ferrum::Browser.new(headless: headless, **ferrum_options)
-    end
-
-    def ferrum_options
-      opts = { timeout: 30, process_timeout: 30,
-               browser_options: { "disable-dev-shm-usage" => nil, "disable-gpu" => nil } }
-      if ENV["CI"] || ENV["BROWSERCTL_NO_SANDBOX"]
-        Browserctl.logger.warn "no-sandbox enabled (CI or BROWSERCTL_NO_SANDBOX set)"
-        opts[:browser_options]["no-sandbox"] = nil
-      end
-      opts
     end
 
     def init_state
@@ -119,7 +105,7 @@ module Browserctl
     def teardown(idle, server)
       idle&.kill
       quietly { server&.close }
-      quietly { Timeout.timeout(5) { @browser.quit } }
+      quietly { Timeout.timeout(5) { @driver.quit } }
       quietly { File.unlink(@socket_path) }
       quietly { File.unlink(@pid_path) }
     end
