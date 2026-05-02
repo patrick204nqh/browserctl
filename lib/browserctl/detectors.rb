@@ -11,7 +11,7 @@ module Browserctl
 
     # Returns true if the page appears to be showing a Cloudflare challenge.
     # Checks both the current URL and the page body for known Cloudflare signals.
-    # @param page [Ferrum::Page] the browser page to inspect
+    # @param page [#current_url, #body] the browser page to inspect
     # @return [Boolean]
     def self.cloudflare?(page)
       url  = page.current_url.to_s

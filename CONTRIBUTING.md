@@ -16,7 +16,7 @@ This guide covers the workflow for contributing code, docs, and bug reports to b
 
 ## Development Setup
 
-**Requirements:** Ruby >= 3.3, Chrome or Chromium installed
+**Requirements:** Ruby >= 3.3, Chrome, Chromium, or Brave installed
 
 ```bash
 git clone https://github.com/patrick204nqh/browserctl

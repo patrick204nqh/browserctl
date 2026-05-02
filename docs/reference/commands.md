@@ -41,7 +41,7 @@ Page is always the first argument after the verb.
 | `wait <page> <selector> [--timeout N]` | Wait until selector appears (default: 30s) |
 | `pause <page> [--message MSG]` | Pause automation — browser stays live for manual interaction |
 | `resume <page>` | Resume automation after manual action |
-| `devtools <page>` | Open Chrome DevTools for a named page |
+| `devtools <page>` | Open DevTools for a named page (CDP drivers only) |
 | `press <page> <key>` | Fire a `keydown` + `keyup` event for the given key |
 | `hover <page> <selector>` or `hover <page> --ref <id>` | Move the mouse cursor to the centre of the matched element |
 | `upload <page> <selector> <file>` or `upload <page> --ref <id> <file>` | Set a `<input type="file">` element's value to a file path |
@@ -181,7 +181,7 @@ A session bundles everything needed to resume a browser state: all open pages (n
 |---|---|
 | `daemon ping` | Check if `browserd` is alive — returns `{ ok: true, pid: N, protocol_version: "2" }` |
 | `daemon status` | Show daemon status, PID, and all open pages with their current URLs |
-| `daemon start [--headed] [--name NAME]` | Start a new `browserd` instance in the background |
+| `daemon start [--headed] [--browser chrome|chromium|brave] [--name NAME]` | Start a new `browserd` instance in the background |
 | `daemon stop` | Stop the running `browserd` gracefully |
 | `daemon list` | List all running daemon instances with name, PID, and page count |
 
@@ -208,6 +208,7 @@ When the daemon is not running:
 | `--headed` | headless | Start with a visible browser window |
 | `--name <id>` | auto | Name this daemon instance; if omitted and the default slot is taken, auto-picks `d1`, `d2`, ... |
 | `--log-level <level>` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+| `--browser <browser>` | `chrome` | Browser to launch: `chrome`, `chromium`, or `brave` |
 
 `browserd` always writes logs to `~/.browserctl/browserd.log` (or `~/.browserctl/<name>.log` for a named instance). The log path is printed to stderr on startup:
 
@@ -312,7 +313,7 @@ Methods available on `page(:name)` inside a workflow:
 | `storage_get(key, store: "local")` | Read a localStorage or sessionStorage key |
 | `storage_set(key, value, store: "local")` | Write a localStorage or sessionStorage key |
 | `delete_cookies` | Delete all cookies for the page |
-| `devtools` | Return the Chrome DevTools URL for this page |
+| `devtools` | Return the DevTools URL for this page (CDP drivers only) |
 | `press(key)` | Fire a `keydown` + `keyup` event for the given key |
 | `hover(selector = nil, ref: nil)` | Move mouse to element by selector or ref |
 | `upload(selector = nil, path = nil, ref: nil)` | Set file input by selector or ref |
