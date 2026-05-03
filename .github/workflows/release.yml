@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 10
     environment: rubygems-release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ needs.release-pr.outputs.tag_name }}
       - uses: ./.github/actions/setup-ruby
