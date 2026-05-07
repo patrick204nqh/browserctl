@@ -24,7 +24,7 @@ if opts[:name] && opts[:name] !~ /\A[a-zA-Z0-9_-]{1,64}\z/
 end
 
 unless SUPPORTED_BROWSERS.include?(opts[:browser])
-  abort "Unsupported browser #{opts[:browser].inspect} — choose one of: #{SUPPORTED_BROWSERS.join(", ")}"
+  abort "Unsupported browser #{opts[:browser].inspect} — choose one of: #{SUPPORTED_BROWSERS.join(', ')}"
 end
 
 assigned_name = opts[:name] || Browserctl.next_daemon_name
