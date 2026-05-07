@@ -23,6 +23,7 @@ module Browserctl
   class TimeoutError     < Error; def self.default_code = "timeout"            end
   class KeyNotFound < Error; def self.default_code = "key_not_found" end
   class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable" end
+  class BrowserNotFound < Error; def self.default_code = "browser_not_found" end
 
   class WorkflowError < Error; def self.default_code = "workflow_error" end
   class SecretResolverError < WorkflowError; def self.default_code = "secret_resolver_error" end

@@ -9,15 +9,22 @@ require "browserctl/logger"
 require "browserctl/server"
 require "browserctl/version"
 
+SUPPORTED_BROWSERS = %w[chrome chromium brave].freeze
+
 opts = Optimist.options do
   version "browserd #{Browserctl::VERSION}"
   opt :headed,    "Run with a visible browser window",        default: false,  short: "-H"
   opt :log_level, "Log verbosity: debug, info, warn, error",  default: "info", short: "-l", type: :string
   opt :name,      "Daemon instance name for multi-agent use", default: nil,    short: "-n", type: :string
+  opt :browser,   "Browser to use: chrome, chromium, brave",  default: "chrome", short: "-b", type: :string
 end
 
 if opts[:name] && opts[:name] !~ /\A[a-zA-Z0-9_-]{1,64}\z/
   abort "Invalid daemon name #{opts[:name].inspect} — use only letters, digits, _ or -"
+end
+
+unless SUPPORTED_BROWSERS.include?(opts[:browser])
+  abort "Unsupported browser #{opts[:browser].inspect} — choose one of: #{SUPPORTED_BROWSERS.join(', ')}"
 end
 
 assigned_name = opts[:name] || Browserctl.next_daemon_name
@@ -29,8 +36,13 @@ end
 log_path = Browserctl.log_path(assigned_name)
 warn "browserd starting — log: #{log_path}"
 Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
-Browserctl::Server.new(
-  headless: !opts[:headed],
-  socket_path: Browserctl.socket_path(assigned_name),
-  pid_path: Browserctl.pid_path(assigned_name)
-).run
+begin
+  Browserctl::Server.new(
+    headless: !opts[:headed],
+    browser: opts[:browser],
+    socket_path: Browserctl.socket_path(assigned_name),
+    pid_path: Browserctl.pid_path(assigned_name)
+  ).run
+rescue Browserctl::BrowserNotFound => e
+  abort e.message
+end

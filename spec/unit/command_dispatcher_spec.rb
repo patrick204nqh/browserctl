@@ -6,10 +6,10 @@ require "browserctl/server/snapshot_builder"
 require "browserctl/server/page_session"
 
 RSpec.describe Browserctl::CommandDispatcher do
-  let(:browser)    { double("browser") }
+  let(:driver)     { double("driver") }
   let(:pages)      { {} }
   let(:snapshot)   { instance_double(Browserctl::SnapshotBuilder) }
-  subject(:dispatcher) { described_class.new(pages, browser, snapshot) }
+  subject(:dispatcher) { described_class.new(pages, driver, snapshot) }
 
   describe "#dispatch" do
     it "returns error for unknown command" do
@@ -34,7 +34,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "page_open creates and stores a page" do
       page = double("page")
-      allow(browser).to receive(:create_page).and_return(page)
+      allow(driver).to receive(:create_page).and_return(page)
       result = dispatcher.dispatch({ cmd: "page_open", name: "home" })
       expect(result).to eq({ ok: true, name: "home" })
       expect(pages["home"]).to be_a(Browserctl::PageSession)
@@ -43,7 +43,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "page_open navigates to url when given" do
       page = double("page")
-      allow(browser).to receive(:create_page).and_return(page)
+      allow(driver).to receive(:create_page).and_return(page)
       expect(page).to receive(:go_to).with("http://example.com")
       dispatcher.dispatch({ cmd: "page_open", name: "home", url: "http://example.com" })
     end
@@ -76,7 +76,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:html) { '<html><body><input name="email"><button>Go</button></body></html>' }
     let(:page) { instance_double("Ferrum::Page", body: html, current_url: "https://example.com") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     before do
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
@@ -111,7 +111,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:html_v2) { '<html><body><button id="a">A</button><button id="b">B</button></body></html>' }
     let(:page)    { instance_double("Ferrum::Page", current_url: "https://example.com") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     it "returns full snapshot on first call with diff: true (no previous)" do
       allow(page).to receive(:body).and_return(html_v1)
@@ -140,7 +140,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "#cmd_screenshot" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     it "rejects paths outside the allowed screenshot directory" do
       res = dispatcher.dispatch({ cmd: "screenshot", name: "main",
@@ -184,7 +184,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "#cmd_wait" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     it "returns ok with selector when element appears" do
       call_count = 0
@@ -208,7 +208,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:html) { '<html><body><input name="q"><button>Search</button></body></html>' }
     let(:page) { instance_double("Ferrum::Page", body: html, current_url: "https://example.com") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     it 'returns elements snapshot for format: "elements"' do
       res = dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
@@ -227,7 +227,7 @@ RSpec.describe Browserctl::CommandDispatcher do
 
   describe "Cloudflare challenge detection" do
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     context "when snapshot detects challenge page" do
       let(:cf_html) { '<html><body class="cf-challenge-running">Just a moment...</body></html>' }
@@ -277,7 +277,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "#cmd_pause and #cmd_resume" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     it "pause returns ok and marks page as paused" do
       res = dispatcher.dispatch({ cmd: "pause", name: "main" })
@@ -322,7 +322,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "plugin commands" do
     let(:page)  { instance_double("Ferrum::Page") }
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, double("browser")) }
+    subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
     after { Browserctl.instance_variable_set(:@plugin_commands, {}) }
 
@@ -365,7 +365,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     let(:builder) { Browserctl::SnapshotBuilder.new }
-    subject(:dispatcher) { described_class.new(pages, double("browser"), builder) }
+    subject(:dispatcher) { described_class.new(pages, double("driver"), builder) }
 
     it "stores ref registry after ai snapshot" do
       dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
@@ -415,32 +415,39 @@ RSpec.describe Browserctl::CommandDispatcher do
   end
 
   describe "#cmd_devtools" do
-    let(:browser) { double("browser") }
-    let(:page)    { instance_double("Ferrum::Page") }
-    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, browser) }
+    let(:driver) { double("driver") }
+    let(:page)   { instance_double("Ferrum::Page") }
+    let(:pages)  { { "main" => Browserctl::PageSession.new(page) } }
+    subject(:dispatcher) { described_class.new(pages, driver) }
 
-    it "returns a devtools_url for a known page" do
-      allow(browser).to receive_message_chain(:process, :port).and_return(9222)
-      allow(page).to receive(:target_id).and_return("ABCD1234")
+    it "returns a devtools_url for a known page when driver supports devtools" do
+      allow(driver).to receive(:supports?).with(:devtools).and_return(true)
+      allow(driver).to receive(:devtools_info).with(page).and_return({ port: 9222, target_id: "ABCD1234" })
       res = dispatcher.dispatch({ cmd: "devtools", name: "main" })
       expect(res[:ok]).to be true
       expect(res[:devtools_url]).to include("9222")
       expect(res[:devtools_url]).to include("ABCD1234")
     end
 
+    it "returns error when driver does not support devtools" do
+      allow(driver).to receive(:supports?).with(:devtools).and_return(false)
+      res = dispatcher.dispatch({ cmd: "devtools", name: "main" })
+      expect(res[:error]).to match(/not supported by this driver/)
+    end
+
     it "returns error for unknown page" do
+      allow(driver).to receive(:supports?).with(:devtools).and_return(true)
       res = dispatcher.dispatch({ cmd: "devtools", name: "ghost" })
       expect(res[:error]).to match(/no page named 'ghost'/)
     end
   end
 
   describe "#cmd_cookies / #cmd_set_cookie / #cmd_delete_cookies" do
-    let(:browser) { double("browser") }
+    let(:driver)  { double("driver") }
     let(:page)    { instance_double("Ferrum::Page") }
     let(:cookies) { double("cookies") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
-    subject(:dispatcher) { described_class.new(pages, browser) }
+    subject(:dispatcher) { described_class.new(pages, driver) }
 
     before { allow(page).to receive(:cookies).and_return(cookies) }
 
