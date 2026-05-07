@@ -15,7 +15,8 @@
       "source": "./",
       "strict": true,
       "skills": [
-        "./skills/browserctl"
+        "./skills/automate",
+        "./skills/feedback"
       ]
     }
   ]

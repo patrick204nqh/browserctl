@@ -1,22 +1,25 @@
 ---
-name: browserctl
-description: Control a persistent browser daemon with discrete shell commands. Use for web automation, AI agent browser tasks, login flows, form filling, screenshots, and replayable Ruby workflows.
+name: automate
+description: Drive a persistent browser daemon with discrete shell commands — Chrome, Chromium, or Brave. Use for web automation, AI agent browser tasks, login flows, form filling, screenshots, and replayable Ruby workflows.
 user-invocable: false
 ---
 
-# browserctl — AI agent skill
+# browserctl — browser automation skill
 
 ## What this is
 
 `browserctl` gives you a persistent browser you can control with discrete shell commands.
 The browser state (open tabs, cookies, localStorage) survives between commands — you don't
-restart the browser on every action.
+restart the browser on every action. As of v0.9 the daemon is browser-agnostic: pick
+Chrome (default), Chromium, or Brave with `-b/--browser`.
 
 ## Starting the daemon
 
 ```
-browserd &         # headless (default)
-browserd --headed  # shows the browser window
+browserd &                  # headless Chrome (default)
+browserd --headed           # visible window
+browserd -b brave           # use Brave instead of Chrome
+browserd -b chromium -H     # Chromium, headed
 ```
 
 Or start it through the CLI (spawns in background automatically):
@@ -156,9 +159,12 @@ browserctl --daemon session-abc page open main --url https://app.example.com
 
 | Flag | Default | Description |
 |---|---|---|
-| `--headed` | headless | Start with a visible browser window |
-| `--name <id>` | auto | Name this daemon instance; if omitted and the default slot is taken, auto-picks `d1`, `d2`, ... |
-| `--log-level <level>` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+| `-H`, `--headed` | headless | Start with a visible browser window |
+| `-b`, `--browser <name>` | `chrome` | Which browser to launch: `chrome`, `chromium`, or `brave` |
+| `-n`, `--name <id>` | auto | Name this daemon instance; if omitted and the default slot is taken, auto-picks `d1`, `d2`, ... |
+| `-l`, `--log-level <level>` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+
+Browser binary discovery is automatic on macOS, Linux, and Windows. To override the resolved path, set one of: `CHROME_PATH`, `CHROMIUM_PATH`, `BRAVE_PATH`. If a browser isn't installed, `browserd` exits with a clear error pointing to the env var.
 
 ## Snapshot format (elements)
 
@@ -303,6 +309,8 @@ browserctl navigate main https://protected.example.com
 ```
 
 > `cf_clearance` expires in 30 min–a few hours. Re-capture when Cloudflare challenges again.
+
+> Switching browsers (Brave, Chromium) does **not** bypass Cloudflare Turnstile. The CDP attach itself is detected as automation regardless of the Chromium flavour. The reliable path is HITL solve once → capture `cf_clearance` → replay.
 
 ## Rules
 
@@ -475,6 +483,7 @@ page(:main).devtools
 ## Troubleshooting
 
 - `browserd is not running` → run `browserd &` or `browserctl daemon start`; check `~/.browserctl/browserd.log` for startup errors
+- `Brave browser not found` (or Chrome/Chromium) → install it, or set `BRAVE_PATH` / `CHROME_PATH` / `CHROMIUM_PATH` to the executable
 - `default slot taken — starting as 'd1'` → connect with `browserctl --daemon d1 <command>`, or stop the existing daemon first
 - `no page named 'X'` → run `browserctl daemon status` to see what's open, then `browserctl page open X`
 - Selector not found → use `snapshot` to get valid selectors (elements format is the default)
