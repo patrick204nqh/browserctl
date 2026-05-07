@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-02
 **Status**: accepted
-**Supersedes**: ADR-0002
+**Extends**: ADR-0002 (Ferrum/CDP remains the implementation; this ADR adds the abstraction layer in front of it)
 **Deciders**: Patrick
 
 ## Context

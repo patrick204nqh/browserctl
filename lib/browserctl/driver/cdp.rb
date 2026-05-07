@@ -3,6 +3,7 @@
 require "ferrum"
 require_relative "base"
 require_relative "cdp_page"
+require_relative "../errors"
 
 module Browserctl
   module Driver
@@ -60,7 +61,9 @@ module Browserctl
           browser_options: { "disable-dev-shm-usage" => nil, "disable-gpu" => nil }
         }
 
-        opts[:browser_path] = resolve_browser_path if @browser != "chrome"
+        if @browser != "chrome" && (path = resolve_browser_path)
+          opts[:browser_path] = path
+        end
 
         if ENV["CI"] || ENV["BROWSERCTL_NO_SANDBOX"]
           Browserctl.logger.warn "no-sandbox enabled (CI or BROWSERCTL_NO_SANDBOX set)"
@@ -83,20 +86,31 @@ module Browserctl
       end
 
       def resolve_chromium_path
-        ENV["CHROMIUM_PATH"] if ENV["CHROMIUM_PATH"]
-        # Ferrum finds Chromium automatically on most platforms; return nil to let it do so
-        nil
+        env_override("CHROMIUM_PATH")
+        # Returns nil when no override — Ferrum finds Chromium automatically on most platforms.
       end
 
       def resolve_brave_path
-        return ENV["BRAVE_PATH"] if ENV["BRAVE_PATH"]
+        override = env_override("BRAVE_PATH")
+        return override if override
 
         platform = detect_platform
         candidates = BRAVE_PATHS.fetch(platform, [])
         path = candidates.find { |p| File.executable?(p) }
-        abort "Brave browser not found. Install Brave or set BRAVE_PATH to its executable." unless path
+        unless path
+          raise BrowserNotFound,
+                "Brave browser not found. Install Brave or set BRAVE_PATH to its executable."
+        end
 
         path
+      end
+
+      def env_override(var)
+        value = ENV.fetch(var, nil)
+        return nil if value.nil? || value.empty?
+        raise BrowserNotFound, "#{var}=#{value} is not an executable file" unless File.executable?(value)
+
+        value
       end
 
       def detect_platform

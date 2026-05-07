@@ -1,7 +1,7 @@
 # ADR-0002: Ferrum/CDP over Selenium/WebDriver
 
 **Date**: 2026-04-20
-**Status**: superseded by ADR-0012
+**Status**: accepted (extended by ADR-0012)
 **Deciders**: Patrick
 
 ## Context

@@ -36,17 +36,51 @@ RSpec.describe Browserctl::Driver::CDP do
   describe "resolve_brave_path (private)" do
     let(:driver) { described_class.allocate }
 
-    it "returns BRAVE_PATH env var when set" do
+    it "returns BRAVE_PATH env var when it points to an executable" do
       with_env("BRAVE_PATH" => "/custom/brave") do
+        allow(File).to receive(:executable?).with("/custom/brave").and_return(true)
         expect(driver.send(:resolve_brave_path)).to eq("/custom/brave")
       end
     end
 
-    it "aborts when no Brave binary is found and BRAVE_PATH is not set" do
+    it "raises BrowserNotFound when BRAVE_PATH is set but not executable" do
+      with_env("BRAVE_PATH" => "/typo/brave") do
+        allow(File).to receive(:executable?).with("/typo/brave").and_return(false)
+        expect { driver.send(:resolve_brave_path) }
+          .to raise_error(Browserctl::BrowserNotFound, /not an executable/)
+      end
+    end
+
+    it "raises BrowserNotFound when no Brave binary is found and BRAVE_PATH is not set" do
       with_env("BRAVE_PATH" => nil) do
-        # Stub all candidate paths to be non-executable
         allow(File).to receive(:executable?).and_return(false)
-        expect { driver.send(:resolve_brave_path) }.to raise_error(SystemExit)
+        expect { driver.send(:resolve_brave_path) }
+          .to raise_error(Browserctl::BrowserNotFound, /Brave browser not found/)
+      end
+    end
+  end
+
+  describe "resolve_chromium_path (private)" do
+    let(:driver) { described_class.allocate }
+
+    it "returns CHROMIUM_PATH env var when it points to an executable" do
+      with_env("CHROMIUM_PATH" => "/custom/chromium") do
+        allow(File).to receive(:executable?).with("/custom/chromium").and_return(true)
+        expect(driver.send(:resolve_chromium_path)).to eq("/custom/chromium")
+      end
+    end
+
+    it "returns nil when CHROMIUM_PATH is not set" do
+      with_env("CHROMIUM_PATH" => nil) do
+        expect(driver.send(:resolve_chromium_path)).to be_nil
+      end
+    end
+
+    it "raises BrowserNotFound when CHROMIUM_PATH is set but not executable" do
+      with_env("CHROMIUM_PATH" => "/typo/chromium") do
+        allow(File).to receive(:executable?).with("/typo/chromium").and_return(false)
+        expect { driver.send(:resolve_chromium_path) }
+          .to raise_error(Browserctl::BrowserNotFound, /not an executable/)
       end
     end
   end

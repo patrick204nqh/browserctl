@@ -36,9 +36,13 @@ end
 log_path = Browserctl.log_path(assigned_name)
 warn "browserd starting — log: #{log_path}"
 Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
-Browserctl::Server.new(
-  headless: !opts[:headed],
-  browser: opts[:browser],
-  socket_path: Browserctl.socket_path(assigned_name),
-  pid_path: Browserctl.pid_path(assigned_name)
-).run
+begin
+  Browserctl::Server.new(
+    headless: !opts[:headed],
+    browser: opts[:browser],
+    socket_path: Browserctl.socket_path(assigned_name),
+    pid_path: Browserctl.pid_path(assigned_name)
+  ).run
+rescue Browserctl::BrowserNotFound => e
+  abort e.message
+end
