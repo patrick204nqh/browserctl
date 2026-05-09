@@ -13,3 +13,7 @@
 | [0009](0009-error-handling-strategy.md) | Uniform JSON-RPC error format with per-thread isolation | accepted | 2026-05-01 |
 | [0010](0010-concurrency-model.md) | Thread-per-client with layered mutexes | accepted | 2026-05-01 |
 | [0011](0011-screenshot-format.md) | PNG default for screenshots with path-scoped safety | accepted | 2026-05-01 |
+| [0012](0012-browser-agnostic-driver.md) | Browser-agnostic driver layer | accepted | 2026-05-02 |
+| [0013](0013-flow-dsl.md) | Flow DSL — separate registry, lifetime, stdlib split | accepted | 2026-05-09 |
+| [0014](0014-bctl-bundle-format.md) | `.bctl` bundle format — HMAC, manifest, transports, origin scope | accepted | 2026-05-09 |
+| [0015](0015-auth-required-detection.md) | `auth_required` detection — signals, false positives, pluggability | accepted | 2026-05-09 |
