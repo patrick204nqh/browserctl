@@ -11,9 +11,10 @@ them by name without copying code into your project.
 | `totp_2fa` | Generate a TOTP code from a base32 secret and type it into the page |
 | `basic_auth` | Navigate to an HTTP Basic Auth URL with credentials embedded |
 | `magic_link_email` | Pause for a magic link, then navigate to it |
+| `oauth_github` | Click the Authorize button on a GitHub OAuth consent screen |
+| `oauth_google` | Click the Continue button on a Google OAuth consent screen |
 
-More flows arrive later in v0.10 (oauth_google, oauth_github,
-cloudflare_solve).
+One more flow arrives later in v0.10 (cloudflare_solve).
 
 ---
 
@@ -208,3 +209,55 @@ browserctl flow run magic_link_email --page main
 
 The shell session must be interactive — the flow reads from stdin
 synchronously.
+
+---
+
+## `oauth_github` and `oauth_google`
+
+Both flows handle only the **consent** step of OAuth — clicking the
+"Authorize" / "Continue" button after the user is already signed in
+and parked on the consent URL. Compose them with whatever you use for
+sign-in (often `magic_link_email`, manual session, or your own
+workflow). They do not enter passwords, pick accounts, or solve 2FA.
+
+### `oauth_github`
+
+| Param | Default |
+|---|---|
+| `authorize_selector` | `button[name="authorize"][value="1"]` |
+
+Precondition: `page.url` contains `/login/oauth/authorize`.
+
+```ruby
+step "consent" do
+  invoke :oauth_github, page: :main
+end
+```
+
+`name="authorize"` has been stable across years of GitHub UI revisions,
+so the default works on github.com. For GitHub Enterprise installs
+with custom templates, override the selector.
+
+### `oauth_google`
+
+| Param | Default |
+|---|---|
+| `continue_selector` | `button[jsname="LgbsSe"]` |
+
+Precondition: `page.url` is on `accounts.google.com` and contains
+`/oauth` or `/signin/oauth`.
+
+```ruby
+step "consent" do
+  invoke :oauth_google, page: :main
+end
+```
+
+Google's consent UI rotates more often than GitHub's. The default
+selector targets the modern Material 3 button; if it stops working,
+override with whatever your account currently sees, then file an issue
+so we can refresh the default.
+
+For repeatable testing, capture a single working selector via DevTools
+("Inspect" the Continue button → "Copy → Copy selector") and pin it as
+a workflow-level constant.
