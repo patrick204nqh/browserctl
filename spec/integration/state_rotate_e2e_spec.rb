@@ -26,14 +26,14 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
 
     # /login: drops a fresh auth cookie, returns 200.
     server.mount_proc("/login") do |_, res|
-      res["Set-Cookie"] = "#{COOKIE_NAME}=#{COOKIE_FRESH_VALUE}; Path=/"
+      res["Set-Cookie"] = "#{StateRotateE2E::COOKIE_NAME}=#{COOKIE_FRESH_VALUE}; Path=/"
       res["Content-Type"] = "text/html"
       res.body = "<html><body data-test='login-ok'>logged in</body></html>"
     end
 
     # /dashboard: 401 without cookie, 200 with.
     server.mount_proc("/dashboard") do |req, res|
-      cookie = req.cookies.find { |c| c.name == COOKIE_NAME && c.value == COOKIE_FRESH_VALUE }
+      cookie = req.cookies.find { |c| c.name == StateRotateE2E::COOKIE_NAME && c.value == COOKIE_FRESH_VALUE }
       if cookie
         res.status = 200
         res["Content-Type"] = "text/html"
@@ -56,7 +56,7 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
   def seed_expired_bundle(name:, flow:, host:, port:)
     payload = {
       cookies: [{
-        name: COOKIE_NAME,
+        name: StateRotateE2E::COOKIE_NAME,
         value: "expired",
         domain: host,
         path: "/",
@@ -84,7 +84,12 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
     # so the FlowContext receives no page proxy. The flow drives the daemon
     # via `client` directly against the workflow's open "work" page — same
     # pattern stdlib flows will need when invoked via the auto-rotate path.
-    Browserctl.flow(FLOW_NAME) do
+    #
+    # Constants referenced by the DSL block are captured into locals first
+    # because `Browserctl.flow` evaluates the block via `instance_exec`,
+    # which switches the constant-lookup scope away from this file.
+    flow_name = StateRotateE2E::FLOW_NAME
+    Browserctl.flow(flow_name) do
       version "0.1.0"
       desc "e2e: log in by visiting /login and letting the server set a cookie"
       step "visit login" do
@@ -97,21 +102,22 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
   after(:all) do
     stop_daemon
     @server.shutdown
-    FileUtils.rm_f(state_path(STATE_NAME))
+    FileUtils.rm_f(state_path(StateRotateE2E::STATE_NAME))
   end
 
   it "rotates an expired bundle via the bound flow and reaches the authenticated URL" do
     base_url = "http://localhost:#{@port}"
 
     # Pre-seed an expired bundle bound to the registered flow.
-    seed_expired_bundle(name: STATE_NAME, flow: FLOW_NAME, host: "localhost", port: @port)
-    expect(File.exist?(state_path(STATE_NAME))).to be true
+    seed_expired_bundle(name: StateRotateE2E::STATE_NAME, flow: StateRotateE2E::FLOW_NAME, host: "localhost",
+                        port: @port)
+    expect(File.exist?(state_path(StateRotateE2E::STATE_NAME))).to be true
 
     @client.page_open("work", url: "#{base_url}/")
 
     ctx = Browserctl::WorkflowContext.new({}, @client)
 
-    result = ctx.load_state(STATE_NAME)
+    result = ctx.load_state(StateRotateE2E::STATE_NAME)
 
     # Auto-rotate path fired: result carries rotated:true and the rewritten
     # bundle's load metadata (cookies count > 0).
