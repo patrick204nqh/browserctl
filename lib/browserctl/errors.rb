@@ -27,4 +27,10 @@ module Browserctl
 
   class WorkflowError < Error; def self.default_code = "workflow_error" end
   class SecretResolverError < WorkflowError; def self.default_code = "secret_resolver_error" end
+
+  class FlowError < WorkflowError; def self.default_code = "flow_error" end
+  class FlowParamError < FlowError; def self.default_code = "flow_param_error" end
+  class FlowPreconditionError < FlowError; def self.default_code = "flow_precondition_failed" end
+  class FlowStepError < FlowError; def self.default_code = "flow_step_failed" end
+  class FlowPostconditionError < FlowError; def self.default_code = "flow_postcondition_failed" end
 end
