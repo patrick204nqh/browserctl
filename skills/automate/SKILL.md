@@ -110,14 +110,33 @@ browserctl resume login                    # resume automation after human actio
 # DevTools
 browserctl devtools login          # open Chrome DevTools URL for a named page
 
-# Cookies
+# Flows (v0.10) — small, replayable auth surfaces. Prefer over hand-coded login.
+browserctl flow list                                              # list registered flows (stdlib + project)
+browserctl flow describe github_login                             # show params, preconditions, steps
+browserctl flow run github_login --page work --username pat       # run against a named page; secret_ref params resolve at runtime
+
+# State (v0.10) — single verb for "log in once, reuse later". Replaces session/cookie/storage as the recommended path.
+browserctl state save   github --flow github_login                # snapshot cookies+storage, bind producing flow into the manifest
+browserctl state save   github --encrypt                          # passphrase-protected at rest (AES-256-GCM)
+browserctl state save   github --origins github.com,api.github.com # override auto-detected nav-chain origins
+browserctl state load   github                                    # restore into running daemon; auto-rotates if AUTH_REQUIRED
+browserctl state list                                             # show all bundles + origin/flow/age
+browserctl state info   github                                    # manifest: origins, flow, flow_version, expiry hint
+browserctl state rotate github                                    # invoke the bound flow + re-save (manual refresh)
+browserctl state delete github
+browserctl state export github /tmp/github.bctl                   # file path
+browserctl state export github s3://bucket/key.bctl               # via aws CLI
+browserctl state export github op://Vault/github-state            # via 1Password CLI
+browserctl state import /tmp/github.bctl
+
+# Cookies (low-level escape hatch — prefer `state` for auth)
 browserctl cookie list   login                                                  # list all cookies as JSON
 browserctl cookie set    login cf_clearance "xyz..." --domain ".example.com"   # set a cookie
 browserctl cookie delete login                                                  # clear all cookies
 browserctl cookie export login .browserctl/sessions/app.json                   # export to file
 browserctl cookie import login .browserctl/sessions/app.json                   # import from file
 
-# Storage (localStorage / sessionStorage)
+# Storage (localStorage / sessionStorage — low-level escape hatch; prefer `state` for auth)
 browserctl storage get    login cart_id                                         # read a key (default: localStorage)
 browserctl storage get    login cart_id --store session                         # read from sessionStorage
 browserctl storage set    login cart_id "abc123"                                # write a key
@@ -127,7 +146,7 @@ browserctl storage import login .browserctl/storage.json                        
 browserctl storage delete login                                                  # clear all storage
 browserctl storage delete login --store session                                  # clear sessionStorage only
 
-# Session (save/restore full browser state: pages + cookies + localStorage)
+# Session (legacy — kept for v0.8/v0.9 callers; new code should use `state`)
 browserctl session save   myapp                          # snapshot current state (plaintext, 0o600)
 browserctl session save   myapp --encrypt                # AES-256-GCM at rest, key in macOS Keychain
 browserctl session load   myapp                          # restore into running daemon
@@ -312,6 +331,80 @@ browserctl navigate main https://protected.example.com
 
 > Switching browsers (Brave, Chromium) does **not** bypass Cloudflare Turnstile. The CDP attach itself is detected as automation regardless of the Chromium flavour. The reliable path is HITL solve once → capture `cf_clearance` → replay.
 
+## Flows and state — the auth recovery loop (v0.10)
+
+If a task needs an authenticated browser, **use a flow + state bundle** instead of hand-coding login steps. A flow is a small, replayable sequence that produces an authenticated state; a state bundle (`.bctl`) is the saved cookies+storage with a manifest binding it to its producing flow.
+
+The recovery loop the daemon runs for you:
+
+```
+load_state → cookies still valid? ─yes→ continue
+                       │
+                       no
+                       ▼
+            run bound flow (from manifest) → save fresh bundle → continue
+```
+
+`load_state` returns `{rotated: true}` when this happened. No caller-side detect-expiry logic required.
+
+The CLI surfaces the same loop via **exit code 7** = `AUTH_REQUIRED`. When you see exit 7 from any command, the JSON response carries `{code: "AUTH_REQUIRED", state: "<name>", suggested_flow: "<name>"}` — run that flow, retry the original command.
+
+### Example 1 — Workflow with auto-rotate (preferred path)
+
+```ruby
+# .browserctl/workflows/check_inbox.rb
+Browserctl.workflow "check_inbox" do
+  step "load auth" do
+    open_page(:work, url: "https://github.com")
+    load_state(:github)              # transparently rotates if expired
+  end
+  step "do work" do
+    page(:work).navigate("https://github.com/notifications")
+    page(:work).wait("[data-testid=notifications-list]")
+  end
+end
+```
+
+First run: `browserctl flow run github_login --username pat --state-name github` to produce the bundle. After that, `workflow run check_inbox` re-authenticates automatically when cookies expire. No `fallback:` parameter needed — the manifest carries the binding.
+
+### Example 2 — CLI loop with exit code 7
+
+```sh
+#!/usr/bin/env bash
+set -e
+attempt() { browserctl state load github && browserctl navigate work https://github.com/notifications; }
+if ! attempt; then
+  if [ "$?" -eq 7 ]; then
+    browserctl flow run github_login --state-name github   # bundle is refreshed
+    attempt
+  else
+    exit $?
+  fi
+fi
+```
+
+Use this shape when driving browserctl from a shell script or CI job.
+
+### Example 3 — Explicit override with `on_auth_required`
+
+```ruby
+Browserctl.workflow "check_dashboard" do
+  step "load auth" do
+    open_page(:app, url: "https://app.example.com")
+    load_state(:app, on_auth_required: -> {
+      # Replace the default "invoke the bound flow" path — e.g. for a custom
+      # 2FA prompt, ad-hoc HITL pause, or branching across SSO providers.
+      ask("MFA code: ").tap { |code| invoke "company_sso_login", mfa: code }
+    })
+  end
+  step "do work" do
+    page(:app).wait("[data-test=dashboard]")
+  end
+end
+```
+
+Use when the default "invoke the bound flow" doesn't fit — the lambda runs in place of the flow, then the daemon re-saves the bundle.
+
 ## Rules
 
 - **Probe before you harden** — explore with discrete commands or a throwaway file, then write the named workflow.
@@ -328,9 +421,12 @@ browserctl navigate main https://protected.example.com
 - **Use `ask`** when automation needs a human-supplied value (2FA code, CAPTCHA answer, confirmation) but doesn't need to hand over full browser control. Cleaner than `pause` for value injection.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
 - **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
-- **Use `session save/load`** to persist the full browser state across daemon restarts — saves cookies, localStorage, and open page URLs. Load it on a fresh daemon to skip login entirely.
+- **Use `flow run` over hand-coded login** (v0.10) — for any auth-gated task, prefer a registered flow (`browserctl flow list` to see what's available; `flow describe <name>` for params). Stdlib ships `totp_2fa`, `basic_auth`, `magic_link_email`, `oauth_google`, `oauth_github`, `cloudflare_solve`.
+- **Use `state save/load` to persist auth across runs** (v0.10) — `state save <name> --flow <flow>` snapshots cookies+storage and binds the producing flow into the manifest; `state load <name>` restores and auto-rotates via the bound flow when cookies expired. Replaces ad-hoc cookie/storage juggling for auth.
+- **Exit code 7 means re-auth** — any CLI command exiting 7 returned `AUTH_REQUIRED` with a `suggested_flow`. Run that flow, retry the command. From inside a workflow, `load_state` handles this loop transparently.
 - **Use `secret_ref:` for credentials** — `param :password, secret_ref: "op://vault/item/field"` resolves the value from your keychain or secret manager at runtime. Never pass credentials as CLI flags or hardcode them in workflow files. `secret_ref:` always implies `secret: true`.
-- **Use `load_session` with `fallback:`** instead of hand-rolling expiry detection — `load_session("myapp", fallback: "login_myapp")` handles the detect-expiry → re-login → retry cycle automatically.
+- **Use `session save/load`** for v0.8/v0.9 callers only — new code should use `state save/load`. The session zip format remains readable through v0.10 with a deprecation warning.
+- **`load_session(fallback:, expired_if:)` is deprecated** — the recovery loop now lives in `load_state`. Existing usages still work through v0.10 but emit a stderr DEPRECATION warning; migrate to `save_state(name, flow: :name)` + `load_state(name)`.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
 
 ## Recording and refs
@@ -380,10 +476,12 @@ end
 | `open_page(name, url: nil)` | Open a named page, optionally navigating to a URL |
 | `close_page(name)` | Close a named page |
 | `page(:name)` | Return a `PageProxy` for the named page |
-| `save_session(name, encrypt: false)` | Snapshot current browser state to a named session; `encrypt: true` stores sensitive files as AES-256-GCM blobs with the key in macOS Keychain (darwin only) |
-| `load_session(name)` | Restore a saved session into the running daemon |
-| `load_session(name, fallback: "workflow_name")` | Restore session; if load fails, invoke the named fallback workflow then retry once. Use this instead of hand-rolling detect-expiry logic. |
-| `load_session(name, fallback: "workflow_name", expired_if: -> { ... })` | Same as above, but also calls the lambda after restore; if it returns `true`, the fallback workflow is invoked and the session is re-established. Use when the server can invalidate sessions without changing cookies (e.g. server-side logout, expired JWT in localStorage). |
+| `save_state(name, flow: :name, origins: nil, encrypt: false)` | (v0.10) Save cookies+storage as a `.bctl` bundle and bind the producing flow into the manifest so future `load_state` calls can auto-rotate. `origins:` overrides the auto-detected nav-chain origins. |
+| `load_state(name)` | (v0.10) Restore a `.bctl` bundle. If the daemon detects AUTH_REQUIRED, it invokes the manifest's bound flow, re-saves, and continues. Returns `{rotated: true}` when this happened. |
+| `load_state(name, on_auth_required: -> { ... })` | (v0.10) Same as above, but the lambda runs in place of the bound flow when AUTH_REQUIRED fires. Use for custom MFA prompts, branching SSO, or HITL pauses. |
+| `save_session(name, encrypt: false)` | (legacy, v0.8) Snapshot to the old session-zip format; prefer `save_state`. |
+| `load_session(name)` | (legacy, v0.8) Restore a session zip; prefer `load_state`. |
+| `load_session(name, fallback:, expired_if:)` | **Deprecated in v0.10** — use `load_state` with a flow-bound bundle. Removal in v0.12. Emits stderr deprecation warning when `fallback:` or `expired_if:` is passed. |
 | `list_sessions` | Return all saved session metadata |
 | `store :key, value` | Store a value for use in later steps (persists in daemon until it stops) |
 | `fetch :key` | Retrieve a value stored by an earlier step |
