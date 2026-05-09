@@ -27,6 +27,7 @@ require "browserctl/commands/storage"
 require "browserctl/commands/session"
 require "browserctl/commands/daemon"
 require "browserctl/commands/workflow"
+require "browserctl/commands/flow"
 require "browserctl/commands/dialog"
 require "browserctl/commands/ask"
 
@@ -105,6 +106,11 @@ def usage
       workflow list
       workflow describe <name>
 
+    Flow:
+      flow run      <name|file> [--page NAME] [--params file] [--key value ...]
+      flow list
+      flow describe <name>
+
     Daemon:
       daemon start  [--headed] [--name NAME]
       daemon stop
@@ -142,6 +148,7 @@ else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
 
   case cmd
+  when "flow"     then Browserctl::Commands::Flow.run(client, args)
   when "page"     then Browserctl::Commands::Page.run(client, args)
   when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
   when "storage"  then Browserctl::Commands::Storage.run(client, args)
