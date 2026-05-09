@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0](https://github.com/patrick204nqh/browserctl/compare/v0.9.0...v0.10.0) (2026-05-09)
+
+
+### Features
+
+* Browserctl::Flow class + DSL ([#82](https://github.com/patrick204nqh/browserctl/issues/82)) ([93282ed](https://github.com/patrick204nqh/browserctl/commit/93282edfc1358a371377c9ffbedf7cf1f6e7f567))
+
 ## [0.9.0](https://github.com/patrick204nqh/browserctl/compare/v0.8.4...v0.9.0) (2026-05-09)
 
 
