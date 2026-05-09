@@ -10,6 +10,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/patrick204nqh/browserctl/compare/v0.8.4...v0.9.0) (2026-05-09)
+
+
+### Features
+
+* split skills into automate + feedback, refresh for v0.9 driver ([#80](https://github.com/patrick204nqh/browserctl/issues/80)) ([65c1a8e](https://github.com/patrick204nqh/browserctl/commit/65c1a8ee25a81aa5337fb8c447781efd8f6ade2e))
+* v0.9 browser-agnostic driver layer + Brave support ([#77](https://github.com/patrick204nqh/browserctl/issues/77)) ([0156c2d](https://github.com/patrick204nqh/browserctl/commit/0156c2defc105d49be038d108fa3da3ed1c4b402))
+
 ## [0.8.4](https://github.com/patrick204nqh/browserctl/compare/v0.8.3...v0.8.4) (2026-05-01)
 
 
