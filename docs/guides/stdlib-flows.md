@@ -13,8 +13,7 @@ them by name without copying code into your project.
 | `magic_link_email` | Pause for a magic link, then navigate to it |
 | `oauth_github` | Click the Authorize button on a GitHub OAuth consent screen |
 | `oauth_google` | Click the Continue button on a Google OAuth consent screen |
-
-One more flow arrives later in v0.10 (cloudflare_solve).
+| `cloudflare_solve` | Pause for a human to solve a Cloudflare challenge, verify it cleared, optionally save state |
 
 ---
 
@@ -261,3 +260,71 @@ so we can refresh the default.
 For repeatable testing, capture a single working selector via DevTools
 ("Inspect" the Continue button → "Copy → Copy selector") and pin it as
 a workflow-level constant.
+
+---
+
+## `cloudflare_solve`
+
+Cloudflare's interstitials (Turnstile, "Just a moment...", interactive
+checkbox) are designed to be unsolvable by automation. The pragmatic
+answer is to put a human in the loop: pause, let them solve it, then
+continue.
+
+This flow:
+
+1. Detects the challenge (reuses `Browserctl::Detectors.cloudflare?`,
+   the same logic the daemon already uses for v0.8 challenge
+   notifications).
+2. Prints a prompt to **stderr** and blocks on stdin.
+3. After the human presses Enter, re-runs detection. If the challenge
+   is still showing, raises a step error so the workflow can react.
+4. Optionally saves the post-solve session under a name you can reload
+   later — the whole point of solving the challenge in the first place.
+
+### Params
+
+| Name | Default | Notes |
+|---|---|---|
+| `prompt` | "Cloudflare challenge detected. Solve it in the browser, then press Enter to continue." | |
+| `state_name` | `nil` | When set, calls `client.session_save(state_name)` after the challenge clears. |
+
+### From a workflow
+
+```ruby
+Browserctl.workflow "scrape_with_cf_protection" do
+  step "open" do
+    open_page(:main, url: "https://protected.example.com/feed")
+  end
+
+  step "solve if needed" do
+    invoke :cloudflare_solve,
+           page: :main,
+           state_name: "protected_example_com"
+  end
+
+  step "scrape" do
+    puts page(:main).snapshot(format: "html")
+  end
+end
+```
+
+The `state_name` ties this flow to the v0.10 state command — once
+saved, you can `browserctl state load protected_example_com` on a
+fresh daemon and skip the challenge entirely until cookies expire.
+
+### From the CLI
+
+```sh
+browserctl flow run cloudflare_solve --page main --state-name protected_example_com
+# [browserctl] Cloudflare challenge detected. Solve it in the browser, then press Enter to continue.
+```
+
+The shell session must be interactive — the flow blocks on stdin.
+
+### Why pause + verify, not auto-bypass?
+
+Auto-solvers (changing user-agent, spoofing canvas, etc.) get caught,
+break frequently, and put your IP on Cloudflare's penalty list. A
+single human-in-the-loop solve produces a session cookie that's good
+for hours-to-days; saving it via `state_name` lets the rest of your
+automation skip the challenge entirely on subsequent runs.
