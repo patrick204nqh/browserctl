@@ -166,7 +166,13 @@ module Browserctl
                 "save with `save_state('#{name}', flow: :NAME)` or pass on_auth_required:"
         end
 
-        invoke(flow_name)
+        # Match the daemon's `state load` preflight: it auth-checks the first
+        # open page (insertion order). Passing that same name to the flow
+        # gives stdlib flows a `page` proxy to drive (oauth_github reads
+        # `page.url`, totp_2fa calls `page.fill`, etc.). Falls back to no
+        # page only when nothing is open — `state_save` would have errored
+        # earlier in that case, so this is a defence-in-depth nil.
+        invoke(flow_name, page: first_open_page)
       end
 
       after_save = @client.state_save(name)
@@ -176,6 +182,12 @@ module Browserctl
       raise WorkflowError, retry_res[:error] if retry_res[:error]
 
       retry_res.merge(rotated: true)
+    end
+
+    def first_open_page
+      res = @client.page_list
+      pages = res[:pages] || res["pages"] || []
+      pages.first
     end
 
     def validate_expired_if!(expired_if)

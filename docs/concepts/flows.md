@@ -97,6 +97,8 @@ browserctl state save github --flow github_login
 
 Then `state rotate github` re-runs the bound flow and overwrites the bundle. WS-5 of v0.10 wires `load_state :github` in workflows to call `state rotate` automatically when the daemon detects an expired bundle, so most code never needs to think about rotation explicitly.
 
+When the auto-rotate path invokes the bound flow, the flow receives the workflow's first open page as its `page` proxy — same convention the daemon's preflight uses for the auth check. That means stdlib flows that read `page.url` or call `page.fill` work the same whether you `flow run` them by hand or let `load_state` invoke them. To override the target page (e.g. a flow that should run against a dedicated `:auth` tab), pass `on_auth_required: -> { invoke :my_flow, page: :auth }` to `load_state`.
+
 ---
 
 ## Stdlib flows

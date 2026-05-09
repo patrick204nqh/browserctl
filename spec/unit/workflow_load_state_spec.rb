@@ -24,13 +24,27 @@ RSpec.describe "WorkflowContext#load_state" do
     allow(client).to receive(:state_load).with("github").and_return(auth_response)
     allow(client).to receive(:state_load).with("github", skip_auth_check: true).and_return(fresh_response)
     allow(client).to receive(:state_save).with("github").and_return(ok: true)
-    allow(ctx).to receive(:invoke).with("github_login")
+    allow(client).to receive(:page_list).and_return(pages: ["work"])
+    allow(ctx).to receive(:invoke).with("github_login", page: "work")
 
     result = ctx.load_state("github")
 
-    expect(ctx).to have_received(:invoke).with("github_login")
+    expect(ctx).to have_received(:invoke).with("github_login", page: "work")
     expect(client).to have_received(:state_save).with("github")
     expect(result).to include(rotated: true, ok: true, cookies: 4)
+  end
+
+  it "passes page: nil to the flow when no pages are open (defence-in-depth)" do
+    auth_response = { error: "expired", code: "AUTH_REQUIRED", suggested_flow: "github_login" }
+    allow(client).to receive(:state_load).with("github").and_return(auth_response)
+    allow(client).to receive(:state_load).with("github", skip_auth_check: true).and_return(ok: true)
+    allow(client).to receive(:state_save).with("github").and_return(ok: true)
+    allow(client).to receive(:page_list).and_return(pages: [])
+    allow(ctx).to receive(:invoke).with("github_login", page: nil)
+
+    ctx.load_state("github")
+
+    expect(ctx).to have_received(:invoke).with("github_login", page: nil)
   end
 
   it "honours an explicit on_auth_required: hook over the auto path" do
@@ -61,7 +75,8 @@ RSpec.describe "WorkflowContext#load_state" do
     allow(client).to receive(:state_save).with("github").and_return(ok: true)
     allow(client).to receive(:state_load).with("github", skip_auth_check: true)
                                          .and_return(error: "still bad")
-    allow(ctx).to receive(:invoke).with("github_login")
+    allow(client).to receive(:page_list).and_return(pages: ["work"])
+    allow(ctx).to receive(:invoke).with("github_login", page: "work")
 
     expect { ctx.load_state("github") }
       .to raise_error(Browserctl::WorkflowError, /still bad/)
