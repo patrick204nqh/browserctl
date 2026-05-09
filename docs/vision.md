@@ -144,29 +144,103 @@ It is the difference between a browser **you restart** and a browser **you steer
 
 - [x] `expired_if:` on `load_session` — detect server-side session expiry and auto-recover via fallback
 
-### v0.9 — Evidence & Reproduction
-**Goal:** Every session leaves a trail. Every bug is reproducible from code.
+### v0.9 — Browser-Agnostic Driver ✓ _(shipped)_
+**Goal:** Decouple the daemon from a single browser. Same daemon, same protocol, multiple Chromium-family browsers.
 
-- [ ] Evidence capture hooks — configurable auto-screenshot (on HITL pause, on step failure, per-step)
-- [ ] Session trace export — structured JSON log of every command; `browserctl session export-trace`
-- [ ] `replay` command — step through a recorded workflow with live screenshots at each step
-- [ ] Extensible HITL detection modules — DataDome, 2FA prompts, consent banners as built-in detectors
-- [ ] `register_detector` plugin API — third-party detectors installable via plugin system
+- [x] Driver abstraction layer — CDP client interface separated from Ferrum specifics
+- [x] Chrome / Chromium / Brave support via `-b/--browser` flag
+- [x] Auto binary discovery with `CHROME_PATH`, `CHROMIUM_PATH`, `BRAVE_PATH` overrides
+- [x] Skill split — `automate` (AI-driven) and `feedback` (user-invoked) as separate manifests
 
-### v0.10 — Platform
-**Goal:** browserctl becomes the runtime layer where human oversight produces better agents.
+> **Strategic shift after v0.9.** Pre-1.0 development now optimises for two things: making AI-driven exploration produce durable workflows, and proving the HITL + reusable-flow model that no competitor has. **Breaking changes are acceptable** between minor versions until 1.0; deprecation policy starts at 1.0. Ruby support is **3.3 only** through the 0.x series to keep the CI matrix small. MCP server work is parked — skills remain the primary AI surface.
 
-- [ ] Annotated session traces — export pause/resume sessions as fine-tuning data for browser agents
-- [ ] Session recording + replay — deterministic browser regression testing
-- [ ] Visual regression — `shot --compare baseline.png` with pixel diff
-- [ ] Distributed sessions — fan-out a command across N named pages in parallel
-- [ ] Webhook triggers — run a workflow when an HTTP POST arrives
-- [ ] GUI companion app — macOS status bar showing live page list and daemon health
+### v0.10 — Flows
+**Goal:** Make browser auth and any other repeatable interaction a named, parameterised, secret-aware, composable artifact. The moat.
+
+**Reusable Flow DSL**
+- [ ] `Browserctl.flow :name do … end` — first-class flow definition with `version`, `desc`, `param`, `step`, `precondition`, `postcondition`, `produces_state`
+- [ ] Flow registry — auto-load from `~/.browserctl/flows/` (user) and `./.browserctl/flows/` (project), project wins
+- [ ] `invoke :flow_name` from inside any workflow or other flow
+- [ ] CLI: `browserctl flow run/list/describe`
+- [ ] Stdlib flows — `oauth_google`, `oauth_github`, `totp_2fa`, `magic_link_email`, `cloudflare_solve`, `basic_auth`
+
+**Unified state command**
+- [ ] `browserctl state save/load/list/info/delete/export/import/rotate`
+- [ ] `.bctl` bundle format — manifest + cookies + localStorage + sessionStorage + (optional) IndexedDB, HMAC-signed, optionally encrypted
+- [ ] Origin-scoped by default; full-browser scope opt-in
+- [ ] Bundle metadata declares `expires_at`, source flow, flow version
+- [ ] Three blessed transports for portability: file, S3-compatible, 1Password document
+- [ ] Existing `cookie *` / `storage *` verbs retained as low-level escape hatches
+
+**Auth re-detection**
+- [ ] Daemon emits `auth_required` event when login redirects, 401/403, or expired cookies are detected
+- [ ] CLI exit code `7` for auth-required; structured error payload with `suggested_flow`
+- [ ] Workflow DSL: automatic re-run of bound flow on `load_state` expiry; explicit `on_auth_required` override
+- [ ] Skill update — `automate` teaches the AI to react to `auth_required`
+
+### v0.11 — Replayable
+**Goal:** Turn ephemeral AI exploration into durable, version-controlled workflows.
+
+**Stable refs and fingerprints**
+- [ ] `snapshot_v2` — refs derived from `(role, accessible-name, tag, parent-path)` hash; same element → same ref across snapshots
+- [ ] Fingerprint blob per element (text, ARIA role, neighbor signature, position) emitted alongside ref
+- [ ] Fingerprint-based fuzzy match on replay when selectors fail — Scrapling-style self-healing for recordings
+- [ ] Versioned snapshot format header so old recordings remain replayable
+
+**Recording → workflow → flow pipeline**
+- [ ] `browserctl workflow generate <recording>` — emits a Ruby workflow with stable selectors, fingerprint fallbacks as comments, secret detection (`secret_ref:` placeholders), inferred waits, postconditions
+- [ ] `browserctl workflow run --check` — replay with snapshot-diff assertions; flag drift
+- [ ] `browserctl workflow promote <name>` — graduate to `~/.browserctl/workflows/`
+- [ ] `browserctl workflow promote --as-flow` — register a workflow as a reusable flow (closes the loop with v0.10)
+- [ ] Skill update — `automate` teaches the AI the explore → generate → check → promote loop
+
+### v0.12 — Solid
+**Goal:** Earn the right to call 1.0. Determinism, observability, performance budgets, real test pyramid.
+
+**Determinism**
+- [ ] Versioned formats for snapshots, recordings, workflows, state bundles — explicit `version:` in every header
+- [ ] Migration helpers between format versions
+- [ ] No implicit waits; every wait is explicit and surfaced in errors
+
+**Error model**
+- [ ] Standardised error codes across daemon and CLI (e.g. `AUTH_REQUIRED`, `SELECTOR_NOT_FOUND`, `STATE_EXPIRED`)
+- [ ] CLI exit codes mapped 1:1 to error categories
+- [ ] Structured `{code, message, context, suggested_action}` payload everywhere
+
+**Observability**
+- [ ] JSONL structured logs in `~/.browserctl/logs/`
+- [ ] `browserctl trace <session>` — pretty timeline of events, snapshots, network, errors
+- [ ] Crash reports on daemon panic with last 50 events
+
+**Test pyramid**
+- [ ] Unit tests for snapshot/ref/fingerprint, secret resolver, bundle codec
+- [ ] Integration tests for every CLI command, error path, and JSON-RPC contract
+- [ ] Workflow replay matrix across Chrome / Chromium / Brave
+- [ ] Smoke tests against stable public sites, run nightly
+
+**Performance budgets (CI-enforced)**
+- [ ] `snapshot` p95 < 250 ms on a typical page
+- [ ] `click` ack < 50 ms (action dispatch)
+- [ ] Daemon RSS < 200 MB idle
+- [ ] State bundle < 50 KB typical
+
+**Compatibility matrix**
+- [ ] CI: Ruby 3.3 only (cost-saving choice through 0.x)
+- [ ] CI: macOS 14+, Ubuntu 22+, Windows-via-WSL2
+- [ ] Pinned Ferrum minor; explicit upgrade PRs only
 
 ### v1.0 — Production-Ready
-**Goal:** Ship it when it's ready. No checklist owns this milestone — it will be cut when the project is stable enough to warrant a compatibility promise and a deprecation policy.
+**Goal:** A compatibility promise the project can keep.
 
-What "ready" means: the Fixed and Stable zones carry an explicit compatibility promise — breaking them is a considered decision with a migration path, not an accident. The security audit is closed. The architecture has absorbed real usage feedback from agents and developers in the wild.
+Ship 1.0 when v0.12 has been crash-free for two months in real use, the Fixed and Stable zones in `docs/reference/api-stability.md` carry an explicit compatibility promise, the security review is closed, and the architecture has absorbed feedback from agents and developers in the wild.
+
+After 1.0: deprecation policy kicks in — one minor of warning before any breaking change in the Stable zone; never break the Fixed zone without a major.
+
+### Parked
+- **MCP server.** Skills remain the primary AI surface. Revisit only if there is concrete demand from non-Claude clients (Cursor, Codex, Cline) that skills can't address.
+- **Cloud / remote daemon mode.** Local-only is a core philosophy; remoting is an explicit non-goal pre-1.0.
+- **Annotated screenshots with ref-overlay numbers.** Useful for vision agents but a smaller segment than the flow/replay work; revisit post-1.0.
+- **Visual regression / pixel diff, distributed fan-out, webhook triggers, macOS GUI.** From the previous v0.10 plan — deferred behind the moat-building work.
 
 ---
 
