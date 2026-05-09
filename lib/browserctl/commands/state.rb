@@ -11,11 +11,11 @@ module Browserctl
     module State
       extend CliOutput
 
-      USAGE = "Usage: browserctl state <save|load|list|info|delete|export|import> [args]"
+      USAGE = "Usage: browserctl state <save|load|list|info|delete|rotate|export|import> [args]"
 
       DAEMON_SUBCOMMANDS = {
         "save" => :run_save, "load" => :run_load, "list" => :run_list,
-        "info" => :run_info, "delete" => :run_delete
+        "info" => :run_info, "delete" => :run_delete, "rotate" => :run_rotate
       }.freeze
 
       LOCAL_SUBCOMMANDS = { "export" => :run_export, "import" => :run_import }.freeze
@@ -70,6 +70,61 @@ module Browserctl
         name = args.shift or abort "usage: browserctl state delete <name>"
         print_result(client.state_delete(name))
       end
+
+      # Re-runs the flow bound to <name> and re-saves the bundle. The flow is
+      # read from the manifest (set when the bundle was originally produced
+      # via `state save --flow ...`). Params come from --params or k=v pairs.
+      def self.run_rotate(client, args)
+        require "browserctl/flow_registry"
+        page_name   = extract_value!(args, "--page")
+        params_path = extract_value!(args, "--params")
+        name        = args.shift or abort "usage: browserctl state rotate <name> " \
+                                          "[--page NAME] [--params FILE] [--key value ...]"
+
+        manifest = read_manifest!(client, name)
+        flow     = resolve_bound_flow!(manifest)
+        params   = build_rotate_params(params_path, args)
+        page_proxy = page_name ? Browserctl::PageProxy.new(page_name, client) : nil
+
+        flow.run(page: page_proxy, client: client, **params)
+
+        save_result = client.state_save(name,
+                                        flow: flow.name,
+                                        flow_version: flow.version_string,
+                                        origins: manifest[:origins])
+        print_result(save_result.merge(rotated_flow: flow.name))
+      rescue Browserctl::FlowError => e
+        warn "Error: #{e.message}"
+        exit 1
+      end
+
+      def self.read_manifest!(client, name)
+        info = client.state_info(name)
+        abort "Error: #{info[:error] || info['error']}" if info[:error] || info["error"]
+
+        info[:info] || info["info"] || {}
+      end
+      private_class_method :read_manifest!
+
+      def self.resolve_bound_flow!(manifest)
+        flow_name = manifest[:flow] || manifest["flow"]
+        abort "Error: state has no bound flow — re-save with `state save --flow NAME` first" if flow_name.nil? ||
+                                                                                                flow_name.to_s.empty?
+
+        flow = Browserctl::FlowRegistry.resolve(flow_name)
+        abort "Error: flow '#{flow_name}' not found in registry" unless flow
+
+        flow
+      end
+      private_class_method :resolve_bound_flow!
+
+      def self.build_rotate_params(params_path, args)
+        require "browserctl/runner"
+        file_params = params_path ? Browserctl::Runner.load_params_file(params_path) : {}
+        cli_params  = args.each_slice(2).to_h { |flag, val| [flag.to_s.sub(/\A--/, "").to_sym, val] }
+        file_params.merge(cli_params)
+      end
+      private_class_method :build_rotate_params
 
       def self.run_export(args)
         name        = args.shift or abort "usage: browserctl state export <name> <destination>"

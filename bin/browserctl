@@ -103,6 +103,7 @@ def usage
       state list
       state info   <name>
       state delete <name>
+      state rotate <name> [--page NAME] [--params FILE] [--key value ...]
       state export <name> <destination>     # file path, s3://..., op://Vault/Item
       state import <source> [--name NAME]
 
