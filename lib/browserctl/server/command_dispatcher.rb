@@ -11,6 +11,7 @@ require_relative "handlers/devtools"
 require_relative "handlers/daemon_control"
 require_relative "handlers/storage"
 require_relative "handlers/session"
+require_relative "handlers/state"
 require_relative "handlers/interaction"
 require_relative "../detectors"
 require_relative "../policy"
@@ -26,6 +27,7 @@ module Browserctl
     include Handlers::DaemonControl
     include Handlers::Storage
     include Handlers::Session
+    include Handlers::State
     include Handlers::Interaction
 
     COMMAND_MAP = {
@@ -66,7 +68,12 @@ module Browserctl
       "session_save" => :cmd_session_save,
       "session_load" => :cmd_session_load,
       "session_list" => :cmd_session_list,
-      "session_delete" => :cmd_session_delete
+      "session_delete" => :cmd_session_delete,
+      "state_save" => :cmd_state_save,
+      "state_load" => :cmd_state_load,
+      "state_list" => :cmd_state_list,
+      "state_info" => :cmd_state_info,
+      "state_delete" => :cmd_state_delete
     }.freeze
 
     SCREENSHOT_DIR   = File.expand_path("~/.browserctl/screenshots").freeze
