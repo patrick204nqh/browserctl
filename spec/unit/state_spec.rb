@@ -99,6 +99,50 @@ RSpec.describe Browserctl::State do
     end
   end
 
+  describe ".export / .import via file transport" do
+    it "round-trips a bundle through a file destination" do
+      described_class.save("github", payload: payload, flow: "github_login")
+
+      Dir.mktmpdir do |tmp|
+        dest = File.join(tmp, "github.bctl")
+        result = described_class.export("github", dest)
+        expect(result[:bytes]).to be > 0
+        expect(File.exist?(dest)).to be(true)
+
+        described_class.delete("github")
+        expect(described_class.exist?("github")).to be(false)
+
+        info = described_class.import(dest)
+        expect(info[:name]).to eq("github")
+        expect(described_class.exist?("github")).to be(true)
+      end
+    end
+
+    it "honours --name on import" do
+      described_class.save("github", payload: payload)
+      Dir.mktmpdir do |tmp|
+        dest = File.join(tmp, "github.bctl")
+        described_class.export("github", dest)
+        info = described_class.import(dest, name: "renamed")
+        expect(info[:name]).to eq("renamed")
+        expect(described_class.exist?("renamed")).to be(true)
+      end
+    end
+
+    it "rejects an import that doesn't carry the .bctl magic" do
+      Dir.mktmpdir do |tmp|
+        bogus = File.join(tmp, "bogus.bctl")
+        File.binwrite(bogus, "not a real bundle")
+        expect { described_class.import(bogus) }
+          .to raise_error(Browserctl::State::Bundle::BundleError)
+      end
+    end
+
+    it "raises when exporting a missing state" do
+      expect { described_class.export("nope", "/tmp/x.bctl") }.to raise_error(Browserctl::Error)
+    end
+  end
+
   describe ".delete" do
     it "removes the file, no-ops when absent" do
       described_class.save("github", payload: payload)

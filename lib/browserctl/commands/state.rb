@@ -11,17 +11,24 @@ module Browserctl
     module State
       extend CliOutput
 
-      USAGE = "Usage: browserctl state <save|load|list|info|delete> [args]"
+      USAGE = "Usage: browserctl state <save|load|list|info|delete|export|import> [args]"
+
+      DAEMON_SUBCOMMANDS = {
+        "save" => :run_save, "load" => :run_load, "list" => :run_list,
+        "info" => :run_info, "delete" => :run_delete
+      }.freeze
+
+      LOCAL_SUBCOMMANDS = { "export" => :run_export, "import" => :run_import }.freeze
 
       def self.run(client, args)
         sub = args.shift or abort USAGE
-        case sub
-        when "save"   then run_save(client, args)
-        when "load"   then run_load(client, args)
-        when "list"   then run_list(client)
-        when "info"   then run_info(client, args)
-        when "delete" then run_delete(client, args)
-        else abort "unknown state subcommand '#{sub}'\n#{USAGE}"
+
+        if (m = DAEMON_SUBCOMMANDS[sub])
+          sub == "list" ? send(m, client) : send(m, client, args)
+        elsif (m = LOCAL_SUBCOMMANDS[sub])
+          send(m, args)
+        else
+          abort "unknown state subcommand '#{sub}'\n#{USAGE}"
         end
       end
 
@@ -62,6 +69,30 @@ module Browserctl
       def self.run_delete(client, args)
         name = args.shift or abort "usage: browserctl state delete <name>"
         print_result(client.state_delete(name))
+      end
+
+      def self.run_export(args)
+        name        = args.shift or abort "usage: browserctl state export <name> <destination>"
+        destination = args.shift or abort "usage: browserctl state export <name> <destination>"
+        require "browserctl/state"
+        result = Browserctl::State.export(name, destination)
+        puts result.to_json
+      rescue Browserctl::State::Transport::TransportError, Browserctl::Error, ArgumentError => e
+        warn "Error: #{e.message}"
+        exit 1
+      end
+
+      def self.run_import(args)
+        name_override = extract_value!(args, "--name")
+        source        = args.shift or abort "usage: browserctl state import <source> [--name NAME]"
+        require "browserctl/state"
+        result = Browserctl::State.import(source, name: name_override)
+        puts result.to_json
+      rescue Browserctl::State::Transport::TransportError,
+             Browserctl::State::Bundle::BundleError,
+             Browserctl::Error, ArgumentError => e
+        warn "Error: #{e.message}"
+        exit 1
       end
 
       private_class_method :parse_origins

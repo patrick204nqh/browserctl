@@ -7,6 +7,10 @@ require_relative "constants"
 require_relative "errors"
 require_relative "version"
 require_relative "state/bundle"
+require_relative "state/transport"
+require_relative "state/transports/file"
+require_relative "state/transports/s3"
+require_relative "state/transports/one_password"
 
 module Browserctl
   # Top-level state store: a single .bctl bundle per name under
@@ -79,6 +83,46 @@ module Browserctl
       validate_name!(name)
       FileUtils.rm_f(path(name))
     end
+
+    # Copies the on-disk .bctl bundle to a transport-addressable destination
+    # (file path, s3://bucket/key, op://Vault/Item, or any registered scheme).
+    # Bundle bytes are written verbatim — no re-encoding — so the receiving
+    # side can verify the manifest/payload exactly as produced.
+    def self.export(name, destination)
+      validate_name!(name)
+      raise Browserctl::Error, "state '#{name}' not found" unless exist?(name)
+
+      transport, parsed = Transport.for(destination)
+      blob = ::File.binread(path(name))
+      transport.write(parsed, blob)
+      { name: name, destination: destination, bytes: blob.bytesize }
+    end
+
+    # Pulls a bundle from a transport-addressable source and stores it as a
+    # local state. Validates the magic header before persisting so we never
+    # leave a corrupt bundle in the state directory. `name` defaults to the
+    # source's basename without `.bctl`.
+    def self.import(source, name: nil)
+      transport, parsed = Transport.for(source)
+      blob = transport.read(parsed)
+      raise Bundle::BundleError, "imported blob is not a .bctl bundle" unless blob.start_with?(Bundle::MAGIC)
+
+      manifest = Bundle.peek_manifest(blob)
+      target_name = name || derive_name(source) || manifest[:name]
+      validate_name!(target_name)
+
+      FileUtils.mkdir_p(BASE_DIR)
+      ::File.open(path(target_name), "wb", 0o600) { |f| f.write(blob) }
+      { name: target_name, source: source, bytes: blob.bytesize, encrypted: manifest[:encrypted] }
+    end
+
+    def self.derive_name(uri)
+      base = ::File.basename(uri.to_s.split("?").first.to_s, EXTENSION)
+      return nil if base.empty?
+
+      base
+    end
+    private_class_method :derive_name
 
     # Read manifests for all stored bundles. Errors on a single file are
     # surfaced via { error: "...", path: "..." } rather than aborting the list.
