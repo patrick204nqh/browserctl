@@ -38,6 +38,7 @@ module Browserctl
       "navigate" => :cmd_navigate,
       "wait" => :cmd_wait,
       "snapshot" => :cmd_snapshot,
+      "auth_check" => :cmd_auth_check,
       "evaluate" => :cmd_evaluate,
       "fill" => :cmd_fill,
       "click" => :cmd_click,

@@ -330,6 +330,22 @@ module Browserctl
     # Permanently deletes a state bundle.
     def state_delete(name) = call("state_delete", name: name)
 
+    # Runs the auth_required detector against a named page. Returns either
+    # `{ ok: true, auth_required: false }` or an AUTH_REQUIRED error response.
+    # @param name [String] page name
+    # @param include_cookies [Boolean] also feed the page's current cookies
+    #   into the detector (catches expired-cookie auth)
+    # @param state [String, nil] bundle name the caller was working with;
+    #   passed back verbatim so callers can recover without bookkeeping
+    # @param suggested_flow [String, nil] flow name to surface when triggered
+    def auth_check(name, include_cookies: false, state: nil, suggested_flow: nil)
+      call("auth_check",
+           name: name,
+           include_cookies: include_cookies,
+           state: state,
+           suggested_flow: suggested_flow)
+    end
+
     private
 
     def auto_discover_socket

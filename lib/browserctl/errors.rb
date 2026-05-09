@@ -25,6 +25,36 @@ module Browserctl
   class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable" end
   class BrowserNotFound < Error; def self.default_code = "browser_not_found" end
 
+  # Raised when the daemon detects that the current page needs authentication —
+  # the canonical signal that a workflow's `load_state` should rotate the bound
+  # flow. Carries the bundle name (when a state load was in progress) and a
+  # suggested flow (from the bundle manifest) so callers can recover without
+  # additional lookups. The CLI maps this code to exit status 7.
+  class AuthRequiredError < Error
+    def self.default_code = "AUTH_REQUIRED"
+
+    AUTH_REQUIRED_EXIT_CODE = 7
+
+    attr_reader :state, :suggested_flow, :reason
+
+    def initialize(msg = "authentication required", state: nil, suggested_flow: nil, reason: nil)
+      super(msg)
+      @state          = state
+      @suggested_flow = suggested_flow
+      @reason         = reason
+    end
+
+    def to_response
+      {
+        error: message,
+        code: self.class.default_code,
+        state: state,
+        suggested_flow: suggested_flow,
+        reason: reason
+      }.compact
+    end
+  end
+
   class WorkflowError < Error; def self.default_code = "workflow_error" end
   class SecretResolverError < WorkflowError; def self.default_code = "secret_resolver_error" end
 
