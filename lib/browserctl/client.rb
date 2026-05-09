@@ -308,6 +308,28 @@ module Browserctl
       call("session_delete", session_name: session_name)
     end
 
+    # Saves browser state (cookies + storage) into a single .bctl bundle.
+    # @return [Hash] `{ ok:, path:, origins:, cookies:, encrypted: }` or `{ error: }`
+    def state_save(name, origins: nil, flow: nil, flow_version: nil, passphrase: nil)
+      call("state_save",
+           name: name, origins: origins, flow: flow,
+           flow_version: flow_version, passphrase: passphrase)
+    end
+
+    # Restores a .bctl bundle into the running daemon.
+    def state_load(name, passphrase: nil)
+      call("state_load", name: name, passphrase: passphrase)
+    end
+
+    # Lists all stored state bundles (manifest only — no payload decryption).
+    def state_list = call("state_list")
+
+    # Reads a single bundle's manifest.
+    def state_info(name) = call("state_info", name: name)
+
+    # Permanently deletes a state bundle.
+    def state_delete(name) = call("state_delete", name: name)
+
     private
 
     def auto_discover_socket

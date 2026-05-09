@@ -25,6 +25,7 @@ require "browserctl/commands/page"
 require "browserctl/commands/cookie"
 require "browserctl/commands/storage"
 require "browserctl/commands/session"
+require "browserctl/commands/state"
 require "browserctl/commands/daemon"
 require "browserctl/commands/workflow"
 require "browserctl/commands/flow"
@@ -96,6 +97,13 @@ def usage
       session export <name> <path>
       session import <path>
 
+    State (.bctl bundles — cookies + storage + flow binding):
+      state save   <name> [--encrypt] [--origins a,b] [--flow NAME]
+      state load   <name>
+      state list
+      state info   <name>
+      state delete <name>
+
     Recording:
       record start <name>
       record stop  [--out PATH]
@@ -153,6 +161,7 @@ else
   when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
   when "storage"  then Browserctl::Commands::Storage.run(client, args)
   when "session"  then Browserctl::Commands::Session.run(client, args)
+  when "state"    then Browserctl::Commands::State.run(client, args)
   when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
   when "navigate" then print_result(client.navigate(args[0], args[1]))
   when "fill"     then Browserctl::Commands::Fill.run(client, args)
