@@ -196,7 +196,7 @@ The daemon shuts itself down after 30 minutes of inactivity.
 |---|---|
 | [Getting Started](docs/getting-started.md) | Install, first session, first snapshot |
 | [Agent Integration](docs/guides/agent-integration.md) | Call browserctl from Python, shell, or Anthropic tool-use agents |
-| [Concepts](docs/concepts/) | Sessions, snapshots, human-in-the-loop |
+| [Concepts](docs/concepts/) | Sessions, snapshots, [state](docs/concepts/state.md), [flows](docs/concepts/flows.md), human-in-the-loop |
 | [Guides](docs/guides/) | Writing workflows, handling challenges, smoke testing |
 | [Examples](examples/) | Runnable scripts: session reuse, Cloudflare HITL, and more |
 | [Command Reference](docs/reference/commands.md) | Every command and flag |
