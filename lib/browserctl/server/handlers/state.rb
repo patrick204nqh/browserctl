@@ -42,6 +42,21 @@ module Browserctl
           return { error: "no open pages — open a page before loading state" } unless target
 
           cookies = pluck(data[:payload], :cookies, default: [])
+
+          unless req[:skip_auth_check]
+            auth = Browserctl::Detectors.auth_required(
+              target.page, cookies: cookies, suggested_flow: data[:manifest][:flow]
+            )
+            if auth.triggered
+              return Browserctl::AuthRequiredError.new(
+                auth.reason,
+                state: req[:name],
+                suggested_flow: auth.suggested_flow,
+                reason: auth.reason
+              ).to_response
+            end
+          end
+
           restore_state_cookies(target, cookies)
           ls_count = restore_local_storage(pluck(data[:payload], :local_storage, default: {}))
 
