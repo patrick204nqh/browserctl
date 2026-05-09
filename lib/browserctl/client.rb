@@ -316,9 +316,13 @@ module Browserctl
            flow_version: flow_version, passphrase: passphrase)
     end
 
-    # Restores a .bctl bundle into the running daemon.
-    def state_load(name, passphrase: nil)
-      call("state_load", name: name, passphrase: passphrase)
+    # Restores a .bctl bundle into the running daemon. The daemon runs the
+    # auth_required detector against the bundle's cookies before applying;
+    # callers that have already verified the bundle (e.g. workflow
+    # `load_state` after a successful rotate) can pass `skip_auth_check: true`
+    # to bypass it.
+    def state_load(name, passphrase: nil, skip_auth_check: false)
+      call("state_load", name: name, passphrase: passphrase, skip_auth_check: skip_auth_check)
     end
 
     # Lists all stored state bundles (manifest only — no payload decryption).
