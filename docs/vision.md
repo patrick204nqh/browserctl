@@ -182,10 +182,10 @@ It is the difference between a browser **you restart** and a browser **you steer
 **Goal:** Turn ephemeral AI exploration into durable, version-controlled workflows.
 
 **Stable refs and fingerprints**
-- [ ] `snapshot_v2` — refs derived from `(role, accessible-name, tag, parent-path)` hash; same element → same ref across snapshots
+- [ ] Replace `snapshot` — refs derived from `(role, accessible-name, tag, parent-path)` hash; same element → same ref across snapshots (breaking change, no `_v2` suffix)
 - [ ] Fingerprint blob per element (text, ARIA role, neighbor signature, position) emitted alongside ref
 - [ ] Fingerprint-based fuzzy match on replay when selectors fail — Scrapling-style self-healing for recordings
-- [ ] Versioned snapshot format header so old recordings remain replayable
+- [ ] Migration note in CHANGELOG — old recordings re-record, not auto-migrate
 
 **Recording → workflow → flow pipeline**
 - [ ] `browserctl workflow generate <recording>` — emits a Ruby workflow with stable selectors, fingerprint fallbacks as comments, secret detection (`secret_ref:` placeholders), inferred waits, postconditions
@@ -198,8 +198,8 @@ It is the difference between a browser **you restart** and a browser **you steer
 **Goal:** Earn the right to call 1.0. Determinism, observability, performance budgets, real test pyramid.
 
 **Determinism**
-- [ ] Versioned formats for snapshots, recordings, workflows, state bundles — explicit `version:` in every header
-- [ ] Migration helpers between format versions
+- [ ] Versioned formats for recordings, workflows, state bundles — explicit `version:` in every header (snapshot stays unversioned; refs are deterministic by construction)
+- [ ] Migration helpers between format versions where needed
 - [ ] No implicit waits; every wait is explicit and surfaced in errors
 
 **Error model**
