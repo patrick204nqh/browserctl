@@ -186,9 +186,30 @@ module Browserctl
     end
   end
 
+  @flow_registry_mutex = Mutex.new
+  @flow_registry       = {}
+
   def self.flow(name, &block)
     raise ArgumentError, "Browserctl.flow requires a block" unless block
 
-    Flow.new(name).tap { |f| f.instance_exec(&block) }
+    flow = Flow.new(name).tap { |f| f.instance_exec(&block) }
+    register_flow(flow)
+    flow
+  end
+
+  def self.register_flow(flow)
+    @flow_registry_mutex.synchronize { @flow_registry[flow.name] = flow }
+  end
+
+  def self.lookup_flow(name)
+    @flow_registry_mutex.synchronize { @flow_registry[name.to_s] }
+  end
+
+  def self.flow_registry_snapshot
+    @flow_registry_mutex.synchronize { @flow_registry.dup }
+  end
+
+  def self.flow_registry_reset!
+    @flow_registry_mutex.synchronize { @flow_registry.clear }
   end
 end
