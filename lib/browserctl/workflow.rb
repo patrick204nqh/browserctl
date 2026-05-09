@@ -3,6 +3,7 @@
 require "timeout"
 require_relative "client"
 require_relative "errors"
+require_relative "flow_registry"
 require_relative "secret_resolvers"
 require_relative "session"
 
@@ -94,10 +95,16 @@ module Browserctl
       $stdin.gets.chomp
     end
 
-    def invoke(workflow_name, **override_params)
-      name = workflow_name.to_s
+    def invoke(target_name, page: nil, **override_params)
+      name = target_name.to_s
       guard_circular!(name)
-      track_invoke(name) { run_nested(workflow_name, **override_params) }
+
+      flow = lookup_flow_target(name)
+      if flow
+        track_invoke(name) { run_invoked_flow(flow, page_name: page, **override_params) }
+      else
+        track_invoke(name) { run_nested(target_name, **override_params) }
+      end
     end
 
     def assert(condition, msg = "assertion failed")
@@ -181,6 +188,19 @@ module Browserctl
 
     def run_nested(workflow_name, **override_params)
       Runner.new.run_workflow(workflow_name, **@params, **override_params)
+    end
+
+    def lookup_flow_target(name)
+      Browserctl.lookup_flow(name) || begin
+        FlowRegistry.resolve(name)
+      rescue ArgumentError
+        nil
+      end
+    end
+
+    def run_invoked_flow(flow, page_name:, **params)
+      proxy = page_name ? page(page_name) : nil
+      flow.run(page: proxy, client: @client, **params)
     end
   end
 
