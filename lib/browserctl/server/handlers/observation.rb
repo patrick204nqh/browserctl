@@ -12,6 +12,30 @@ module Browserctl
           with_page(req[:name]) { |session| take_snapshot(session, req[:format], req[:diff]) }
         end
 
+        # Runs the auth_required detector against the page and returns either a
+        # plain `{ ok: true, auth_required: false }` response or a structured
+        # `{ error:, code: "AUTH_REQUIRED", state:, suggested_flow:, reason: }`
+        # error. Callers feed in cookies / suggested_flow when they have a
+        # bundle in hand (see PR 18); without them, only the URL signal fires.
+        def cmd_auth_check(req)
+          with_page(req[:name]) do |session|
+            cookies = session.page.cookies.all.values.map(&:to_h) if req[:include_cookies]
+            result = Browserctl::Detectors.auth_required(
+              session.page,
+              cookies: cookies,
+              suggested_flow: req[:suggested_flow]
+            )
+            next { ok: true, auth_required: false } unless result.triggered
+
+            Browserctl::AuthRequiredError.new(
+              result.reason,
+              state: req[:state],
+              suggested_flow: result.suggested_flow,
+              reason: result.reason
+            ).to_response
+          end
+        end
+
         def take_snapshot(session, format, diff)
           nonce     = SecureRandom.hex(8)
           challenge = Detectors.cloudflare?(session.page)

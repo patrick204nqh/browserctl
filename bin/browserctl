@@ -33,9 +33,10 @@ require "browserctl/commands/dialog"
 require "browserctl/commands/ask"
 
 def print_result(res)
-  if res.is_a?(Hash) && res[:error]
-    warn "Error: #{res[:error]}"
-    exit 1
+  if res.is_a?(Hash) && (res[:error] || res["error"])
+    warn "Error: #{res[:error] || res['error']}"
+    puts res.to_json
+    exit((res[:code] || res["code"]) == "AUTH_REQUIRED" ? 7 : 1)
   end
   puts res.to_json
 end
@@ -96,6 +97,10 @@ def usage
       session delete <name>
       session export <name> <path>
       session import <path>
+
+    Auth detection:
+      auth-check <page> [--cookies] [--state NAME] [--flow NAME]
+        # Exits 7 with code: AUTH_REQUIRED when the page needs login.
 
     State (.bctl bundles — cookies + storage + flow binding):
       state save   <name> [--encrypt] [--origins a,b] [--flow NAME]
@@ -166,6 +171,21 @@ else
   when "session"  then Browserctl::Commands::Session.run(client, args)
   when "state"    then Browserctl::Commands::State.run(client, args)
   when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
+  when "auth-check"
+    page_name = args.shift or abort "usage: browserctl auth-check <page> [--cookies] [--state NAME] [--flow NAME]"
+    include_cookies = args.delete("--cookies") ? true : false
+    state_idx = args.index("--state")
+    state_arg = if state_idx
+                  (args.delete_at(state_idx)
+                   args.delete_at(state_idx))
+                end
+    flow_idx  = args.index("--flow")
+    flow_arg  = if flow_idx
+                  (args.delete_at(flow_idx)
+                   args.delete_at(flow_idx))
+                end
+    print_result(client.auth_check(page_name, include_cookies: include_cookies,
+                                              state: state_arg, suggested_flow: flow_arg))
   when "navigate" then print_result(client.navigate(args[0], args[1]))
   when "fill"     then Browserctl::Commands::Fill.run(client, args)
   when "click"    then Browserctl::Commands::Click.run(client, args)
