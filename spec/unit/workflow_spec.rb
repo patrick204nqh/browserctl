@@ -430,6 +430,86 @@ RSpec.describe Browserctl::WorkflowContext do
       expect { ctx.invoke("loop_a") }.to raise_error(Browserctl::WorkflowError, /circular/)
     end
   end
+
+  describe "#invoke flow dispatch" do
+    before { Browserctl.flow_registry_reset! }
+    after  { Browserctl.flow_registry_reset! }
+
+    it "runs a registered flow when the name resolves to one" do
+      received = nil
+      Browserctl.flow("greet") do
+        param :who
+        step("s") { received = who }
+      end
+
+      ctx = described_class.new({}, client)
+      ctx.invoke("greet", who: "patrick")
+
+      expect(received).to eq("patrick")
+    end
+
+    it "passes the named page proxy to the flow" do
+      seen = nil
+      Browserctl.flow("uses_page") do
+        step("s") { seen = page }
+      end
+
+      ctx = described_class.new({}, client)
+      ctx.invoke("uses_page", page: :main)
+
+      expect(seen).to be_a(Browserctl::PageProxy)
+    end
+
+    it "passes nil page when no page: kwarg given" do
+      seen = :unset
+      Browserctl.flow("no_page") do
+        step("s") { seen = page }
+      end
+
+      described_class.new({}, client).invoke("no_page")
+
+      expect(seen).to be_nil
+    end
+
+    it "exposes the workflow's client to the flow" do
+      seen = nil
+      Browserctl.flow("uses_client") do
+        step("s") { seen = client }
+      end
+
+      described_class.new({}, client).invoke("uses_client")
+
+      expect(seen).to equal(client)
+    end
+
+    it "prefers a registered flow over a registered workflow with the same name" do
+      Browserctl.workflow "shadow" do
+        step("wf") { raise "should not run" }
+      end
+      Browserctl.flow("shadow") { step("flow_step") { :flow_ran } }
+
+      expect { described_class.new({}, client).invoke("shadow") }.not_to raise_error
+    ensure
+      Browserctl.instance_variable_get(:@registry).delete("shadow")
+    end
+
+    it "falls through to workflow invocation when no flow matches" do
+      ctx = described_class.new({}, client)
+      runner = instance_double(Browserctl::Runner, run_workflow: true)
+      allow(Browserctl::Runner).to receive(:new).and_return(runner)
+
+      ctx.invoke("only_a_workflow")
+
+      expect(runner).to have_received(:run_workflow).with("only_a_workflow")
+    end
+
+    it "propagates flow typed errors" do
+      Browserctl.flow("guarded") { precondition("on page") { false } }
+
+      expect { described_class.new({}, client).invoke("guarded") }
+        .to raise_error(Browserctl::FlowPreconditionError)
+    end
+  end
 end
 
 RSpec.describe "WorkflowContext compose guard" do
