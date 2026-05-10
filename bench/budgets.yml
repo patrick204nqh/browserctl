@@ -1,0 +1,16 @@
+# Performance budgets for `bench:` targets.
+#
+# Each entry pins a single percentile metric to a budget in nanoseconds. The
+# `observed_ns` value is the worst sample seen across the runs that produced
+# this budget; `margin` is the multiplier applied to that observed value to
+# arrive at `budget_ns`. Bumping a budget should be deliberate — investigate
+# the regression first, only widen the budget if the new cost is justified.
+#
+# Enforcement (a CI task that fails the build when results exceed the budget)
+# lands in a follow-up PR. This file is the contract; the gate comes next.
+---
+bundle_codec:
+  metric: p95_ns
+  budget_ns: 150000
+  observed_ns: 119000
+  margin: 1.2
