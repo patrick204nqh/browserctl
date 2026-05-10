@@ -527,7 +527,7 @@ RSpec.describe Browserctl::CommandDispatcher do
       it "returns an error for a missing key" do
         result = dispatcher.dispatch({ cmd: "fetch", key: "missing" })
         expect(result[:error]).to match(/key 'missing' not found/)
-        expect(result[:code]).to eq("key_not_found")
+        expect(result[:code]).to eq(Browserctl::Error::Codes::KEY_NOT_FOUND)
       end
 
       it "overwrites an existing key" do

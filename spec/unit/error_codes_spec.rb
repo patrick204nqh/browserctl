@@ -29,7 +29,10 @@ RSpec.describe Browserctl::Error::Codes do
         "STATE_EXPIRED",
         "SECRET_RESOLUTION_FAILED",
         "DAEMON_UNREACHABLE",
-        "PROTOCOL_MISMATCH"
+        "PROTOCOL_MISMATCH",
+        "DOMAIN_NOT_ALLOWED",
+        "KEY_NOT_FOUND",
+        "GENERIC"
       )
       expect(described_class.all).to be_frozen
     end

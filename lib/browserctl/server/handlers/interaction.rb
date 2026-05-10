@@ -27,7 +27,13 @@ module Browserctl
               "return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; " \
               "})(#{sel.to_json})"
             )
-            return { error: "selector not found: #{sel}", code: "selector_not_found" } unless coords
+            unless coords
+              return error_payload(
+                code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+                message: "selector not found: #{sel}",
+                context: { selector: sel }
+              )
+            end
 
             session.page.mouse.move(x: coords["x"], y: coords["y"])
             { ok: true }
@@ -43,7 +49,13 @@ module Browserctl
             return sel if sel.is_a?(Hash)
 
             el = session.page.at_css(sel)
-            return { error: "selector not found: #{sel}", code: "selector_not_found" } unless el
+            unless el
+              return error_payload(
+                code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+                message: "selector not found: #{sel}",
+                context: { selector: sel }
+              )
+            end
 
             el.select_file(path)
             { ok: true }
@@ -56,7 +68,13 @@ module Browserctl
             return sel if sel.is_a?(Hash)
 
             el = session.page.at_css(sel)
-            return { error: "selector not found: #{sel}", code: "selector_not_found" } unless el
+            unless el
+              return error_payload(
+                code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+                message: "selector not found: #{sel}",
+                context: { selector: sel }
+              )
+            end
 
             el.evaluate(
               "this.value = #{req[:value].to_json}; " \

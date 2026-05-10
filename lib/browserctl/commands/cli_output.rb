@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "../errors"
+require_relative "../error/suggested_actions"
 
 module Browserctl
   module Commands
@@ -9,7 +11,9 @@ module Browserctl
 
       def print_result(res)
         if res.is_a?(Hash) && (res[:error] || res["error"])
-          warn "Error: #{res[:error] || res['error']}"
+          message = res[:error] || res["error"]
+          warn "Error: #{message}"
+          warn structured_error_line(res, message)
           puts res.to_json
           exit exit_code_for(res)
         end
@@ -22,6 +26,22 @@ module Browserctl
         return AUTH_REQUIRED_EXIT_CODE if (res[:code] || res["code"]) == "AUTH_REQUIRED"
 
         1
+      end
+
+      # Builds the single-line structured payload emitted to stderr after
+      # the human-readable line. Agents parse this JSON deterministically.
+      # Shape: { code, message, context, suggested_action }.
+      def structured_error_line(res, message)
+        code    = (res[:code] || res["code"] || Browserctl::Error::Codes::GENERIC).to_s
+        context = res[:context] || res["context"] || {}
+        action  = res[:suggested_action] || res["suggested_action"] ||
+                  Browserctl::Error::SuggestedActions.for(code)
+        JSON.generate(
+          code: code,
+          message: message,
+          context: context,
+          suggested_action: action
+        )
       end
     end
   end

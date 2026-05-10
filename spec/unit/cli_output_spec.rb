@@ -23,13 +23,13 @@ RSpec.describe Browserctl::Commands::CliOutput do
 
   describe "#print_result" do
     it "prints OK responses as JSON without exiting" do
-      out = capture_stdout { host.print_result(ok: true, value: 42) }
+      out, = capture_io { host.print_result(ok: true, value: 42) }
       expect(out).to include('"ok":true')
       expect(out).to include('"value":42')
     end
 
     it "exits 7 with the body still printed for AUTH_REQUIRED" do
-      out = capture_stdout do
+      out, = capture_io do
         expect { host.print_result(error: "login", code: "AUTH_REQUIRED", suggested_flow: "f") }
           .to raise_error(SystemExit) { |e| expect(e.status).to eq(7) }
       end
@@ -38,20 +38,51 @@ RSpec.describe Browserctl::Commands::CliOutput do
     end
 
     it "exits 1 for plain errors" do
-      capture_stdout do
+      capture_io do
         expect { host.print_result(error: "oops") }
           .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
       end
     end
+
+    it "emits a structured JSON line on stderr after the human line" do
+      _, err = capture_io do
+        expect do
+          host.print_result(
+            error: "selector not found: .x",
+            code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+            context: { selector: ".x" },
+            suggested_action: "Re-run snapshot."
+          )
+        end.to raise_error(SystemExit)
+      end
+      lines = err.split("\n")
+      expect(lines.first).to start_with("Error: selector not found")
+      payload = JSON.parse(lines.last)
+      expect(payload).to eq(
+        "code" => "SELECTOR_NOT_FOUND",
+        "message" => "selector not found: .x",
+        "context" => { "selector" => ".x" },
+        "suggested_action" => "Re-run snapshot."
+      )
+    end
+
+    it "fills in suggested_action and GENERIC code when missing from the daemon response" do
+      _, err = capture_io do
+        expect { host.print_result(error: "boom") }.to raise_error(SystemExit)
+      end
+      payload = JSON.parse(err.split("\n").last)
+      expect(payload["code"]).to eq("GENERIC")
+      expect(payload["suggested_action"]).to eq(Browserctl::Error::SuggestedActions::DEFAULT)
+    end
   end
 
-  def capture_stdout
+  def capture_io
     original_stdout = $stdout
     original_stderr = $stderr
     $stdout = StringIO.new
     $stderr = StringIO.new
     yield
-    $stdout.string
+    [$stdout.string, $stderr.string]
   ensure
     $stdout = original_stdout
     $stderr = original_stderr

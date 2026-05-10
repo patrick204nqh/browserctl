@@ -26,7 +26,7 @@ RSpec.describe Browserctl::PageProxy, "selector_not_found fallback" do
     it "rematches via fingerprint when selector fails and retries by ref" do
       expect(client).to receive(:click).with("login", "form .submit-old", ref: nil)
                                        .and_return({ error: "selector not found: form .submit-old",
-                                                     code: "selector_not_found" })
+                                                     code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND })
       expect(client).to receive(:snapshot).with("login", format: "elements")
                                           .and_return({ ok: true, snapshot: live_snapshot })
       expect(client).to receive(:click).with("login", nil, ref: "eb22222").and_return({ ok: true })
@@ -42,7 +42,7 @@ RSpec.describe Browserctl::PageProxy, "selector_not_found fallback" do
       proxy = described_class.new("login", client, replay_context: ctx)
       expect(client).to receive(:click).with("login", "form .other", ref: nil)
                                        .and_return({ error: "selector not found: form .other",
-                                                     code: "selector_not_found" })
+                                                     code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND })
 
       expect { proxy.click("form .other") }.to raise_error(Browserctl::WorkflowError, /selector not found/)
       expect(ctx.drift_events).to be_empty
@@ -55,7 +55,7 @@ RSpec.describe Browserctl::PageProxy, "selector_not_found fallback" do
       ]
       expect(client).to receive(:click).with("login", "form .submit-old", ref: nil)
                                        .and_return({ error: "selector not found: form .submit-old",
-                                                     code: "selector_not_found" })
+                                                     code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND })
       expect(client).to receive(:snapshot).and_return({ ok: true, snapshot: cold_snapshot })
 
       expect { proxy.click("form .submit-old") }.to raise_error(Browserctl::WorkflowError)
@@ -66,7 +66,8 @@ RSpec.describe Browserctl::PageProxy, "selector_not_found fallback" do
     it "does not attempt fallback when no replay context is attached" do
       bare = described_class.new("login", client)
       expect(client).to receive(:click).once
-                                       .and_return({ error: "selector not found: x", code: "selector_not_found" })
+                                       .and_return({ error: "selector not found: x",
+                                                     code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND })
       expect(client).not_to receive(:snapshot)
       expect { bare.click("x") }.to raise_error(Browserctl::WorkflowError)
     end
@@ -87,7 +88,7 @@ RSpec.describe Browserctl::PageProxy, "selector_not_found fallback" do
 
       expect(client).to receive(:fill).with("login", "input.old", "me@example.com", ref: nil)
                                       .and_return({ error: "selector not found: input.old",
-                                                    code: "selector_not_found" })
+                                                    code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND })
       expect(client).to receive(:snapshot).and_return({ ok: true, snapshot: live_snapshot })
       expect(client).to receive(:fill).with("login", nil, "me@example.com", ref: "ea11111")
                                       .and_return({ ok: true })
