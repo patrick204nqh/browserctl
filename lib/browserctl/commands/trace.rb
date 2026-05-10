@@ -3,20 +3,29 @@
 require "json"
 require "time"
 require_relative "../logger"
+require_relative "../redactor"
+require_relative "../secret_resolver_registry"
 
 module Browserctl
   module Commands
-    # `browserctl trace [<session>]` — pretty timeline of structured log events
-    # across cli.log + daemon.log. Defaults to most recent session.
+    # `browserctl trace [<session>] [--no-redact]` — pretty timeline of
+    # structured log events across cli.log + daemon.log. Defaults to most
+    # recent session.
     #
     # Loose categorisation by inspecting common keys (event/snapshot/request/
     # error). No schema is enforced — this command is tolerant of any JSONL
     # produced by Browserctl::JsonlFormatter.
     #
-    # TODO(PR#15): redact secrets via `--redact` flag. This PR prints raw
-    # log content as-is.
+    # Redaction: ON by default. Secret values are sourced from current ENV
+    # patterns (`*_TOKEN`, `*_KEY`, `*_SECRET`, `*_PASSWORD`) and any values
+    # captured by `SecretResolverRegistry` during this process. Pass
+    # `--no-redact` to disable (local debugging only). Note: when replaying
+    # historical traces from a previous process, registry-captured values are
+    # gone — only current ENV patterns apply.
     module Trace
-      USAGE = "Usage: browserctl trace [<session>]"
+      USAGE = "Usage: browserctl trace [<session>] [--no-redact]"
+      NO_REDACT_WARNING = "[browserctl] traces include unredacted secret values; " \
+                          "do not paste this output publicly."
 
       LEVEL_COLORS = {
         "DEBUG" => "\e[2;37m", # dim grey
@@ -35,9 +44,18 @@ module Browserctl
 
       OMIT_KEYS = %w[ts level component event msg].freeze
 
-      def self.run(args, log_dir: Browserctl.log_dir, out: $stdout)
+      def self.run(args, log_dir: Browserctl.log_dir, out: $stdout, err: $stderr)
         abort USAGE if args.include?("-h") || args.include?("--help")
+        args = args.dup
+        redact = !args.delete("--no-redact")
         session_filter = args.shift
+
+        if redact
+          redactor = build_redactor
+        else
+          redactor = nil
+          warn_no_redact(err)
+        end
 
         records = load_records(log_dir)
         if records.empty?
@@ -51,7 +69,22 @@ module Browserctl
           return
         end
 
-        render(records, out: out)
+        render(records, out: out, redactor: redactor)
+      end
+
+      def self.build_redactor
+        extra = if defined?(Browserctl::SecretResolverRegistry)
+                  Browserctl::SecretResolverRegistry.resolved_values
+                else
+                  []
+                end
+        Browserctl::Redactor.from_env(extra: extra)
+      rescue StandardError
+        Browserctl::Redactor.new(secrets: [])
+      end
+
+      def self.warn_no_redact(err)
+        err&.puts NO_REDACT_WARNING
       end
 
       def self.load_records(log_dir)
@@ -89,12 +122,12 @@ module Browserctl
         end
       end
 
-      def self.render(records, out:)
+      def self.render(records, out:, redactor: nil)
         tty = out.respond_to?(:tty?) && out.tty?
-        records.each { |r| out.puts(format_line(r, tty: tty)) }
+        records.each { |r| out.puts(format_line(r, tty: tty, redactor: redactor)) }
       end
 
-      def self.format_line(record, tty:)
+      def self.format_line(record, tty:, redactor: nil)
         level = (record["level"] || "INFO").to_s
         line  = format("%-12<ts>s %<icon>s %-5<level>s %-7<comp>s %-22<label>s %<ctx>s",
                        ts: format_ts(record["ts"]),
@@ -104,6 +137,7 @@ module Browserctl
                        label: event_label(record),
                        ctx: context_snippet(record)).rstrip
 
+        line = redactor.redact(line) if redactor
         tty ? colourise(line, level) : line
       end
 

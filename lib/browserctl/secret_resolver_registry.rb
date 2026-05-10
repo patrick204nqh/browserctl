@@ -4,8 +4,9 @@ require_relative "errors"
 
 module Browserctl
   class SecretResolverRegistry
-    @mutex    = Mutex.new
-    @registry = {}
+    @mutex          = Mutex.new
+    @registry       = {}
+    @resolved_values = []
 
     def self.register(resolver_class)
       instance = resolver_class.new
@@ -25,7 +26,9 @@ module Browserctl
         raise SecretResolverError, msg
       end
 
-      resolver.resolve(reference)
+      value = resolver.resolve(reference)
+      record_resolved_value(value)
+      value
     rescue SecretResolverError
       raise
     rescue StandardError => e
@@ -36,8 +39,24 @@ module Browserctl
       @mutex.synchronize { @registry.key?(scheme) }
     end
 
+    # In-memory record of values resolved during this process. Used by the
+    # Redactor so trace output never leaks values that flowed through the
+    # registry. Never persisted.
+    def self.resolved_values
+      @mutex.synchronize { @resolved_values.dup }
+    end
+
+    def self.record_resolved_value(value)
+      return unless value.is_a?(String) && !value.empty?
+
+      @mutex.synchronize { @resolved_values << value unless @resolved_values.include?(value) }
+    end
+
     def self.reset!
-      @mutex.synchronize { @registry.clear }
+      @mutex.synchronize do
+        @registry.clear
+        @resolved_values.clear
+      end
     end
   end
 end
