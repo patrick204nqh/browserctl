@@ -52,7 +52,7 @@ def print_result(res)
   warn "Error: #{message}"
   warn payload
   puts res.to_json
-  exit(code == "AUTH_REQUIRED" ? 7 : 1)
+  exit Browserctl::Error::ExitCodes.for(code)
 end
 
 def usage
@@ -184,100 +184,112 @@ usage if cmd.nil? || %w[-h --help help].include?(cmd)
 
 runner = Browserctl::Runner.new
 
-case cmd
-when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
-when "record"   then Browserctl::Commands::Record.run(args)
-when "init"     then Browserctl::Commands::Init.run(args)
-when "ask"      then Browserctl::Commands::Ask.run(args)
-when "trace"    then Browserctl::Commands::Trace.run(args)
-
-else
-  client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
-
+begin
   case cmd
-  when "flow"     then Browserctl::Commands::Flow.run(client, args)
-  when "page"     then Browserctl::Commands::Page.run(client, args)
-  when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
-  when "storage"  then Browserctl::Commands::Storage.run(client, args)
-  when "session"  then Browserctl::Commands::Session.run(client, args)
-  when "state"    then Browserctl::Commands::State.run(client, args)
-  when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
-  when "auth-check"
-    page_name = args.shift or abort "usage: browserctl auth-check <page> [--cookies] [--state NAME] [--flow NAME]"
-    include_cookies = args.delete("--cookies") ? true : false
-    state_idx = args.index("--state")
-    state_arg = if state_idx
-                  (args.delete_at(state_idx)
-                   args.delete_at(state_idx))
-                end
-    flow_idx  = args.index("--flow")
-    flow_arg  = if flow_idx
-                  (args.delete_at(flow_idx)
-                   args.delete_at(flow_idx))
-                end
-    print_result(client.auth_check(page_name, include_cookies: include_cookies,
-                                              state: state_arg, suggested_flow: flow_arg))
-  when "navigate" then print_result(client.navigate(args[0], args[1]))
-  when "fill"     then Browserctl::Commands::Fill.run(client, args)
-  when "click"    then Browserctl::Commands::Click.run(client, args)
-  when "snapshot" then Browserctl::Commands::Snapshot.run(client, args)
-  when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
-  when "evaluate" then print_result(client.evaluate(args[0], args[1]))
-  when "url"      then print_result(client.url(args[0]))
-  when "wait"
-    opts = Optimist.options(args) do
-      opt :timeout, "Seconds to wait (default: 30)", default: 30.0, short: "-t"
-    end
-    name = args.shift
-    selector = args.shift
-    abort "usage: browserctl wait <page> <selector> [--timeout N]" unless name && selector
-    print_result(client.wait(name, selector, timeout: opts[:timeout]))
-  when "pause"
-    opts = Optimist.options(args) do
-      opt :message, "Message shown to human", type: :string, short: "-m"
-    end
-    name = args.shift or abort "usage: browserctl pause <page> [--message MSG]"
-    res = client.pause(name, message: opts[:message])
-    if res[:error]
-      warn "Error: #{res[:error]}"
-      exit 1
-    end
-    puts "Page '#{name}' paused. Browser is live — interact freely."
-    puts "(#{opts[:message]})" if opts[:message]
-    puts "When done: browserctl resume #{name}"
-  when "resume" then Browserctl::Commands::Resume.run(client, args)
-  when "press"
-    name = args.shift or abort "usage: browserctl press <page> <key>"
-    key  = args.shift or abort "usage: browserctl press <page> <key>"
-    print_result(client.press(name, key))
-  when "hover"
-    name     = args.shift or abort "usage: browserctl hover <page> <selector>"
-    selector = args.shift or abort "usage: browserctl hover <page> <selector>"
-    print_result(client.hover(name, selector))
-  when "upload"
-    name     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
-    selector = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
-    path     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
-    print_result(client.upload(name, selector, path))
-  when "select"
-    name     = args.shift or abort "usage: browserctl select <page> <selector> <value>"
-    selector = args.shift or abort "usage: browserctl select <page> <selector> <value>"
-    value    = args.shift or abort "usage: browserctl select <page> <selector> <value>"
-    print_result(client.select(name, selector, value))
-  when "dialog" then Browserctl::Commands::Dialog.run(client, args)
-  when "devtools"
-    name = args.shift or abort "usage: browserctl devtools <page>"
-    res = client.devtools(name)
-    if res[:error]
-      warn "Error: #{res[:error]}"
-      exit 1
-    end
-    url = res[:devtools_url]
-    puts "Opening DevTools for '#{name}':"
-    puts "  #{url}"
-    opener = RUBY_PLATFORM =~ /darwin/ ? "open" : "xdg-open"
-    system(opener, url)
+  when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
+  when "record"   then Browserctl::Commands::Record.run(args)
+  when "init"     then Browserctl::Commands::Init.run(args)
+  when "ask"      then Browserctl::Commands::Ask.run(args)
+  when "trace"    then Browserctl::Commands::Trace.run(args)
+
   else
-    abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."
+    client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
+
+    case cmd
+    when "flow"     then Browserctl::Commands::Flow.run(client, args)
+    when "page"     then Browserctl::Commands::Page.run(client, args)
+    when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
+    when "storage"  then Browserctl::Commands::Storage.run(client, args)
+    when "session"  then Browserctl::Commands::Session.run(client, args)
+    when "state"    then Browserctl::Commands::State.run(client, args)
+    when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
+    when "auth-check"
+      page_name = args.shift or abort "usage: browserctl auth-check <page> [--cookies] [--state NAME] [--flow NAME]"
+      include_cookies = args.delete("--cookies") ? true : false
+      state_idx = args.index("--state")
+      state_arg = if state_idx
+                    (args.delete_at(state_idx)
+                     args.delete_at(state_idx))
+                  end
+      flow_idx  = args.index("--flow")
+      flow_arg  = if flow_idx
+                    (args.delete_at(flow_idx)
+                     args.delete_at(flow_idx))
+                  end
+      print_result(client.auth_check(page_name, include_cookies: include_cookies,
+                                                state: state_arg, suggested_flow: flow_arg))
+    when "navigate" then print_result(client.navigate(args[0], args[1]))
+    when "fill"     then Browserctl::Commands::Fill.run(client, args)
+    when "click"    then Browserctl::Commands::Click.run(client, args)
+    when "snapshot" then Browserctl::Commands::Snapshot.run(client, args)
+    when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
+    when "evaluate" then print_result(client.evaluate(args[0], args[1]))
+    when "url"      then print_result(client.url(args[0]))
+    when "wait"
+      opts = Optimist.options(args) do
+        opt :timeout, "Seconds to wait (default: 30)", default: 30.0, short: "-t"
+      end
+      name = args.shift
+      selector = args.shift
+      abort "usage: browserctl wait <page> <selector> [--timeout N]" unless name && selector
+      print_result(client.wait(name, selector, timeout: opts[:timeout]))
+    when "pause"
+      opts = Optimist.options(args) do
+        opt :message, "Message shown to human", type: :string, short: "-m"
+      end
+      name = args.shift or abort "usage: browserctl pause <page> [--message MSG]"
+      res = client.pause(name, message: opts[:message])
+      if res[:error]
+        warn "Error: #{res[:error]}"
+        exit 1
+      end
+      puts "Page '#{name}' paused. Browser is live — interact freely."
+      puts "(#{opts[:message]})" if opts[:message]
+      puts "When done: browserctl resume #{name}"
+    when "resume" then Browserctl::Commands::Resume.run(client, args)
+    when "press"
+      name = args.shift or abort "usage: browserctl press <page> <key>"
+      key  = args.shift or abort "usage: browserctl press <page> <key>"
+      print_result(client.press(name, key))
+    when "hover"
+      name     = args.shift or abort "usage: browserctl hover <page> <selector>"
+      selector = args.shift or abort "usage: browserctl hover <page> <selector>"
+      print_result(client.hover(name, selector))
+    when "upload"
+      name     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+      selector = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+      path     = args.shift or abort "usage: browserctl upload <page> <selector> <file>"
+      print_result(client.upload(name, selector, path))
+    when "select"
+      name     = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+      selector = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+      value    = args.shift or abort "usage: browserctl select <page> <selector> <value>"
+      print_result(client.select(name, selector, value))
+    when "dialog" then Browserctl::Commands::Dialog.run(client, args)
+    when "devtools"
+      name = args.shift or abort "usage: browserctl devtools <page>"
+      res = client.devtools(name)
+      if res[:error]
+        warn "Error: #{res[:error]}"
+        exit 1
+      end
+      url = res[:devtools_url]
+      puts "Opening DevTools for '#{name}':"
+      puts "  #{url}"
+      opener = RUBY_PLATFORM =~ /darwin/ ? "open" : "xdg-open"
+      system(opener, url)
+    else
+      abort "unknown command: #{cmd}\nRun 'browserctl --help' for usage."
+    end
   end
+rescue Browserctl::Error => e
+  payload = {
+    code: e.code,
+    message: e.message,
+    context: e.respond_to?(:context) ? (e.context || {}) : {},
+    suggested_action: Browserctl::Error::SuggestedActions.for(e.code)
+  }
+  warn "Error: #{e.message}"
+  warn JSON.generate(payload)
+  exit Browserctl::Error::ExitCodes.for(e.code)
 end
