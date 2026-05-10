@@ -6,19 +6,37 @@ require "browserctl/server/snapshot_builder"
 RSpec.describe Browserctl::SnapshotBuilder do
   subject(:builder) { described_class.new }
 
+  def page_with(html) = double("page", body: html)
+
   describe "#call" do
     it "returns an array of element entries with required keys" do
-      page = double("page", body: "<html><body><a href='/'>Home</a></body></html>")
-      result = builder.call(page)
+      result = builder.call(page_with("<html><body><a href='/'>Home</a></body></html>"))
       expect(result).to be_an(Array)
       expect(result.first).to include(:ref, :tag, :text, :selector, :attrs)
     end
 
-    it "increments ref counters per element" do
+    it "derives stable hash-prefixed refs (e<7-hex>)" do
       html = "<html><body><a>One</a><button>Two</button></body></html>"
-      page = double("page", body: html)
-      refs = builder.call(page).map { |e| e[:ref] }
-      expect(refs).to eq(%w[e1 e2])
+      refs = builder.call(page_with(html)).map { |e| e[:ref] }
+      expect(refs).to all(match(/\Ae[0-9a-f]{7}(-\d+)?\z/))
+      expect(refs.uniq.size).to eq(refs.size)
+    end
+
+    it "produces identical refs across two snapshots of the same page" do
+      html = "<html><body><a>One</a><button>Two</button></body></html>"
+      first  = builder.call(page_with(html)).map { |e| e[:ref] }
+      second = builder.call(page_with(html)).map { |e| e[:ref] }
+      expect(first).to eq(second)
+    end
+
+    it "disambiguates collisions with a numeric suffix" do
+      # Two anchors with identical role/name/tag/parent-path should collide
+      # on the base hash and get -2 appended to the second.
+      html = "<html><body><a>Same</a><a>Same</a></body></html>"
+      refs = builder.call(page_with(html)).map { |e| e[:ref] }
+      expect(refs.size).to eq(2)
+      expect(refs[0]).to match(/\Ae[0-9a-f]{7}\z/)
+      expect(refs[1]).to eq("#{refs[0]}-2")
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "nokogiri"
+require "browserctl/snapshot/ref"
 
 module Browserctl
   class SnapshotBuilder
@@ -8,16 +9,24 @@ module Browserctl
                       [role=button] [role=link] [role=menuitem]].freeze
     ATTRS        = %w[type name placeholder href aria-label role].freeze
 
+    def initialize(ref_deriver: Snapshot::RefDeriver.new)
+      @ref_deriver = ref_deriver
+    end
+
     def call(page)
       doc = Nokogiri::HTML(page.body)
-      ref = 0
-      doc.css(INTERACTABLE.join(",")).map { |el| element_entry(el, ref += 1) }
+      taken = {}
+      doc.css(INTERACTABLE.join(",")).map do |el|
+        ref = @ref_deriver.disambiguate(@ref_deriver.derive(el), taken)
+        taken[ref] = true
+        element_entry(el, ref)
+      end
     end
 
     private
 
     def element_entry(elem, ref)
-      { ref: "e#{ref}", tag: elem.name, text: elem.text.strip.slice(0, 80),
+      { ref: ref, tag: elem.name, text: elem.text.strip.slice(0, 80),
         selector: css_path(elem), attrs: element_attrs(elem) }
     end
 

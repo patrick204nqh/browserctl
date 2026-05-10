@@ -13,9 +13,9 @@ RSpec.describe "browserd daemon", :integration do
       expect(res[:pid]).to be_a(Integer)
     end
 
-    it "reports protocol_version 2" do
+    it "reports protocol_version 3" do
       res = @client.ping
-      expect(res[:protocol_version]).to eq("2")
+      expect(res[:protocol_version]).to eq("3")
     end
   end
 

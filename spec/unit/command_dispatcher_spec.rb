@@ -78,13 +78,16 @@ RSpec.describe Browserctl::CommandDispatcher do
     let(:pages) { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, double("driver")) }
 
-    before do
-      dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" })
-    end
+    let(:snapshot) { dispatcher.dispatch({ cmd: "snapshot", name: "main", format: "elements" }) }
+    let(:elements) { snapshot[:snapshot] }
+    let(:button_ref) { elements.find { |e| e[:tag] == "button" }[:ref] }
+    let(:input_ref)  { elements.find { |e| e[:tag] == "input" }[:ref] }
+
+    before { snapshot }
 
     it "resolves ref to selector for click" do
       allow(page).to receive(:at_css).and_return(double("el", evaluate: nil))
-      res = dispatcher.dispatch({ cmd: "click", name: "main", ref: "e2" })
+      res = dispatcher.dispatch({ cmd: "click", name: "main", ref: button_ref })
       expect(res[:ok]).to be true
     end
 
@@ -96,7 +99,7 @@ RSpec.describe Browserctl::CommandDispatcher do
     it "resolves ref to selector for fill" do
       el = double("el", focus: nil, evaluate: nil, type: nil)
       allow(page).to receive(:at_css).and_return(el)
-      res = dispatcher.dispatch({ cmd: "fill", name: "main", ref: "e1", value: "test@example.com" })
+      res = dispatcher.dispatch({ cmd: "fill", name: "main", ref: input_ref, value: "test@example.com" })
       expect(res[:ok]).to be true
     end
 
