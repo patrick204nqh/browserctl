@@ -2,9 +2,9 @@
 
 require "json"
 require "openssl"
-require "securerandom"
 require_relative "../errors"
 require_relative "../error/codes"
+require_relative "../encryption_service"
 
 module Browserctl
   module State
@@ -37,6 +37,11 @@ module Browserctl
     #   first 32 bytes are the AES-256-GCM encryption key, last 32 bytes are
     #   the HMAC-SHA-256 key.
     #
+    # AES-256-GCM cipher setup and PBKDF2 key derivation are delegated to
+    # `Browserctl::EncryptionService` so this class stays focused on the
+    # bundle wire format. The service translates `OpenSSL::Cipher` errors
+    # into `EncryptionService::DecryptionError`, which we map to
+    # `PassphraseError` for the public API.
     class Bundle
       MAGIC          = "BCTL\x00".b.freeze
       VERSION        = 1
@@ -50,10 +55,12 @@ module Browserctl
       HEADER_SIZE    = MAGIC.bytesize + 3 # version + flags + reserved
       LEN_SIZE       = 4
       FOOTER_SIZE    = 32
-      SALT_SIZE      = 16
-      NONCE_SIZE     = 12
-      TAG_SIZE       = 16
-      PBKDF2_ITERS   = 200_000
+      # Cryptographic primitive sizes are sourced from EncryptionService so
+      # there is exactly one source of truth for cipher parameters.
+      SALT_SIZE      = Browserctl::EncryptionService::SALT_SIZE
+      NONCE_SIZE     = Browserctl::EncryptionService::NONCE_SIZE
+      TAG_SIZE       = Browserctl::EncryptionService::TAG_SIZE
+      PBKDF2_ITERS   = Browserctl::EncryptionService::PBKDF2_ITERS
 
       class BundleError      < Browserctl::Error; def self.default_code = "bundle_error"      end
       class TamperError      < BundleError;       def self.default_code = "bundle_tampered"   end
@@ -74,9 +81,9 @@ module Browserctl
         hmac_key       = nil
 
         if passphrase
-          salt = SecureRandom.bytes(SALT_SIZE)
-          enc_key, hmac_key = derive_keys(passphrase, salt)
-          payload_bytes = salt + aes_gcm_encrypt(payload_json, enc_key)
+          salt = EncryptionService.random_salt
+          enc_key, hmac_key = EncryptionService.derive_keys(passphrase, salt)
+          payload_bytes = salt + EncryptionService.encrypt(payload_json, enc_key)
           flags |= FLAG_ENCRYPTED
         else
           payload_bytes = payload_json
@@ -204,7 +211,7 @@ module Browserctl
           # We need the HMAC key, which depends on the salt embedded in the
           # payload. Pull the salt from the payload bytes inside `body`.
           salt = extract_salt!(body)
-          _, hmac_key = derive_keys(passphrase, salt)
+          _, hmac_key = EncryptionService.derive_keys(passphrase, salt)
           expected = OpenSSL::HMAC.digest("SHA256", hmac_key, body)
           raise PassphraseError, "wrong passphrase or tampered bundle" unless secure_eq?(footer, expected)
         else
@@ -227,47 +234,16 @@ module Browserctl
         if encrypted
           salt       = bytes.byteslice(0, SALT_SIZE)
           ciphertext = bytes.byteslice(SALT_SIZE, bytes.bytesize - SALT_SIZE)
-          enc_key, = derive_keys(passphrase, salt)
-          plaintext  = aes_gcm_decrypt(ciphertext, enc_key)
+          enc_key, = EncryptionService.derive_keys(passphrase, salt)
+          plaintext  = EncryptionService.decrypt(ciphertext, enc_key)
           JSON.parse(plaintext)
         else
           JSON.parse(bytes)
         end
-      rescue OpenSSL::Cipher::CipherError
+      rescue EncryptionService::DecryptionError
         raise PassphraseError, "wrong passphrase — payload could not be decrypted"
       end
       private_class_method :decode_payload
-
-      def self.derive_keys(passphrase, salt)
-        material = OpenSSL::PKCS5.pbkdf2_hmac(passphrase.to_s, salt, PBKDF2_ITERS, 64, "SHA256")
-        [material.byteslice(0, 32), material.byteslice(32, 32)]
-      end
-      private_class_method :derive_keys
-
-      def self.aes_gcm_encrypt(plaintext, key)
-        cipher = OpenSSL::Cipher.new("aes-256-gcm")
-        cipher.encrypt
-        cipher.key = key
-        nonce = SecureRandom.bytes(NONCE_SIZE)
-        cipher.iv = nonce
-        ct = cipher.update(plaintext) + cipher.final
-        nonce + ct + cipher.auth_tag
-      end
-      private_class_method :aes_gcm_encrypt
-
-      def self.aes_gcm_decrypt(blob, key)
-        nonce      = blob.byteslice(0, NONCE_SIZE)
-        tag        = blob.byteslice(-TAG_SIZE, TAG_SIZE)
-        ciphertext = blob.byteslice(NONCE_SIZE, blob.bytesize - NONCE_SIZE - TAG_SIZE)
-
-        cipher = OpenSSL::Cipher.new("aes-256-gcm")
-        cipher.decrypt
-        cipher.key      = key
-        cipher.iv       = nonce
-        cipher.auth_tag = tag
-        cipher.update(ciphertext) + cipher.final
-      end
-      private_class_method :aes_gcm_decrypt
 
       def self.secure_eq?(actual, expected)
         return false if actual.bytesize != expected.bytesize
