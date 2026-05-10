@@ -35,6 +35,7 @@ Narrative how-tos for real tasks.
 |---|---|
 | [Agent Integration](guides/agent-integration.md) | Using browserctl from Python, shell, and Anthropic tool-use agents |
 | [Writing Workflows](guides/writing-workflows.md) | Automate multi-step flows with the Ruby DSL |
+| [AI-Driven Authoring](guides/ai-authoring.md) | The replayable loop: explore → generate → check → promote |
 | [Secrets and Credentials](guides/writing-workflows.md#sourcing-secrets-with-secret_ref) | Secret resolver system — env://, keychain://, op://, and custom resolvers |
 | [Handling Challenges](guides/handling-challenges.md) | Cloudflare, 2FA, and the pause/resume pattern in practice |
 | [Smoke Testing](guides/smoke-testing.md) | Ready-to-run examples against the-internet.herokuapp.com |
