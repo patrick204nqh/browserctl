@@ -94,6 +94,12 @@ RSpec.describe "workflow format version" do
       end
     end
 
+    before do
+      # Isolate from doubles leaked by other specs into the global registry.
+      # We only care about the verifier's stderr side-effect here, not the returned list.
+      allow(Browserctl).to receive(:registry_snapshot).and_return({})
+    end
+
     def write_workflow(name, content)
       path = File.join(@workflows_dir, "#{name}.rb")
       File.write(path, content)
