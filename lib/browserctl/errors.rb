@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "error/codes"
+require_relative "error/suggested_actions"
 
 module Browserctl
   # Base error class for all browserctl daemon errors.
@@ -9,14 +10,29 @@ module Browserctl
   # the sweep that retrofits every raise to use those codes lands in a later
   # v0.12 PR.
   # @attr_reader code [String] machine-readable error code
+  # @attr_reader context [Hash] free-form structured fields (selector, path, ...)
   class Error < StandardError
     def self.default_code = "error"
 
-    attr_reader :code
+    attr_reader :code, :context
 
-    def initialize(msg = nil, code: self.class.default_code)
-      @code = code
+    def initialize(msg = nil, code: self.class.default_code, context: {})
+      @code    = code
+      @context = context || {}
       super(msg)
+    end
+
+    # Returns the canonical structured payload emitted on the daemon wire and
+    # on CLI stderr. Shape is stable across releases — agents branch on `code`
+    # without parsing prose.
+    # @return [Hash{Symbol => Object}]
+    def to_payload
+      {
+        code: code,
+        message: message,
+        context: context,
+        suggested_action: SuggestedActions.for(code)
+      }
     end
   end
 
@@ -55,7 +71,9 @@ module Browserctl
         code: self.class.default_code,
         state: state,
         suggested_flow: suggested_flow,
-        reason: reason
+        reason: reason,
+        context: { state: state, suggested_flow: suggested_flow, reason: reason }.compact,
+        suggested_action: SuggestedActions.for(self.class.default_code)
       }.compact
     end
   end

@@ -21,7 +21,11 @@ module Browserctl
         def cmd_fetch(req)
           key = req[:key].to_s
           found = @kv_mutex.synchronize { @kv_store.key?(key) ? { ok: true, value: @kv_store[key] } : nil }
-          found || { error: "key '#{key}' not found", code: "key_not_found" }
+          found || error_payload(
+            code: Browserctl::Error::Codes::KEY_NOT_FOUND,
+            message: "key '#{key}' not found",
+            context: { key: key }
+          )
         end
       end
     end

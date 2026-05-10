@@ -33,13 +33,26 @@ require "browserctl/commands/dialog"
 require "browserctl/commands/ask"
 require "browserctl/commands/trace"
 
+def structured_stderr_payload(res, message)
+  code    = (res[:code] || res["code"] || Browserctl::Error::Codes::GENERIC).to_s
+  context = res[:context] || res["context"] || {}
+  action  = res[:suggested_action] || res["suggested_action"] ||
+            Browserctl::Error::SuggestedActions.for(code)
+  [code, JSON.generate(code: code, message: message, context: context, suggested_action: action)]
+end
+
 def print_result(res)
-  if res.is_a?(Hash) && (res[:error] || res["error"])
-    warn "Error: #{res[:error] || res['error']}"
+  unless res.is_a?(Hash) && (res[:error] || res["error"])
     puts res.to_json
-    exit((res[:code] || res["code"]) == "AUTH_REQUIRED" ? 7 : 1)
+    return
   end
+
+  message = res[:error] || res["error"]
+  code, payload = structured_stderr_payload(res, message)
+  warn "Error: #{message}"
+  warn payload
   puts res.to_json
+  exit(code == "AUTH_REQUIRED" ? 7 : 1)
 end
 
 def usage

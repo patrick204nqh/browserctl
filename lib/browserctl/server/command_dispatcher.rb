@@ -2,6 +2,7 @@
 
 require_relative "snapshot_builder"
 require_relative "page_session"
+require_relative "handlers/error_payload"
 require_relative "handlers/page_lifecycle"
 require_relative "handlers/navigation"
 require_relative "handlers/observation"
@@ -15,10 +16,12 @@ require_relative "handlers/state"
 require_relative "handlers/interaction"
 require_relative "../detectors"
 require_relative "../policy"
+require_relative "../errors"
 require_relative "../replay/snapshot_diff"
 
 module Browserctl
   class CommandDispatcher
+    include Handlers::ErrorPayload
     include Handlers::PageLifecycle
     include Handlers::Navigation
     include Handlers::Observation

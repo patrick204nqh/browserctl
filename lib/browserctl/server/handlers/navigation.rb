@@ -8,7 +8,11 @@ module Browserctl
 
         def cmd_navigate(req)
           unless Policy.allowed_navigation?(req[:url].to_s)
-            return { error: "navigation to '#{req[:url]}' blocked by domain policy", code: "domain_not_allowed" }
+            return error_payload(
+              code: Browserctl::Error::Codes::DOMAIN_NOT_ALLOWED,
+              message: "navigation to '#{req[:url]}' blocked by domain policy",
+              context: { url: req[:url].to_s }
+            )
           end
 
           with_page(req[:name]) do |session|
@@ -81,7 +85,13 @@ module Browserctl
 
         def type_into(page, selector, value)
           el = page.at_css(selector)
-          return { error: "selector not found: #{selector}", code: "selector_not_found" } unless el
+          unless el
+            return error_payload(
+              code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+              message: "selector not found: #{selector}",
+              context: { selector: selector }
+            )
+          end
 
           el.focus
           el.evaluate("this.select()")
@@ -91,7 +101,13 @@ module Browserctl
 
         def click_element(page, selector)
           el = page.at_css(selector)
-          return { error: "selector not found: #{selector}", code: "selector_not_found" } unless el
+          unless el
+            return error_payload(
+              code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
+              message: "selector not found: #{selector}",
+              context: { selector: selector }
+            )
+          end
 
           # Use the DOM native click() so JS-only event listeners fire.
           # CDP mouse simulation (el.click) dispatches events at screen coordinates

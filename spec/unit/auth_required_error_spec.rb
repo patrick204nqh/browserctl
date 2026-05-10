@@ -24,8 +24,10 @@ RSpec.describe Browserctl::AuthRequiredError do
     expect(response[:reason]).to eq("redirect_login")
   end
 
-  it "omits nil fields from to_response" do
+  it "omits nil fields from to_response but always carries the structured payload keys" do
     response = described_class.new("login").to_response
-    expect(response.keys).to contain_exactly(:error, :code)
+    expect(response.keys).to contain_exactly(:error, :code, :context, :suggested_action)
+    expect(response[:context]).to eq({})
+    expect(response[:suggested_action]).to be_a(String)
   end
 end

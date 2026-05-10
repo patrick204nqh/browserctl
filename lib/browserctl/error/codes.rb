@@ -16,6 +16,9 @@ module Browserctl
       SECRET_RESOLUTION_FAILED = "SECRET_RESOLUTION_FAILED"
       DAEMON_UNREACHABLE       = "DAEMON_UNREACHABLE"
       PROTOCOL_MISMATCH        = "PROTOCOL_MISMATCH"
+      DOMAIN_NOT_ALLOWED       = "DOMAIN_NOT_ALLOWED"
+      KEY_NOT_FOUND            = "KEY_NOT_FOUND"
+      GENERIC                  = "GENERIC"
 
       ALL = [
         AUTH_REQUIRED,
@@ -23,7 +26,10 @@ module Browserctl
         STATE_EXPIRED,
         SECRET_RESOLUTION_FAILED,
         DAEMON_UNREACHABLE,
-        PROTOCOL_MISMATCH
+        PROTOCOL_MISMATCH,
+        DOMAIN_NOT_ALLOWED,
+        KEY_NOT_FOUND,
+        GENERIC
       ].freeze
 
       def self.all

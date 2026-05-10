@@ -391,7 +391,7 @@ module Browserctl
     end
 
     def selector_not_found?(res)
-      res.is_a?(Hash) && res[:code] == "selector_not_found"
+      res.is_a?(Hash) && res[:code] == Browserctl::Error::Codes::SELECTOR_NOT_FOUND
     end
 
     def log_rematch(cmd, selector, match)
