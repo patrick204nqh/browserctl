@@ -14,7 +14,7 @@ module Browserctl
           warn "Error: #{res[:error]}"
           exit 1
         end
-        puts "Page '#{name}' resumed."
+        print_result(res.merge(resumed: name)) { "Page '#{name}' resumed." }
       end
     end
   end

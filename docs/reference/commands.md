@@ -2,6 +2,27 @@
 
 All commands require `browserd` to be running unless noted.
 
+## Global flags
+
+These flags work on every command listed below.
+
+| Flag                            | Description                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--daemon <name>`               | Connect to a named or auto-indexed daemon (`d1`, `d2`, `work`, ...). See [agent-integration.md](../guides/agent-integration.md#multi-agent-isolation). |
+| `--log-level <level>`, `-l`     | One of `debug`, `info`, `warn`, `error`. Default: `info` (or `BROWSERCTL_LOG_LEVEL`).                                                                  |
+| `--output <json\|text\|silent>` | Stdout format. Default: `text` (or `BROWSERCTL_OUTPUT`). See "Output formats" below.                                                                   |
+| `--version`, `-v`               | Print the gem version and exit.                                                                                                                        |
+
+### Output formats
+
+Resolution order: explicit `--output` flag -> `BROWSERCTL_OUTPUT` env var -> `text`.
+
+- **`text`** — Human-readable. For most commands the human form already is JSON; commands like `init`, `pause`, `devtools`, `migrate`, and `trace` print prose.
+- **`json`** — A JSON document on stdout. Stable per-command shape. Recommended for agents and scripts.
+- **`silent`** — No stdout. The exit code still carries the result; the structured stderr error payload is still emitted on failure (errors are the result, not cosmetic output).
+
+See [Using browserctl from AI Agents](../guides/agent-integration.md#output-formats---output-jsontextsilent) for end-to-end recipes.
+
 ---
 
 ## Setup

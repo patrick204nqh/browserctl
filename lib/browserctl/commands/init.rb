@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -30,10 +31,22 @@ module Browserctl
         config_path = ".browserctl/config.yml"
         File.write(config_path, CONFIG_TEMPLATE) unless File.exist?(config_path)
 
-        puts "Initialised browserctl project:"
-        puts "  .browserctl/workflows/   (place workflow .rb files here)"
-        puts "  .browserctl/state/       (state bundles — git-ignored)"
-        puts "  .browserctl/config.yml   (project settings)"
+        payload = {
+          ok: true,
+          paths: {
+            workflows: ".browserctl/workflows",
+            state: ".browserctl/state",
+            config: ".browserctl/config.yml"
+          }
+        }
+        OutputFormat.current.emit(payload) do
+          <<~TEXT.chomp
+            Initialised browserctl project:
+              .browserctl/workflows/   (place workflow .rb files here)
+              .browserctl/state/       (state bundles — git-ignored)
+              .browserctl/config.yml   (project settings)
+          TEXT
+        end
       end
     end
   end

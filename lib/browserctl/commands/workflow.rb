@@ -3,6 +3,7 @@
 require "fileutils"
 require "json"
 require_relative "cli_output"
+require_relative "output_format"
 require_relative "../recording"
 require_relative "../workflow/promoter"
 
@@ -44,11 +45,11 @@ module Browserctl
         result = Browserctl::Workflow::Promoter.promote(
           workflow: name, force: force, threshold: threshold, as_flow: as_flow
         )
-        puts JSON.generate(ok: true, **result)
+        OutputFormat.current.emit({ ok: true, **result })
       rescue Browserctl::Workflow::Promoter::IneligibleError => e
-        puts JSON.generate(
-          ok: false, error: "ineligible",
-          message: e.message, streak: e.streak, threshold: e.threshold
+        OutputFormat.current.emit(
+          { ok: false, error: "ineligible",
+            message: e.message, streak: e.streak, threshold: e.threshold }
         )
         exit 1
       rescue Browserctl::Workflow::Promoter::NotFoundError => e
@@ -68,7 +69,7 @@ module Browserctl
               end
         FileUtils.mkdir_p(File.dirname(out))
         Browserctl::Recording.generate_workflow(name, output_path: out, keep_log: true)
-        puts JSON.generate({ ok: true, name: name, path: out })
+        OutputFormat.current.emit({ ok: true, name: name, path: out })
       rescue StandardError => e
         abort "Error generating workflow: #{e.message}"
       end
@@ -111,12 +112,13 @@ module Browserctl
 
       def self.run_list(runner)
         list = runner.list_workflows
-        puts JSON.generate({ workflows: list.map { |w| { name: w[:name], desc: w[:desc] } } })
+        OutputFormat.current.emit({ workflows: list.map { |w| { name: w[:name], desc: w[:desc] } } })
       end
 
       def self.run_describe(runner, args)
         name = args.shift or abort "usage: browserctl workflow describe <name>"
-        puts JSON.pretty_generate(runner.describe_workflow(name))
+        payload = runner.describe_workflow(name)
+        OutputFormat.current.emit(payload, JSON.pretty_generate(payload))
       end
     end
   end

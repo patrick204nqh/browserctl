@@ -6,6 +6,8 @@ require "browserctl/commands/cli_output"
 RSpec.describe Browserctl::Commands::CliOutput do
   let(:host) { Class.new { extend Browserctl::Commands::CliOutput } }
 
+  after { Browserctl::Commands::OutputFormat.reset! }
+
   describe "#exit_code_for" do
     it "returns 7 for AUTH_REQUIRED" do
       expect(host.exit_code_for(error: "x", code: "AUTH_REQUIRED")).to eq(7)
@@ -64,6 +66,40 @@ RSpec.describe Browserctl::Commands::CliOutput do
         "context" => { "selector" => ".x" },
         "suggested_action" => "Re-run snapshot."
       )
+    end
+
+    context "with the unified --output formatter" do
+      let(:res) { { ok: true, items: [1, 2, 3] } }
+
+      it "default (text) mode is byte-identical to the historical puts res.to_json" do
+        out, = capture_io { host.print_result(res) }
+        expect(out).to eq("#{res.to_json}\n")
+      end
+
+      it "json mode emits the same JSON" do
+        Browserctl::Commands::OutputFormat.current =
+          Browserctl::Commands::OutputFormat::Formatter.new("json")
+        out, = capture_io { host.print_result(res) }
+        expect(out).to eq("#{res.to_json}\n")
+      end
+
+      it "silent mode suppresses success stdout" do
+        Browserctl::Commands::OutputFormat.current =
+          Browserctl::Commands::OutputFormat::Formatter.new("silent")
+        out, = capture_io { host.print_result(res) }
+        expect(out).to eq("")
+      end
+
+      it "silent mode still emits the structured stderr line on errors" do
+        Browserctl::Commands::OutputFormat.current =
+          Browserctl::Commands::OutputFormat::Formatter.new("silent")
+        out, err = capture_io do
+          expect { host.print_result(error: "boom") }.to raise_error(SystemExit)
+        end
+        expect(out).to eq("")
+        expect(err).to include("Error: boom")
+        expect(err.split("\n").last).to start_with("{")
+      end
     end
 
     it "fills in suggested_action and GENERIC code when missing from the daemon response" do

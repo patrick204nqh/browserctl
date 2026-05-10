@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "optimist"
 require "browserctl/recording"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -30,7 +31,7 @@ module Browserctl
           abort "Invalid recording name #{name.inspect} — use only letters, digits, _ or -" \
             unless name =~ /\A[a-zA-Z0-9_-]{1,64}\z/
           Browserctl::Recording.start(name)
-          puts JSON.generate({ ok: true, name: name })
+          OutputFormat.current.emit({ ok: true, name: name })
         end
 
         def run_stop(args)
@@ -42,12 +43,12 @@ module Browserctl
           out  = opts[:out] || File.join(".browserctl/workflows", "#{name}.rb")
           FileUtils.mkdir_p(File.dirname(out))
           Browserctl::Recording.generate_workflow(name, output_path: out)
-          puts JSON.generate({ ok: true, name: name, path: out })
+          OutputFormat.current.emit({ ok: true, name: name, path: out })
         end
 
         def run_status
           active = Browserctl::Recording.active
-          puts JSON.generate({ active: active })
+          OutputFormat.current.emit({ active: active })
         end
       end
     end

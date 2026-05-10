@@ -14,6 +14,7 @@ require "json"
 require "optimist"
 require "browserctl"
 require "browserctl/commands/cli_output"
+require "browserctl/commands/output_format"
 require "browserctl/commands/fill"
 require "browserctl/commands/click"
 require "browserctl/commands/snapshot"
@@ -41,9 +42,11 @@ def structured_stderr_payload(res, message)
   [code, JSON.generate(code: code, message: message, context: context, suggested_action: action)]
 end
 
-def print_result(res)
+def print_result(res, text_block = nil)
+  fmt = Browserctl::Commands::OutputFormat.current
+
   unless res.is_a?(Hash) && (res[:error] || res["error"])
-    puts res.to_json
+    fmt.emit(res, text_block)
     return
   end
 
@@ -51,7 +54,7 @@ def print_result(res)
   code, payload = structured_stderr_payload(res, message)
   warn "Error: #{message}"
   warn payload
-  puts res.to_json
+  puts res.to_json unless fmt.silent?
   exit Browserctl::Error::ExitCodes.for(code)
 end
 
@@ -153,9 +156,21 @@ def usage
 
     Global options:
       --daemon <name>    Connect to named or auto-indexed daemon (d1, d2, work, ...)
+      --output <fmt>     Output format: json | text | silent (default: text;
+                         override with BROWSERCTL_OUTPUT)
       --version, -v
   USAGE
   exit 0
+end
+
+# Resolve --output {json,text,silent} (or BROWSERCTL_OUTPUT) once, globally,
+# before per-command parsers run. Strips the flag from ARGV in place so
+# downstream Optimist/positional parsers don't see it.
+begin
+  Browserctl::Commands::OutputFormat.install!(ARGV)
+rescue Browserctl::Commands::OutputFormat::InvalidFormat => e
+  warn "Error: #{e.message}"
+  exit 2
 end
 
 daemon_idx  = ARGV.index("--daemon")
@@ -239,9 +254,12 @@ begin
         warn "Error: #{res[:error]}"
         exit 1
       end
-      puts "Page '#{name}' paused. Browser is live — interact freely."
-      puts "(#{opts[:message]})" if opts[:message]
-      puts "When done: browserctl resume #{name}"
+      print_result(res.merge(paused: name, message: opts[:message])) do
+        lines = ["Page '#{name}' paused. Browser is live — interact freely."]
+        lines << "(#{opts[:message]})" if opts[:message]
+        lines << "When done: browserctl resume #{name}"
+        lines.join("\n")
+      end
     when "resume" then Browserctl::Commands::Resume.run(client, args)
     when "press"
       name = args.shift or abort "usage: browserctl press <page> <key>"
@@ -270,8 +288,9 @@ begin
         exit 1
       end
       url = res[:devtools_url]
-      puts "Opening DevTools for '#{name}':"
-      puts "  #{url}"
+      print_result(res) do
+        "Opening DevTools for '#{name}':\n  #{url}"
+      end
       opener = RUBY_PLATFORM =~ /darwin/ ? "open" : "xdg-open"
       system(opener, url)
     else

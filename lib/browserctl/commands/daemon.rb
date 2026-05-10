@@ -3,6 +3,7 @@
 require "json"
 require "optimist"
 require_relative "cli_output"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -18,7 +19,8 @@ module Browserctl
           begin
             print_result(client.ping)
           rescue Browserctl::DaemonUnavailableError => e
-            puts JSON.generate({ ok: false, daemon: "offline", error: e.message })
+            payload = { ok: false, daemon: "offline", error: e.message }
+            OutputFormat.current.emit(payload)
             exit 1
           end
         when "status" then run_status(client)
@@ -36,14 +38,16 @@ module Browserctl
           url_res = client.url(name)
           { name: name, url: url_res[:url] || url_res[:error] }
         end
-        puts JSON.pretty_generate(
+        payload = {
           daemon: "online",
           pid: ping[:pid],
           protocol_version: ping[:protocol_version],
           pages: page_info
-        )
+        }
+        OutputFormat.current.emit(payload, JSON.pretty_generate(payload))
       rescue Browserctl::DaemonUnavailableError => e
-        puts JSON.pretty_generate(daemon: "offline", error: e.message)
+        payload = { daemon: "offline", error: e.message }
+        OutputFormat.current.emit(payload, JSON.pretty_generate(payload))
         exit 1
       end
 
@@ -57,7 +61,7 @@ module Browserctl
         flags += ["--name", opts[:name]] if opts[:name]
         pid = Process.spawn("browserd", *flags, out: File::NULL, err: File::NULL)
         Process.detach(pid)
-        puts "browserd started (pid #{pid})"
+        OutputFormat.current.emit({ ok: true, pid: pid }) { "browserd started (pid #{pid})" }
       end
 
       def self.run_list
@@ -74,7 +78,7 @@ module Browserctl
         rescue Browserctl::DaemonUnavailableError, RuntimeError
           nil
         end.compact
-        puts({ daemons: rows }.to_json)
+        OutputFormat.current.emit({ daemons: rows })
       end
     end
   end
