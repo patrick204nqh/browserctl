@@ -4,13 +4,14 @@ require "fileutils"
 require "json"
 require_relative "cli_output"
 require_relative "../recording"
+require_relative "../workflow/promoter"
 
 module Browserctl
   module Commands
     module Workflow
       extend CliOutput
 
-      USAGE = "Usage: browserctl workflow <run|list|describe|generate> [args]"
+      USAGE = "Usage: browserctl workflow <run|list|describe|generate|promote> [args]"
 
       def self.run(runner, args)
         sub = args.shift or abort USAGE
@@ -19,8 +20,40 @@ module Browserctl
         when "list"     then run_list(runner)
         when "describe" then run_describe(runner, args)
         when "generate" then run_generate(args)
+        when "promote"  then run_promote(args)
         else abort "unknown workflow subcommand '#{sub}'\n#{USAGE}"
         end
+      end
+
+      def self.run_promote(args)
+        name = args.shift or abort \
+          "usage: browserctl workflow promote <name> [--force] [--threshold N]"
+
+        force = !args.delete("--force").nil?
+
+        threshold_idx = args.index("--threshold")
+        threshold = if threshold_idx
+                      val = args.delete_at(threshold_idx + 1)
+                      args.delete_at(threshold_idx)
+                      Integer(val)
+                    else
+                      Browserctl::Workflow::PromotionLedger::DEFAULT_THRESHOLD
+                    end
+
+        result = Browserctl::Workflow::Promoter.promote(
+          workflow: name, force: force, threshold: threshold
+        )
+        puts JSON.generate(ok: true, **result)
+      rescue Browserctl::Workflow::Promoter::IneligibleError => e
+        puts JSON.generate(
+          ok: false, error: "ineligible",
+          message: e.message, streak: e.streak, threshold: e.threshold
+        )
+        exit 1
+      rescue Browserctl::Workflow::Promoter::NotFoundError => e
+        abort "Error: #{e.message}"
+      rescue ArgumentError => e
+        abort "Error: invalid --threshold value: #{e.message}"
       end
 
       def self.run_generate(args)

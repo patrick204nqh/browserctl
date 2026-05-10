@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "workflow"
+require_relative "workflow/promotion_ledger"
 require_relative "client"
 require_relative "replay/telemetry"
 
@@ -22,13 +23,20 @@ module Browserctl
     def run_workflow(name, check: false, **params)
       defn    = fetch_workflow(name)
       ctx     = check ? Browserctl::Replay::Context.new : nil
-      results = defn.call(params, Client.new, replay_context: ctx)
+      begin
+        results = defn.call(params, Client.new, replay_context: ctx)
+      rescue StandardError
+        Browserctl::Workflow::PromotionLedger.record(workflow: name.to_s, verdict: :fail) if check
+        raise
+      end
       print_results(results)
+      v = verdict(results, ctx)
       if check
         print_drift_report(ctx)
         Browserctl::Replay::Telemetry.emit(ctx, workflow: name.to_s)
+        Browserctl::Workflow::PromotionLedger.record(workflow: name.to_s, verdict: v)
       end
-      verdict(results, ctx)
+      v
     end
 
     # Lists all registered workflows from the standard search paths.
