@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
 require "ferrum"
-require_relative "base"
 require_relative "cdp_page"
 require_relative "../errors"
 
 module Browserctl
   module Driver
-    class CDP < Base
+    class CDP
       BRAVE_PATHS = {
         darwin: [
           "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
@@ -24,7 +23,7 @@ module Browserctl
         ]
       }.freeze
 
-      def initialize(headless: true, browser: "chrome") # rubocop:disable Lint/MissingSuper
+      def initialize(headless: true, browser: "chrome")
         @headless = headless
         @browser  = browser
         @ferrum   = Ferrum::Browser.new(**ferrum_options)

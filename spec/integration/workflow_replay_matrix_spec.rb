@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "browserctl/driver"
+require "browserctl/driver/cdp"
 
 # Cross-browser replay matrix.
 #
