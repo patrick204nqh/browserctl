@@ -197,6 +197,56 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "inferred waits (v0.11 WS-3.3)" do
+    before { described_class.start("waits") }
+
+    def write_event(entry)
+      File.open(File.join(@tmp_dir, "waits.jsonl"), "a") { |f| f.puts JSON.generate(entry) }
+    end
+
+    it "inserts a wait before a selector step when the preceding gap exceeds the threshold" do
+      t0 = 1_000_000.0
+      write_event(cmd: "navigate", ts: t0, name: "main", url: "https://example.com")
+      write_event(cmd: "click", ts: t0 + 3.4, name: "main", selector: "button.go")
+      ruby = described_class.generate_workflow("waits", keep_log: true)
+      expect(ruby).to match(/# inferred wait: prior step took ~3\.4s/)
+      expect(ruby).to match(/page\(:main\)\.wait\("button\.go", timeout: \d+\)/)
+      # Wait must come before the click
+      expect(ruby.index('page(:main).wait("button.go"')).to be < ruby.index('page(:main).click("button.go"')
+    end
+
+    it "does not insert a wait when the gap is below the threshold" do
+      t0 = 1_000_000.0
+      write_event(cmd: "click", ts: t0,        name: "main", selector: "a.link")
+      write_event(cmd: "click", ts: t0 + 0.3,  name: "main", selector: "button.go")
+      ruby = described_class.generate_workflow("waits", keep_log: true)
+      expect(ruby).not_to include("inferred wait")
+      expect(ruby).not_to match(/page\(:main\)\.wait\(/)
+    end
+
+    it "does not insert a wait before non-selector steps (e.g. screenshot)" do
+      t0 = 1_000_000.0
+      write_event(cmd: "navigate",   ts: t0,        name: "main", url: "https://example.com")
+      write_event(cmd: "screenshot", ts: t0 + 5.0,  name: "main")
+      ruby = described_class.generate_workflow("waits", keep_log: true)
+      expect(ruby).not_to include("inferred wait")
+    end
+
+    it "is a no-op when timestamps are missing (legacy logs)" do
+      write_event(cmd: "navigate", name: "main", url: "https://example.com")
+      write_event(cmd: "click",    name: "main", selector: "button.go")
+      ruby = described_class.generate_workflow("waits", keep_log: true)
+      expect(ruby).not_to include("inferred wait")
+    end
+
+    it "stamps each appended event with a ts field" do
+      described_class.append("click", name: "main", selector: "a")
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "waits.jsonl")).last)
+      expect(entry["ts"]).to be_a(Numeric)
+      expect(entry["ts"]).to be > 0
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")
