@@ -1,0 +1,92 @@
+name: Smoke
+
+on:
+  schedule:
+    # Daily at 06:17 UTC — random offset to avoid the top-of-hour stampede.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Smoke (nightly public surfaces)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SMOKE_LABEL: smoke-failure
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-ruby
+
+      - uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Run smoke specs
+        id: smoke
+        run: bundle exec rspec --tag smoke --format progress
+
+      - name: Upload smoke trace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-trace
+          path: |
+            tmp/smoke-trace.log
+            tmp/crash-*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Open or comment on smoke-failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # Ensure the label exists (idempotent).
+          if ! gh label list --limit 200 | awk '{print $1}' | grep -qx "$SMOKE_LABEL"; then
+            gh label create "$SMOKE_LABEL" \
+              --color B60205 \
+              --description "Nightly smoke suite failure — auto-managed" || true
+          fi
+
+          DATE="$(date -u +%Y-%m-%d)"
+          BODY="Nightly smoke run failed on \`main\`.
+
+          - Run: ${RUN_URL}
+          - Workflow: \`${{ github.workflow }}\`
+          - Commit: \`${{ github.sha }}\`
+          - Trace artifact: \`smoke-trace\` on the run above
+
+          This issue is auto-managed by \`.github/workflows/smoke.yml\`.
+          Close it once the underlying drift is fixed; the workflow will
+          open a new one on the next failure."
+
+          # Duplicate protection: if any open issue carries the smoke label,
+          # comment on the most recent one rather than opening a new issue.
+          EXISTING="$(gh issue list \
+            --state open \
+            --label "$SMOKE_LABEL" \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number' || true)"
+
+          if [ -n "${EXISTING:-}" ] && [ "$EXISTING" != "null" ]; then
+            echo "Existing open smoke-failure issue #$EXISTING — commenting."
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            echo "No open smoke-failure issue — creating one."
+            gh issue create \
+              --title "smoke: ${DATE} failure on main" \
+              --label "$SMOKE_LABEL" \
+              --body "$BODY"
+          fi

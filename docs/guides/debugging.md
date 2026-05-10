@@ -145,3 +145,17 @@ Before you click submit, check that you have:
 - [ ] **OS + Ruby version** (the crash report carries these; otherwise mention them).
 
 A short, redacted trace plus a reviewed crash report covers most bug reports without a back-and-forth.
+
+## Smoke tests
+
+A nightly GitHub Actions workflow (`.github/workflows/smoke.yml`) runs the suite under `spec/smoke/` against stable public surfaces (`example.com`, the project's GitHub repo page) using a real Chrome. This catches drift in Chrome, ferrum, or our CDP wrappers before users hit it.
+
+Smoke specs are tagged `:smoke` and excluded from the default `bundle exec rspec` run via `.rspec` (`--tag ~smoke`). Run them locally with:
+
+```sh
+bundle exec rspec --tag smoke
+```
+
+Specs skip cleanly when no Chrome or no internet is available, so the local default suite stays hermetic.
+
+When the nightly run fails, the workflow uploads `tmp/smoke-trace.log` as an artifact and opens (or comments on) an issue tagged `smoke-failure`. Only one open `smoke-failure` issue exists at a time — subsequent failures append comments to it, so the issue list stays quiet.
