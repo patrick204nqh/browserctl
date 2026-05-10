@@ -3,6 +3,7 @@
 require "json"
 require_relative "workflow"
 require_relative "client"
+require_relative "replay/telemetry"
 
 module Browserctl
   class Runner
@@ -23,7 +24,10 @@ module Browserctl
       ctx     = check ? Browserctl::Replay::Context.new : nil
       results = defn.call(params, Client.new, replay_context: ctx)
       print_results(results)
-      print_drift_report(ctx) if check
+      if check
+        print_drift_report(ctx)
+        Browserctl::Replay::Telemetry.emit(ctx, workflow: name.to_s)
+      end
       verdict(results, ctx)
     end
 
