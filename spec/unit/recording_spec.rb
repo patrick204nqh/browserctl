@@ -304,6 +304,41 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "snapshot-diff postcondition (v0.11 WS-3.5)" do
+    before { described_class.start("snap") }
+
+    it "captures post_snapshot_digest from the daemon response" do
+      response = { ok: true, post_snapshot_digest: "abc123def456" }
+      described_class.append("click", response: response, name: "main", selector: ".go")
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "snap.jsonl")).last)
+      expect(entry["post_snapshot_digest"]).to eq("abc123def456")
+    end
+
+    it "emits an assert_snapshot_stable step in the generated workflow" do
+      described_class.append(
+        "click",
+        response: { ok: true, post_snapshot_digest: "abc123def456" },
+        name: "main", selector: ".go"
+      )
+      ruby = described_class.generate_workflow("snap", keep_log: true)
+      expect(ruby).to include('step "assert post-snapshot stable on main"')
+      expect(ruby).to include('assert_snapshot_stable(:main, expected_digest: "abc123def456")')
+    end
+
+    it "does not emit an assert when no digest was recorded" do
+      described_class.append("click", response: { ok: true }, name: "main", selector: ".go")
+      ruby = described_class.generate_workflow("snap", keep_log: true)
+      expect(ruby).not_to include("assert_snapshot_stable")
+    end
+
+    it "strips capture_post_snapshot from the recorded entry" do
+      described_class.append("click", response: { ok: true },
+                                      name: "main", selector: ".go", capture_post_snapshot: true)
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "snap.jsonl")).last)
+      expect(entry).not_to have_key("capture_post_snapshot")
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")

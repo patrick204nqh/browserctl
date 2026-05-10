@@ -8,7 +8,7 @@ require "tmpdir"
 require "uri"
 
 module Browserctl
-  class Recording
+  class Recording # rubocop:disable Metrics/ClassLength
     RECORDINGS_DIR = File.join(Dir.tmpdir, "browserctl-recordings")
     STATE_FILE     = File.expand_path("~/.browserctl/active_recording")
 
@@ -127,10 +127,11 @@ module Browserctl
 
       def replay_metadata(response)
         meta = {}
-        meta[:ref]                = response[:ref]                if response[:ref]
-        meta[:fingerprint]        = response[:fingerprint]        if response[:fingerprint]
-        meta[:snapshot_id]        = response[:snapshot_id]        if response[:snapshot_id]
-        meta[:postcondition_hint] = response[:postcondition_hint] if response[:postcondition_hint]
+        meta[:ref]                  = response[:ref]                  if response[:ref]
+        meta[:fingerprint]          = response[:fingerprint]          if response[:fingerprint]
+        meta[:snapshot_id]          = response[:snapshot_id]          if response[:snapshot_id]
+        meta[:postcondition_hint]   = response[:postcondition_hint]   if response[:postcondition_hint]
+        meta[:post_snapshot_digest] = response[:post_snapshot_digest] if response[:post_snapshot_digest]
         meta.transform_keys(&:to_s)
       end
 
@@ -164,6 +165,9 @@ module Browserctl
           if (post = url_postcondition_step(cmd, last_url))
             rendered << post
           end
+          if (snap = snapshot_postcondition_step(cmd))
+            rendered << snap
+          end
           update_last_url!(cmd, last_url)
           rendered
         end
@@ -188,6 +192,23 @@ module Browserctl
           step "assert url after #{cmd[:cmd]} on #{page}" do
             current = page(:#{page}).url
             assert current.start_with?(#{prefix.inspect}), "expected URL to start with #{prefix}, got \#{current}"
+          end
+        RUBY
+      end
+
+      # Emits an assert_snapshot_stable step when the recording captured a
+      # post-step DOM digest. Under workflow run --check the helper records
+      # drift on mismatch instead of raising, so a wiggly page surfaces in
+      # the report rather than failing the run outright.
+      def snapshot_postcondition_step(cmd)
+        return nil unless %w[click fill].include?(cmd[:cmd])
+        return nil unless cmd[:post_snapshot_digest]
+
+        page = cmd[:name]
+        digest = cmd[:post_snapshot_digest]
+        <<~RUBY.chomp
+          step "assert post-snapshot stable on #{page}" do
+            assert_snapshot_stable(:#{page}, expected_digest: #{digest.inspect})
           end
         RUBY
       end
@@ -300,6 +321,7 @@ module Browserctl
       end
 
       def prepare_attrs(cmd, attrs)
+        attrs = attrs.except(:capture_post_snapshot)
         if cmd == "fill"
           attrs = attrs.except(:value)
           field = infer_secret_field(attrs[:selector])

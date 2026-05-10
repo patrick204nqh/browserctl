@@ -6,6 +6,7 @@ require_relative "errors"
 require_relative "flow_registry"
 require_relative "replay/context"
 require_relative "replay/fingerprint_matcher"
+require_relative "replay/snapshot_diff"
 require_relative "secret_resolvers"
 require_relative "session"
 
@@ -144,6 +145,25 @@ module Browserctl
 
     def assert(condition, msg = "assertion failed")
       raise WorkflowError, msg unless condition
+    end
+
+    # Snapshots the named page and compares its digest against `expected_digest`.
+    # Under `workflow run --check` (a replay context is attached), a mismatch is
+    # recorded as a drift event with reason "post-snapshot mismatch" and the
+    # step still passes. Outside --check, mismatch raises WorkflowError so the
+    # workflow fails fast.
+    def assert_snapshot_stable(page_name, expected_digest:)
+      res = @client.snapshot(page_name.to_s, format: "elements")
+      snapshot = res[:snapshot]
+      actual = Replay::SnapshotDiff.digest(snapshot)
+      return if actual == expected_digest
+
+      msg = "post-snapshot mismatch on :#{page_name} — expected #{expected_digest}, got #{actual}"
+      raise WorkflowError, msg unless @replay_context
+
+      @replay_context.record(command: :assert_snapshot_stable, selector: page_name.to_s,
+                             matched_ref: nil, score: nil, reason: "post-snapshot mismatch")
+      warn "[browserctl replay] #{msg}"
     end
 
     def compose(*)

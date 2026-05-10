@@ -50,7 +50,8 @@ module Browserctl
     def click(name, selector = nil, ref: nil)
       raise ArgumentError, "click: provide selector or ref:" unless selector || ref
 
-      call("click", name: name, selector: selector, ref: ref)
+      call("click", name: name, selector: selector, ref: ref,
+                    capture_post_snapshot: Recording.active ? true : nil)
     end
 
     # Fills an input element with a value.
@@ -62,7 +63,8 @@ module Browserctl
     def fill(name, selector = nil, value = nil, ref: nil)
       raise ArgumentError, "fill: provide selector or ref:" unless selector || ref
 
-      call("fill", name: name, selector: selector, ref: ref, value: value)
+      call("fill", name: name, selector: selector, ref: ref, value: value,
+                   capture_post_snapshot: Recording.active ? true : nil)
     end
 
     # Takes a screenshot of a named page.
