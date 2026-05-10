@@ -4,6 +4,8 @@ require "timeout"
 require_relative "client"
 require_relative "errors"
 require_relative "flow_registry"
+require_relative "replay/context"
+require_relative "replay/fingerprint_matcher"
 require_relative "secret_resolvers"
 require_relative "session"
 
@@ -276,19 +278,27 @@ module Browserctl
   end
 
   class PageProxy
-    def initialize(name, client)
-      @name   = name
-      @client = client
+    attr_accessor :replay_context
+
+    def initialize(name, client, replay_context: nil, matcher: nil)
+      @name           = name
+      @client         = client
+      @replay_context = replay_context
+      @matcher        = matcher || Replay::FingerprintMatcher.new
     end
 
     def navigate(url) = unwrap @client.navigate(@name, url)
 
     def fill(selector = nil, value = nil, ref: nil)
-      unwrap @client.fill(@name, selector, value, ref: ref)
+      with_selector_fallback(:fill, selector, ref) do |sel, r|
+        @client.fill(@name, sel, value, ref: r)
+      end
     end
 
     def click(selector = nil, ref: nil)
-      unwrap @client.click(@name, selector, ref: ref)
+      with_selector_fallback(:click, selector, ref) do |sel, r|
+        @client.click(@name, sel, ref: r)
+      end
     end
 
     def snapshot(**)              = unwrap @client.snapshot(@name, **)
@@ -310,21 +320,63 @@ module Browserctl
     def press(key) = unwrap @client.press(@name, key)
 
     def hover(selector = nil, ref: nil)
-      unwrap @client.hover(@name, selector, ref: ref)
+      with_selector_fallback(:hover, selector, ref) do |sel, r|
+        @client.hover(@name, sel, ref: r)
+      end
     end
 
     def upload(selector = nil, path = nil, ref: nil)
-      unwrap @client.upload(@name, selector, path, ref: ref)
+      with_selector_fallback(:upload, selector, ref) do |sel, r|
+        @client.upload(@name, sel, path, ref: r)
+      end
     end
 
     def select(selector = nil, value = nil, ref: nil)
-      unwrap @client.select(@name, selector, value, ref: ref)
+      with_selector_fallback(:select, selector, ref) do |sel, r|
+        @client.select(@name, sel, value, ref: r)
+      end
     end
 
     def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
     def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 
     private
+
+    # Issues the wrapped command. If the daemon returns selector_not_found
+    # and a replay context has a fingerprint for this selector, takes a
+    # fresh snapshot, asks the matcher for a candidate, and retries by ref.
+    def with_selector_fallback(cmd, selector, ref)
+      res = yield(selector, ref)
+      return unwrap(res) if !selector_not_found?(res) || ref || !@replay_context || !selector
+
+      fp = @replay_context.fingerprint_for(selector)
+      return unwrap(res) unless fp
+
+      match = @matcher.best(fp, snapshot_entries)
+      unless match
+        @replay_context.record(command: cmd, selector: selector, reason: "no candidate above threshold")
+        return unwrap(res)
+      end
+
+      log_rematch(cmd, selector, match)
+      @replay_context.record(command: cmd, selector: selector,
+                             matched_ref: match.candidate[:ref], score: match.score, reason: "rematch")
+      unwrap(yield(nil, match.candidate[:ref]))
+    end
+
+    def snapshot_entries
+      res = @client.snapshot(@name, format: "elements")
+      Array(res[:snapshot])
+    end
+
+    def selector_not_found?(res)
+      res.is_a?(Hash) && res[:code] == "selector_not_found"
+    end
+
+    def log_rematch(cmd, selector, match)
+      warn "[browserctl replay] #{cmd} selector #{selector.inspect} not found — " \
+           "rematched to ref=#{match.candidate[:ref]} (score=#{format('%.2f', match.score)})"
+    end
 
     def unwrap(res)
       raise WorkflowError, res[:error] if res[:error]
