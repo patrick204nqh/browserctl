@@ -118,9 +118,11 @@ def usage
       record status
 
     Workflow:
-      workflow run      <name|file> [--params file] [--key value ...]
+      workflow run      <name|file> [--check] [--params file] [--key value ...]
       workflow list
       workflow describe <name>
+      workflow generate <recording> [--out PATH]
+      workflow promote  <name> [--force] [--threshold N]
 
     Flow:
       flow run      <name|file> [--page NAME] [--params file] [--key value ...]
