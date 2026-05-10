@@ -247,6 +247,63 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "postcondition extraction (v0.11 WS-3.4)" do
+    before { described_class.start("post") }
+
+    def write_event(entry)
+      File.open(File.join(@tmp_dir, "post.jsonl"), "a") { |f| f.puts JSON.generate(entry) }
+    end
+
+    it "asserts url_matches after a click that triggered navigation" do
+      write_event(cmd: "navigate", ts: 1.0, name: "main", url: "https://example.com/login")
+      write_event(
+        cmd: "click", ts: 2.0, name: "main", selector: "button.go",
+        postcondition_hint: { url: "https://example.com/dashboard?u=42" }
+      )
+      ruby = described_class.generate_workflow("post", keep_log: true)
+      expect(ruby).to include('step "assert url after click on main"')
+      expect(ruby).to include("current = page(:main).url")
+      expect(ruby).to include('assert current.start_with?("https://example.com/dashboard")')
+    end
+
+    it "skips the assertion when click did not change the URL" do
+      write_event(cmd: "navigate", ts: 1.0, name: "main", url: "https://example.com/page")
+      write_event(
+        cmd: "click", ts: 2.0, name: "main", selector: ".reveal",
+        postcondition_hint: { url: "https://example.com/page#section" }
+      )
+      ruby = described_class.generate_workflow("post", keep_log: true)
+      expect(ruby).not_to include("assert url after click")
+    end
+
+    it "skips the assertion when no postcondition_hint was recorded" do
+      write_event(cmd: "navigate", ts: 1.0, name: "main", url: "https://example.com/login")
+      write_event(cmd: "click", ts: 2.0, name: "main", selector: "button.go")
+      ruby = described_class.generate_workflow("post", keep_log: true)
+      expect(ruby).not_to include("assert url after click")
+    end
+
+    it "tracks URL across consecutive clicks" do
+      write_event(cmd: "navigate", ts: 1.0, name: "main", url: "https://example.com/a")
+      write_event(
+        cmd: "click", ts: 2.0, name: "main", selector: ".one",
+        postcondition_hint: { url: "https://example.com/b" }
+      )
+      write_event(
+        cmd: "click", ts: 3.0, name: "main", selector: ".two",
+        postcondition_hint: { url: "https://example.com/b" } # no change
+      )
+      write_event(
+        cmd: "click", ts: 4.0, name: "main", selector: ".three",
+        postcondition_hint: { url: "https://example.com/c" }
+      )
+      ruby = described_class.generate_workflow("post", keep_log: true)
+      expect(ruby.scan("assert url after click on main").size).to eq(2)
+      expect(ruby).to include('"https://example.com/b"')
+      expect(ruby).to include('"https://example.com/c"')
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")

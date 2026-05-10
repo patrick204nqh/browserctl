@@ -149,18 +149,68 @@ module Browserctl
         RUBY
       end
 
-      # Walks the recorded events and inserts an inferred wait step before
-      # selector-driven actions whose preceding gap exceeds the threshold.
-      # Returns the rendered step strings in order.
+      # Walks the recorded events and emits the rendered step strings,
+      # interleaving inferred waits before selector-driven actions whose
+      # preceding gap exceeds WAIT_THRESHOLD_SECONDS, and inferred URL
+      # postconditions after click/fill steps that triggered navigation.
       def annotated_steps(commands)
+        last_url = {}
         commands.each_with_index.flat_map do |cmd, i|
           rendered = []
           if i.positive? && (wait = inferred_wait_step(commands[i - 1], cmd))
             rendered << wait
           end
           rendered << build_step(cmd)
+          if (post = url_postcondition_step(cmd, last_url))
+            rendered << post
+          end
+          update_last_url!(cmd, last_url)
           rendered
         end
+      end
+
+      # Emits a postcondition assertion when a click/fill resulted in a URL
+      # change. Compares the canonical (scheme+host+path) form so query
+      # strings and fragments don't make every replay flaky.
+      def url_postcondition_step(cmd, last_url)
+        return nil unless %w[click fill].include?(cmd[:cmd])
+        return nil unless cmd[:postcondition_hint] && cmd[:postcondition_hint][:url]
+
+        page = cmd[:name]
+        observed = cmd[:postcondition_hint][:url]
+        prior    = last_url[page]
+        return nil if canonical_url(observed) == canonical_url(prior)
+
+        prefix = canonical_url(observed)
+        return nil unless prefix
+
+        <<~RUBY.chomp
+          step "assert url after #{cmd[:cmd]} on #{page}" do
+            current = page(:#{page}).url
+            assert current.start_with?(#{prefix.inspect}), "expected URL to start with #{prefix}, got \#{current}"
+          end
+        RUBY
+      end
+
+      def update_last_url!(cmd, last_url)
+        case cmd[:cmd]
+        when "navigate", "page_open"
+          last_url[cmd[:name]] = cmd[:url] if cmd[:url]
+        when "click", "fill"
+          observed = cmd[:postcondition_hint] && cmd[:postcondition_hint][:url]
+          last_url[cmd[:name]] = observed if observed
+        end
+      end
+
+      def canonical_url(url)
+        return nil if url.nil? || url.empty?
+
+        uri = URI.parse(url)
+        path = uri.path.to_s
+        path = "/" if path.empty?
+        "#{uri.scheme}://#{uri.host}#{path}"
+      rescue URI::InvalidURIError
+        nil
       end
 
       def inferred_wait_step(prev, current)
