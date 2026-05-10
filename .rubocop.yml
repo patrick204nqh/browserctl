@@ -1,11 +1,21 @@
 inherit_from: .rubocop_todo.yml
 
+require:
+  - ./lib/browserctl/rubocop/cops/typed_error.rb
+
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.3
   Exclude:
     - "vendor/**/*"
     - "tmp/**/*"
+
+Browserctl/TypedError:
+  Enabled: true
+  Include:
+    - "lib/**/*.rb"
+  Exclude:
+    - "lib/browserctl/rubocop/**/*"
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
