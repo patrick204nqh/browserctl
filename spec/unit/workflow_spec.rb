@@ -421,3 +421,36 @@ RSpec.describe "PageProxy ref-based interaction" do
     end
   end
 end
+
+RSpec.describe "PageProxy public surface" do
+  # Snapshot of the public method set prior to the delegate_unwrap macro
+  # refactor. The macro must not add, drop, or rename methods — this guards
+  # the user-visible API while the internals churn.
+  it "matches the pre-macro snapshot exactly" do
+    expected = %i[
+      click
+      delete_cookies
+      devtools
+      dialog_accept
+      dialog_dismiss
+      evaluate
+      fill
+      hover
+      navigate
+      press
+      replay_context
+      replay_context=
+      screenshot
+      select
+      snapshot
+      storage_get
+      storage_set
+      upload
+      url
+      wait
+    ].sort
+
+    actual = (Browserctl::PageProxy.public_instance_methods - Object.public_instance_methods).sort
+    expect(actual).to eq(expected)
+  end
+end
