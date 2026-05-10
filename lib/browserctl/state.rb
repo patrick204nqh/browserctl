@@ -42,6 +42,41 @@ module Browserctl
     EXTENSION = ".bctl"
     MANIFEST_VERSION = 1
 
+    # Value object bundling everything needed to persist a state bundle. The
+    # browser-side data lives in `cookies`, `local_storage`, and
+    # `session_storage`; the manifest extras live in `origins`, `flow`, and
+    # `flow_version`; `passphrase` flips the bundle into an encrypted variant.
+    Payload = Data.define(
+      :cookies,
+      :local_storage,
+      :session_storage,
+      :origins,
+      :flow,
+      :flow_version,
+      :passphrase
+    ) do
+      def self.build(cookies: [], local_storage: {}, session_storage: {}, # rubocop:disable Metrics/ParameterLists
+                     origins: nil, flow: nil, flow_version: nil, passphrase: nil)
+        new(
+          cookies: cookies,
+          local_storage: local_storage,
+          session_storage: session_storage,
+          origins: origins,
+          flow: flow,
+          flow_version: flow_version,
+          passphrase: passphrase
+        )
+      end
+
+      def to_bundle_payload
+        {
+          cookies: cookies,
+          local_storage: local_storage,
+          session_storage: session_storage
+        }
+      end
+    end
+
     def self.path(name) = File.join(BASE_DIR, "#{name}#{EXTENSION}")
     def self.exist?(name) = File.exist?(path(name))
 
@@ -51,22 +86,24 @@ module Browserctl
       raise ArgumentError, "invalid state name #{name.inspect} — use letters, digits, _ or - (max 64 chars)"
     end
 
-    # Persist a bundle. `payload` is { cookies:, local_storage:, session_storage: }.
-    # `manifest_extras` may carry origins (override), flow, flow_version.
-    def self.save(name, payload:, origins: nil, flow: nil, flow_version: nil, passphrase: nil) # rubocop:disable Metrics/ParameterLists
+    # Persist a bundle. `payload` is a `State::Payload` value object carrying
+    # cookies, local/session storage, and the manifest extras (origins, flow,
+    # flow_version, passphrase).
+    def self.save(name, payload)
       validate_name!(name)
       FileUtils.mkdir_p(BASE_DIR)
 
+      bundle_payload = payload.to_bundle_payload
       manifest = build_manifest(
         name: name,
-        origins: origins || derive_origins(payload),
-        flow: flow,
-        flow_version: flow_version,
-        cookies: payload[:cookies] || payload["cookies"] || [],
-        encrypted: !passphrase.nil?
+        origins: payload.origins || derive_origins(bundle_payload),
+        flow: payload.flow,
+        flow_version: payload.flow_version,
+        cookies: payload.cookies || [],
+        encrypted: !payload.passphrase.nil?
       )
 
-      blob = Bundle.encode(manifest: manifest, payload: payload, passphrase: passphrase)
+      blob = Bundle.encode(manifest: manifest, payload: bundle_payload, passphrase: payload.passphrase)
       File.open(path(name), "wb", 0o600) { |f| f.write(blob) }
       manifest
     end

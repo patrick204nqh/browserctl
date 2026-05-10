@@ -17,8 +17,13 @@ RSpec.describe Browserctl::State do
   end
   let(:local_storage)   { { "https://example.com" => { "theme" => "dark" } } }
   let(:session_storage) { {} }
-  let(:payload) do
-    { cookies: cookies, local_storage: local_storage, session_storage: session_storage }
+  def build_payload(**overrides)
+    Browserctl::State::Payload.build(
+      cookies: cookies,
+      local_storage: local_storage,
+      session_storage: session_storage,
+      **overrides
+    )
   end
 
   def future_ts = (Time.now + 86_400).to_i
@@ -36,7 +41,7 @@ RSpec.describe Browserctl::State do
 
   describe ".save / .load" do
     it "round-trips a plaintext bundle and writes to disk with 0600" do
-      manifest = described_class.save("github", payload: payload, flow: "github_login")
+      manifest = described_class.save("github", build_payload(flow: "github_login"))
       expect(manifest[:flow]).to eq("github_login")
       expect(manifest[:origins]).to include("https://example.com")
       expect(manifest[:expires_at]).not_to be_nil
@@ -52,7 +57,7 @@ RSpec.describe Browserctl::State do
     end
 
     it "encrypts when a passphrase is provided and refuses to load without it" do
-      described_class.save("github", payload: payload, passphrase: "hunter2")
+      described_class.save("github", build_payload(passphrase: "hunter2"))
 
       expect { described_class.load("github") }
         .to raise_error(Browserctl::State::Bundle::PassphraseError)
@@ -68,16 +73,15 @@ RSpec.describe Browserctl::State do
 
     it "honours an explicit --origins override" do
       manifest = described_class.save("multi",
-                                      payload: payload,
-                                      origins: %w[https://a.test https://b.test])
+                                      build_payload(origins: %w[https://a.test https://b.test]))
       expect(manifest[:origins]).to eq(%w[https://a.test https://b.test])
     end
   end
 
   describe ".info / .all" do
     before do
-      described_class.save("github", payload: payload, flow: "github_login")
-      described_class.save("private", payload: payload, passphrase: "p")
+      described_class.save("github", build_payload(flow: "github_login"))
+      described_class.save("private", build_payload(passphrase: "p"))
     end
 
     it "info returns manifest plus path and size, without needing passphrase" do
@@ -101,7 +105,7 @@ RSpec.describe Browserctl::State do
 
   describe ".export / .import via file transport" do
     it "round-trips a bundle through a file destination" do
-      described_class.save("github", payload: payload, flow: "github_login")
+      described_class.save("github", build_payload(flow: "github_login"))
 
       Dir.mktmpdir do |tmp|
         dest = File.join(tmp, "github.bctl")
@@ -119,7 +123,7 @@ RSpec.describe Browserctl::State do
     end
 
     it "honours --name on import" do
-      described_class.save("github", payload: payload)
+      described_class.save("github", build_payload)
       Dir.mktmpdir do |tmp|
         dest = File.join(tmp, "github.bctl")
         described_class.export("github", dest)
@@ -145,7 +149,7 @@ RSpec.describe Browserctl::State do
 
   describe ".delete" do
     it "removes the file, no-ops when absent" do
-      described_class.save("github", payload: payload)
+      described_class.save("github", build_payload)
       expect(described_class.exist?("github")).to be(true)
 
       described_class.delete("github")

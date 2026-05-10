@@ -69,9 +69,13 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
     }
     Browserctl::State.save(
       name,
-      payload: payload,
-      origins: ["http://#{host}:#{port}"],
-      flow: flow
+      Browserctl::State::Payload.build(
+        cookies: payload[:cookies],
+        local_storage: payload[:local_storage],
+        session_storage: payload[:session_storage],
+        origins: ["http://#{host}:#{port}"],
+        flow: flow
+      )
     )
   end
 
