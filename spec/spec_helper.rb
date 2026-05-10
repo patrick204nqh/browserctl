@@ -30,7 +30,9 @@ module BrowserctlHelpers
       ).run
     end
 
-    deadline = Time.now + 10
+    # Match Ferrum's process_timeout (30s) — snap-packaged Chromium on Ubuntu CI
+    # can take >10s on first launch while snapd mounts and applies security profiles.
+    deadline = Time.now + 30
     sleep 0.1 until File.exist?(socket) || Time.now > deadline
     raise "browserd failed to start" unless File.exist?(socket)
 
