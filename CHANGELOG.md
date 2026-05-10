@@ -10,6 +10,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0](https://github.com/patrick204nqh/browserctl/compare/v0.11.0...v0.12.0) (2026-05-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* Scripts that hard-coded `exit 7 = AUTH_REQUIRED` must update — AUTH_REQUIRED is now exit 3, and 7 is STATE_EXPIRED. Scripts treating any non-zero status as a generic failure are unaffected. Prior to this change the CLI exited 1 for everything except AUTH_REQUIRED (which already used 7); typed errors now surface their dedicated codes.
+
+### Features
+
+* benchmark harness + bundle_codec target ([#154](https://github.com/patrick204nqh/browserctl/issues/154)) ([f4b815a](https://github.com/patrick204nqh/browserctl/commit/f4b815a617d4a7d22473e6028ce2a0f90467fa87))
+* bundle format version ([#132](https://github.com/patrick204nqh/browserctl/issues/132)) ([b52d325](https://github.com/patrick204nqh/browserctl/commit/b52d32546d1b9ec3915fac014fecd8f929161ddb))
+* crash reports ([#135](https://github.com/patrick204nqh/browserctl/issues/135)) ([b02adf4](https://github.com/patrick204nqh/browserctl/commit/b02adf4d41295dbe547d2965d838168d48efb8bf))
+* error code enum ([#128](https://github.com/patrick204nqh/browserctl/issues/128)) ([feb0522](https://github.com/patrick204nqh/browserctl/commit/feb0522887935737fd96ad8a8b47d1407a5f585e))
+* exit code map ([#140](https://github.com/patrick204nqh/browserctl/issues/140)) ([1a1d2b2](https://github.com/patrick204nqh/browserctl/commit/1a1d2b2f50693863cb508b5354e5546f340a2771))
+* format version header convention ([#129](https://github.com/patrick204nqh/browserctl/issues/129)) ([405774d](https://github.com/patrick204nqh/browserctl/commit/405774dd6c99cc96f62f0c092010b30e7e710d41))
+* migration helpers ([#143](https://github.com/patrick204nqh/browserctl/issues/143)) ([1c1762e](https://github.com/patrick204nqh/browserctl/commit/1c1762e755f83445c7cdd0df75fc5324a820fa19))
+* recording format version ([#136](https://github.com/patrick204nqh/browserctl/issues/136)) ([4f1bc46](https://github.com/patrick204nqh/browserctl/commit/4f1bc467e653ecc1f508a85b3c329adf048b783d))
+* structured error payload ([#137](https://github.com/patrick204nqh/browserctl/issues/137)) ([f028410](https://github.com/patrick204nqh/browserctl/commit/f02841069f68de749a76ba9a98a38b0c20836d76))
+* structured JSONL logs ([#131](https://github.com/patrick204nqh/browserctl/issues/131)) ([c6daff4](https://github.com/patrick204nqh/browserctl/commit/c6daff488460606659c0641dd8cee6c23561be05))
+* trace --redact ([#139](https://github.com/patrick204nqh/browserctl/issues/139)) ([19b4cec](https://github.com/patrick204nqh/browserctl/commit/19b4cec37daf95a06b0513780d991d0522069593))
+* trace command ([#133](https://github.com/patrick204nqh/browserctl/issues/133)) ([156f304](https://github.com/patrick204nqh/browserctl/commit/156f304246d24fa6c3e06f8d941ac971629ea77c))
+* workflow format version ([#138](https://github.com/patrick204nqh/browserctl/issues/138)) ([963776b](https://github.com/patrick204nqh/browserctl/commit/963776be785583fc3a3b0c04c97510e16c73ca9a))
+
+
+### Miscellaneous Chores
+
+* target next release as 0.12.0 ([#156](https://github.com/patrick204nqh/browserctl/issues/156)) ([9797fcc](https://github.com/patrick204nqh/browserctl/commit/9797fcc0bae1a47bb72eec9cec5fda105e698406))
+
 ## [0.11.0](https://github.com/patrick204nqh/browserctl/compare/v0.10.0...v0.11.0) (2026-05-10)
 
 
