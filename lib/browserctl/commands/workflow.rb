@@ -20,13 +20,18 @@ module Browserctl
         end
       end
 
+      EXIT_CODE = { clean: 0, drift: 2, fail: 1 }.freeze
+
       def self.run_workflow(runner, args)
-        name = args.shift or abort "usage: browserctl workflow run <name|file> [--params file] [--key value ...]"
+        name = args.shift or abort \
+          "usage: browserctl workflow run <name|file> [--check] [--params file] [--key value ...]"
         if File.exist?(name)
           before = Browserctl.registry_snapshot.keys
           load File.expand_path(name)
           name = (Browserctl.registry_snapshot.keys - before).first || File.basename(name, ".rb")
         end
+
+        check = !args.delete("--check").nil?
 
         params_file_idx = args.index("--params")
         file_params = {}
@@ -47,8 +52,8 @@ module Browserctl
         end
 
         params = file_params.merge(cli_params)
-        success = runner.run_workflow(name, **params)
-        exit(success ? 0 : 1)
+        verdict = runner.run_workflow(name, check: check, **params)
+        exit(EXIT_CODE.fetch(verdict, 1))
       end
 
       def self.run_list(runner)

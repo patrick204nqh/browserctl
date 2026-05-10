@@ -14,13 +14,17 @@ module Browserctl
     # Runs a named workflow with the given parameters.
     # @param name [String] workflow name (must match /\A[a-zA-Z0-9_-]+\z/)
     # @param params [Hash] keyword arguments passed to the workflow
-    # @return [Boolean] true if all steps succeeded
+    # @param check [Boolean] when true, attaches a Replay::Context, renders
+    #   a drift report after the run, and signals drift via exit code 2.
+    # @return [Symbol] :clean (all ok, no drift), :drift (all ok, drift seen), :fail (any step failed)
     # @raise [WorkflowError] if the name is invalid or a step fails
-    def run_workflow(name, **params)
+    def run_workflow(name, check: false, **params)
       defn    = fetch_workflow(name)
-      results = defn.call(params, Client.new)
+      ctx     = check ? Browserctl::Replay::Context.new : nil
+      results = defn.call(params, Client.new, replay_context: ctx)
       print_results(results)
-      results.all?(&:ok)
+      print_drift_report(ctx) if check
+      verdict(results, ctx)
     end
 
     # Lists all registered workflows from the standard search paths.
@@ -107,6 +111,24 @@ module Browserctl
       label = result.ok ? "[ok]  " : "[fail]"
       msg   = result.ok ? result.name : "#{result.name}: #{result.error}"
       $stdout.puts "  #{label} #{msg}"
+    end
+
+    def print_drift_report(ctx)
+      events = ctx&.drift_events || []
+      report = {
+        drift: events.any?,
+        rematches: events.count { |e| e.reason == "rematch" },
+        unresolved: events.count { |e| e.reason == "no candidate above threshold" },
+        events: events.map(&:to_h)
+      }
+      $stdout.puts JSON.pretty_generate(report)
+    end
+
+    def verdict(results, ctx)
+      return :fail unless results.all?(&:ok)
+      return :drift if ctx&.drift_events&.any?
+
+      :clean
     end
 
     def format_params(defn)
