@@ -4,6 +4,8 @@ The `browserctl` CLI exits with a small, stable set of integer status codes so A
 
 The mapping is implemented in [`lib/browserctl/error/exit_codes.rb`](../../lib/browserctl/error/exit_codes.rb) and lives in the **Stable** zone (see [api-stability.md](api-stability.md)) — codes will not be renumbered without a major version bump.
 
+For the meaning of each `Codes::*` string and its suggested-action template, see [errors.md](errors.md).
+
 ## Table
 
 | Exit code | Name                 | Meaning                                                                                  | Mapped `Codes::*`             | Example trigger                                                                  |
