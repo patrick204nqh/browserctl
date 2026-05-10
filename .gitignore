@@ -18,3 +18,4 @@ docs/superpowers/
 examples/smoke/*.yml
 examples/smoke/*.json
 .claude/worktrees/
+.claude/scheduled_tasks.lock
