@@ -95,7 +95,10 @@ module Browserctl
       return if Browserctl.lookup_workflow(name.to_s)
 
       path = workflow_path(name)
-      load path if path
+      return unless path
+
+      Browserctl.verify_workflow_format_version!(path)
+      load path
     end
 
     def workflow_path(name)
@@ -111,7 +114,10 @@ module Browserctl
 
     def load_from_dir(dir)
       Dir.glob("#{dir}/*.rb").each do |f|
-        load f unless $LOADED_FEATURES.include?(f)
+        next if $LOADED_FEATURES.include?(f)
+
+        Browserctl.verify_workflow_format_version!(f)
+        load f
       end
     end
 

@@ -37,7 +37,7 @@ source of truth for the convention:
 | -------------- | ----------------------------------- | --------------- | ------------------------------------ |
 | State bundle   | `*.bctl` manifest                   | `1` (live)      | `lib/browserctl/state/bundle.rb`     |
 | Recording log  | `recordings/<session>.jsonl`        | `1` (live)      | `lib/browserctl/recording.rb`        |
-| Workflow file  | `workflows/*.rb` (front-matter)     | `1` (reserved)  | `lib/browserctl/workflow.rb` (PR #4) |
+| Workflow file  | `workflows/*.rb` (front-matter)     | `1` (live)      | `lib/browserctl/workflow.rb`         |
 | Drift report   | `drift-*.json`                      | `1` (reserved)  | `lib/browserctl/replay/` (PR #3)     |
 | Daemon state   | `~/.browserctl/state.json`          | `1` (reserved)  | `lib/browserctl/state.rb` (PR #2)    |
 
@@ -64,6 +64,33 @@ When you bump a version:
 3. Register a forward migration with `Browserctl::Migrations` (lands in WS-1
    PR #5). `browserctl migrate <path>` runs registered upgraders.
 4. Update the table above and add a CHANGELOG entry under `### Breaking`.
+
+## Workflow files: warn, don't raise
+
+Workflow files (`*.rb` under `.browserctl/workflows/` or
+`~/.browserctl/workflows/`) are the one exception to the hard-failure
+rule. They declare their version in a top-of-file Ruby comment:
+
+```ruby
+# frozen_string_literal: true
+# format_version: 1
+
+Browserctl.workflow "login" do
+  ...
+end
+```
+
+The loader (`Browserctl::Runner#load_workflow_file`) calls
+`Browserctl.verify_workflow_format_version!` before `load`-ing the
+file. If the header is missing or declares an unsupported version, the
+loader emits a `[browserctl]` warning to stderr and proceeds to load
+the file anyway. This is deliberate: workflows are human-authored
+Ruby, and the cost of refusing to run a slightly-stale workflow is
+worse than the cost of loading it and letting Ruby raise on real
+incompatibility.
+
+Bundles, recordings, and (future) drift reports keep the strict
+`PROTOCOL_MISMATCH` behaviour described below.
 
 ## Unknown-version error
 
