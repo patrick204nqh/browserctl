@@ -5,6 +5,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "optimist"
 require "nokogiri"
+require "browserctl/crash_report"
 require "browserctl/logger"
 require "browserctl/server"
 require "browserctl/version"
@@ -35,7 +36,9 @@ end
 
 log_path = Browserctl.log_path(assigned_name)
 warn "browserd starting — log: #{log_path}"
+warn "  if browserd crashes, attach the crash report from ~/.browserctl/logs/crash-*.json"
 Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path, component: "daemon")
+daemon_jsonl_log = File.join(Browserctl.log_dir, "daemon.log")
 begin
   Browserctl::Server.new(
     headless: !opts[:headed],
@@ -45,4 +48,8 @@ begin
   ).run
 rescue Browserctl::BrowserNotFound => e
   abort e.message
+rescue Exception => e # rubocop:disable Lint/RescueException
+  crash_path = Browserctl::CrashReport.write(error: e, log_path: daemon_jsonl_log)
+  warn "browserd crashed — crash report: #{crash_path}" if crash_path
+  raise
 end
