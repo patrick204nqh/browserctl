@@ -3,7 +3,7 @@ description: Setup Ruby with bundler cache
 inputs:
   ruby-version:
     description: Ruby version to use
-    default: "3.3"
+    default: "3.4"
 runs:
   using: composite
   steps:
