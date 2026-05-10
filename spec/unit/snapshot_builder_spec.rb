@@ -12,7 +12,12 @@ RSpec.describe Browserctl::SnapshotBuilder do
     it "returns an array of element entries with required keys" do
       result = builder.call(page_with("<html><body><a href='/'>Home</a></body></html>"))
       expect(result).to be_an(Array)
-      expect(result.first).to include(:ref, :tag, :text, :selector, :attrs)
+      expect(result.first).to include(:ref, :tag, :text, :selector, :attrs, :fingerprint)
+    end
+
+    it "emits a fingerprint hash per element" do
+      result = builder.call(page_with("<html><body><button>Go</button></body></html>"))
+      expect(result.first[:fingerprint]).to include(:text, :role, :neighbors, :position)
     end
 
     it "derives stable hash-prefixed refs (e<7-hex>)" do
