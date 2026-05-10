@@ -35,7 +35,7 @@ source of truth for the convention:
 
 | Format         | File pattern                        | Current version | Source of truth (post-WS-1)          |
 | -------------- | ----------------------------------- | --------------- | ------------------------------------ |
-| State bundle   | `*.bctl` manifest                   | `1` (reserved)  | `lib/browserctl/state.rb` (PR #2)    |
+| State bundle   | `*.bctl` manifest                   | `1` (live)      | `lib/browserctl/state/bundle.rb`     |
 | Recording log  | `recordings/<session>.log`          | `1` (reserved)  | `lib/browserctl/recording.rb` (PR #3)|
 | Workflow file  | `workflows/*.rb` (front-matter)     | `1` (reserved)  | `lib/browserctl/workflow.rb` (PR #4) |
 | Drift report   | `drift-*.json`                      | `1` (reserved)  | `lib/browserctl/replay/` (PR #3)     |
