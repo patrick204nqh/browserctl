@@ -339,6 +339,48 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "format version (v0.12 WS-1)" do
+    it "stamps RECORDING_FORMAT_VERSION in the _meta header on start" do
+      described_class.start("fmt")
+      meta = JSON.parse(File.readlines(File.join(@tmp_dir, "fmt.jsonl")).first)
+      expect(meta["format_version"]).to eq(Browserctl::Recording::RECORDING_FORMAT_VERSION)
+      expect(Browserctl::Recording::RECORDING_FORMAT_VERSION).to eq(1)
+    end
+
+    it "round-trips: a freshly recorded log loads without raising" do
+      described_class.start("rt")
+      described_class.append("page_open", name: "main", url: "https://example.com")
+      expect { described_class.generate_workflow("rt", keep_log: true) }.not_to raise_error
+    end
+
+    it "raises ProtocolMismatch when the log declares an unsupported format_version" do
+      log = File.join(@tmp_dir, "future.jsonl")
+      File.write(log, "#{JSON.generate(cmd: '_meta', format_version: 999, recording: 'future')}\n")
+      expect { described_class.generate_workflow("future") }
+        .to raise_error(Browserctl::ProtocolMismatch) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::PROTOCOL_MISMATCH)
+          expect(e.message).to include("999")
+        end
+    end
+
+    it "raises ProtocolMismatch when the _meta header is missing format_version" do
+      log = File.join(@tmp_dir, "legacy.jsonl")
+      File.write(log, "#{JSON.generate(cmd: '_meta', log_format: 'v0.11', recording: 'legacy')}\n")
+      expect { described_class.generate_workflow("legacy") }
+        .to raise_error(Browserctl::ProtocolMismatch) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::PROTOCOL_MISMATCH)
+          expect(e.message).to include("missing format_version")
+        end
+    end
+
+    it "raises ProtocolMismatch when the log has no _meta header at all" do
+      log = File.join(@tmp_dir, "raw.jsonl")
+      File.write(log, "#{JSON.generate(cmd: 'click', name: 'main', selector: 'a')}\n")
+      expect { described_class.generate_workflow("raw") }
+        .to raise_error(Browserctl::ProtocolMismatch)
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")

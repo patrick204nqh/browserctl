@@ -7,11 +7,20 @@ require "fileutils"
 require "tmpdir"
 require "uri"
 require_relative "errors"
+require_relative "error/codes"
 
 module Browserctl
   class Recording # rubocop:disable Metrics/ClassLength
     RECORDINGS_DIR = File.join(Dir.tmpdir, "browserctl-recordings")
     STATE_FILE     = File.expand_path("~/.browserctl/active_recording")
+
+    # Recording-log format version, written into the `_meta` header and
+    # validated when generate_workflow loads a recording. Distinct from
+    # LOG_FORMAT below — that string ("v0.11") tracks the human-readable
+    # log shape; this integer is the machine-readable schema gate per the
+    # WS-1 format-version convention. See docs/reference/format-versions.md.
+    RECORDING_FORMAT_VERSION = 1
+    SUPPORTED_FORMAT_VERSIONS = [RECORDING_FORMAT_VERSION].freeze
 
     RECORDABLE = %w[page_open navigate fill click screenshot evaluate].freeze
 
@@ -43,6 +52,7 @@ module Browserctl
       File.open(log_path(name), "a") do |f|
         f.puts JSON.generate(
           cmd: "_meta",
+          format_version: RECORDING_FORMAT_VERSION,
           log_format: LOG_FORMAT,
           recording: name,
           started_at: Time.now.utc.iso8601
@@ -87,6 +97,7 @@ module Browserctl
       raise Browserctl::Error, "no recording found for '#{name}'" unless File.exist?(log)
 
       raw   = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
+      verify_format_version!(raw, path: log)
       lines = raw.reject { |l| l[:cmd] == "_meta" }
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
@@ -106,6 +117,25 @@ module Browserctl
 
     class << self
       private
+
+      # Raises Browserctl::ProtocolMismatch when the recording log's _meta
+      # header is missing or declares a format_version this build does not
+      # support. Mirrors Browserctl::State::Bundle.verify_format_version!.
+      def verify_format_version!(raw_lines, path: nil)
+        meta = raw_lines.first
+        version = meta && meta[:cmd] == "_meta" ? meta[:format_version] : nil
+        return if version && SUPPORTED_FORMAT_VERSIONS.include?(version)
+
+        where = path ? " at #{path}" : ""
+        msg = if version.nil?
+                "recording log#{where} is missing format_version " \
+                  "(supported: #{SUPPORTED_FORMAT_VERSIONS.inspect})"
+              else
+                "recording log#{where} declares format_version=#{version.inspect}, " \
+                  "this build supports #{SUPPORTED_FORMAT_VERSIONS.inspect}"
+              end
+        raise Browserctl::ProtocolMismatch.new(msg, code: Browserctl::Error::Codes::PROTOCOL_MISMATCH)
+      end
 
       def log_path(name)
         File.join(RECORDINGS_DIR, "#{name}.jsonl")
