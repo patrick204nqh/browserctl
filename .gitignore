@@ -17,3 +17,4 @@ docs/superpowers/
 .claude/feedback/
 examples/smoke/*.yml
 examples/smoke/*.json
+.claude/worktrees/
