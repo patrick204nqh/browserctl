@@ -63,4 +63,10 @@ module Browserctl
   class FlowPreconditionError < FlowError; def self.default_code = "flow_precondition_failed" end
   class FlowStepError < FlowError; def self.default_code = "flow_step_failed" end
   class FlowPostconditionError < FlowError; def self.default_code = "flow_postcondition_failed" end
+
+  # Raised when a persisted artifact (bundle, recording, workflow, etc.) has a
+  # `version:` header that this build does not know how to read. The full error
+  # code taxonomy lands in WS-2 (PR #7); this class is a forward-reference stub
+  # so WS-1 PRs can already raise the canonical code.
+  class ProtocolMismatch < Error; def self.default_code = "PROTOCOL_MISMATCH" end
 end
