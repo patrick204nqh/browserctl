@@ -196,6 +196,21 @@ module Browserctl
   class PageProxy
     attr_accessor :replay_context
 
+    # Declarative wrapper for `unwrap @client.METHOD(@name, ...)` one-liners.
+    # Forwards positional + keyword args verbatim. Pass `extract:` to return
+    # a single key from the client response instead of unwrapping.
+    def self.delegate_unwrap(method_name, extract: nil)
+      if extract
+        define_method(method_name) do |*args, **kwargs|
+          @client.public_send(method_name, @name, *args, **kwargs)[extract]
+        end
+      else
+        define_method(method_name) do |*args, **kwargs|
+          unwrap @client.public_send(method_name, @name, *args, **kwargs)
+        end
+      end
+    end
+
     def initialize(name, client, replay_context: nil, matcher: nil)
       @name           = name
       @client         = client
@@ -203,7 +218,20 @@ module Browserctl
       @matcher        = matcher || Replay::FingerprintMatcher.new
     end
 
-    def navigate(url) = unwrap @client.navigate(@name, url)
+    delegate_unwrap :navigate
+    delegate_unwrap :snapshot
+    delegate_unwrap :screenshot
+    delegate_unwrap :wait
+    delegate_unwrap :delete_cookies
+    delegate_unwrap :press
+    delegate_unwrap :storage_set
+    delegate_unwrap :dialog_accept
+    delegate_unwrap :dialog_dismiss
+
+    delegate_unwrap :devtools,    extract: :devtools_url
+    delegate_unwrap :url,         extract: :url
+    delegate_unwrap :evaluate,    extract: :result
+    delegate_unwrap :storage_get, extract: :value
 
     def fill(selector = nil, value = nil, ref: nil)
       with_selector_fallback(:fill, selector, ref) do |sel, r|
@@ -216,24 +244,6 @@ module Browserctl
         @client.click(@name, sel, ref: r)
       end
     end
-
-    def snapshot(**)              = unwrap @client.snapshot(@name, **)
-    def screenshot(**)            = unwrap @client.screenshot(@name, **)
-    def wait(sel, timeout: 30)    = unwrap @client.wait(@name, sel, timeout: timeout)
-    def delete_cookies             = unwrap @client.delete_cookies(@name)
-    def devtools                   = @client.devtools(@name)[:devtools_url]
-    def url                        = @client.url(@name)[:url]
-    def evaluate(expr)             = @client.evaluate(@name, expr)[:result]
-
-    def storage_get(key, store: "local")
-      @client.storage_get(@name, key, store: store)[:value]
-    end
-
-    def storage_set(key, value, store: "local")
-      unwrap @client.storage_set(@name, key, value, store: store)
-    end
-
-    def press(key) = unwrap @client.press(@name, key)
 
     def hover(selector = nil, ref: nil)
       with_selector_fallback(:hover, selector, ref) do |sel, r|
@@ -252,9 +262,6 @@ module Browserctl
         @client.select(@name, sel, value, ref: r)
       end
     end
-
-    def dialog_accept(text: nil) = unwrap @client.dialog_accept(@name, text: text)
-    def dialog_dismiss           = unwrap @client.dialog_dismiss(@name)
 
     private
 
