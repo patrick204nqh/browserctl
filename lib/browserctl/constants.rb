@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "errors"
+
 module Browserctl
   BROWSERCTL_DIR   = File.expand_path("~/.browserctl")
   IDLE_TTL         = 30 * 60
@@ -26,7 +28,7 @@ module Browserctl
     1.upto(99) do |i|
       return "d#{i}" unless File.exist?(socket_path("d#{i}"))
     end
-    raise "too many running daemons (limit: 99)"
+    raise Browserctl::Error, "too many running daemons (limit: 99)"
   end
 
   def self.all_daemon_sockets

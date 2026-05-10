@@ -71,7 +71,7 @@ module Browserctl
     def self.load(session_name)
       validate_name!(session_name)
       dir = path(session_name)
-      raise "session '#{session_name}' not found" unless Dir.exist?(dir)
+      raise Browserctl::Error, "session '#{session_name}' not found" unless Dir.exist?(dir)
 
       meta = JSON.parse(File.read(File.join(dir, "metadata.json")), symbolize_names: true)
 

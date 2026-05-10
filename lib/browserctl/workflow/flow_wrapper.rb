@@ -59,7 +59,7 @@ module Browserctl
       def write(defn, overwrite: true, dir: nil)
         path = dir ? File.join(dir, "#{defn.name}.rb") : target_path(defn.name)
         if File.exist?(path) && !overwrite
-          raise "flow wrapper already exists at #{path} (pass overwrite: true to replace)"
+          raise Browserctl::WorkflowError, "flow wrapper already exists at #{path} (pass overwrite: true to replace)"
         end
 
         FileUtils.mkdir_p(File.dirname(path))

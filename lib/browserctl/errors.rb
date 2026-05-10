@@ -20,14 +20,14 @@ module Browserctl
     end
   end
 
-  class PageNotFound     < Error; def self.default_code = "page_not_found"     end
-  class SelectorNotFound < Error; def self.default_code = "selector_not_found" end
-  class RefNotFound      < Error; def self.default_code = "ref_not_found"      end
-  class PathNotAllowed   < Error; def self.default_code = "path_not_allowed"   end
-  class DomainNotAllowed < Error; def self.default_code = "domain_not_allowed" end
-  class TimeoutError     < Error; def self.default_code = "timeout"            end
-  class KeyNotFound < Error; def self.default_code = "key_not_found" end
-  class DaemonUnavailableError < Error; def self.default_code = "daemon_unavailable" end
+  class PageNotFound     < Error; def self.default_code = "page_not_found" end
+  class SelectorNotFound < Error; def self.default_code = Codes::SELECTOR_NOT_FOUND   end
+  class RefNotFound      < Error; def self.default_code = "ref_not_found"             end
+  class PathNotAllowed   < Error; def self.default_code = "path_not_allowed"          end
+  class DomainNotAllowed < Error; def self.default_code = "domain_not_allowed"        end
+  class TimeoutError     < Error; def self.default_code = "timeout"                   end
+  class KeyNotFound      < Error; def self.default_code = "key_not_found"             end
+  class DaemonUnavailableError < Error; def self.default_code = Codes::DAEMON_UNREACHABLE end
   class BrowserNotFound < Error; def self.default_code = "browser_not_found" end
 
   # Raised when the daemon detects that the current page needs authentication —
@@ -36,7 +36,7 @@ module Browserctl
   # suggested flow (from the bundle manifest) so callers can recover without
   # additional lookups. The CLI maps this code to exit status 7.
   class AuthRequiredError < Error
-    def self.default_code = "AUTH_REQUIRED"
+    def self.default_code = Codes::AUTH_REQUIRED
 
     AUTH_REQUIRED_EXIT_CODE = 7
 
@@ -61,7 +61,7 @@ module Browserctl
   end
 
   class WorkflowError < Error; def self.default_code = "workflow_error" end
-  class SecretResolverError < WorkflowError; def self.default_code = "secret_resolver_error" end
+  class SecretResolverError < WorkflowError; def self.default_code = Codes::SECRET_RESOLUTION_FAILED end
 
   class FlowError < WorkflowError; def self.default_code = "flow_error" end
   class FlowParamError < FlowError; def self.default_code = "flow_param_error" end
@@ -73,5 +73,5 @@ module Browserctl
   # `version:` header that this build does not know how to read. The full error
   # code taxonomy lands in WS-2 (PR #7); this class is a forward-reference stub
   # so WS-1 PRs can already raise the canonical code.
-  class ProtocolMismatch < Error; def self.default_code = "PROTOCOL_MISMATCH" end
+  class ProtocolMismatch < Error; def self.default_code = Codes::PROTOCOL_MISMATCH end
 end
