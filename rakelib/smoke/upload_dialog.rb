@@ -36,14 +36,13 @@ Browserctl.workflow "smoke/upload_dialog" do
     page(:dlg).upload("#file-input", path)
     name = page(:dlg).evaluate("document.getElementById('file-input').files[0]?.name")
     assert name == File.basename(path), "expected filename #{File.basename(path).inspect}, got: #{name.inspect}"
-    puts "  [ok] upload: file name = #{name.inspect}"
   end
 
   step "upload — raises for missing file" do
     page(:dlg).upload("#file-input", "/tmp/nonexistent_smoke_file_xyz_abc.txt")
     assert false, "expected WorkflowError was not raised"
-  rescue Browserctl::WorkflowError => e
-    puts "  [ok] upload missing file raised: #{e.message}"
+  rescue Browserctl::WorkflowError
+    # expected
   end
 
   step "dialog accept — dismisses alert without hanging" do
@@ -53,7 +52,6 @@ Browserctl.workflow "smoke/upload_dialog" do
     # If the dialog wasn't handled the page would hang; verify it's still alive.
     result = page(:dlg).evaluate("1 + 1")
     assert result == 2, "page unresponsive after alert — dialog may not have been accepted"
-    puts "  [ok] alert accepted, page still responsive"
   end
 
   step "dialog accept — confirm returns true" do
@@ -62,7 +60,6 @@ Browserctl.workflow "smoke/upload_dialog" do
     sleep 0.3
     confirmed = page(:dlg).evaluate("window.confirmed")
     assert confirmed == true, "expected window.confirmed = true, got: #{confirmed.inspect}"
-    puts "  [ok] confirm accepted → window.confirmed = #{confirmed}"
   end
 
   step "dialog dismiss — confirm returns false" do
@@ -71,7 +68,6 @@ Browserctl.workflow "smoke/upload_dialog" do
     sleep 0.3
     dismissed = page(:dlg).evaluate("window.dismissed")
     assert dismissed == false, "expected window.dismissed = false, got: #{dismissed.inspect}"
-    puts "  [ok] confirm dismissed → window.dismissed = #{dismissed}"
   end
 
   step "dialog accept with text — prompt returns supplied value" do
@@ -80,7 +76,6 @@ Browserctl.workflow "smoke/upload_dialog" do
     sleep 0.3
     prompted = page(:dlg).evaluate("window.prompted")
     assert prompted == "smoke-answer", "expected 'smoke-answer', got: #{prompted.inspect}"
-    puts "  [ok] prompt answered → window.prompted = #{prompted.inspect}"
   end
 
   step "teardown" do
