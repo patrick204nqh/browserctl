@@ -7,8 +7,8 @@ This guide walks an AI agent (or a human moving fast) from a one-off browser exp
 The pipeline is four CLI commands:
 
 ```bash
-browserctl record start <name>          # explore interactively
-browserctl record stop                  # save the recording
+browserctl recording start <name>          # explore interactively
+browserctl recording stop                  # save the recording
 browserctl workflow generate <name>     # → .browserctl/workflows/<name>.rb
 browserctl workflow run <name> --check  # × N (default 3 clean runs)
 browserctl workflow promote <name> [--as-flow]
@@ -18,19 +18,19 @@ No manual editing is required for the happy path.
 
 ---
 
-## 1. Explore — `record start` / `record stop`
+## 1. Explore — `recording start` / `recording stop`
 
 Start a recording session, then drive the browser as you normally would. Every `click`, `fill`, `navigate`, etc. is logged to `~/.browserctl/recordings/<name>.jsonl` along with the snapshot ref, the resolved CSS selector, the element's fingerprint, and a postcondition hint (URL, snapshot digest).
 
 ```bash
 browserd &
 browserctl page open main --url "https://example.com/login"
-browserctl record start gh_issues
+browserctl recording start gh_issues
 browserctl fill main "input[name=username]" alice
 browserctl fill main "input[name=password]" hunter2
 browserctl click main "button[type=submit]"
 browserctl navigate main "https://example.com/issues"
-browserctl record stop
+browserctl recording stop
 ```
 
 The recording captures *what was tried*, not just what worked. Failed clicks and selector retries also appear in the log so the generator can ignore them.
@@ -145,9 +145,9 @@ Once promoted as a flow, it shows up in `browserctl flow list` and is invocable 
 ```bash
 # 1. Explore
 browserd &
-browserctl record start scrape_issues
+browserctl recording start scrape_issues
 # … drive the browser …
-browserctl record stop
+browserctl recording stop
 
 # 2. Generate
 browserctl workflow generate scrape_issues

@@ -10,7 +10,7 @@ Start the daemon once, then issue commands from your agent's tool calls:
 
 ```bash
 browserd &                         # start once; keeps the browser alive
-browserctl snapshot main           # → JSON array your agent reads
+browserctl page snapshot main      # → JSON array your agent reads
 browserctl click main --ref e3     # act on ref IDs from the snapshot
 browserctl daemon stop             # clean up when done
 ```
@@ -118,12 +118,12 @@ For shell-based agent loops, pipe snapshot output through `jq`:
 
 ```bash
 # Get the ref for the login button
-LOGIN_REF=$(browserctl snapshot main | jq -r '.[] | select(.text == "Login") | .ref')
+LOGIN_REF=$(browserctl page snapshot main | jq -r '.[] | select(.text == "Login") | .ref')
 
 browserctl click main --ref "$LOGIN_REF"
 
 # Poll until a target element appears
-until browserctl snapshot main | jq -e '.[] | select(.attrs["data-test"] == "dashboard")' > /dev/null; do
+until browserctl page snapshot main | jq -e '.[] | select(.attrs["data-test"] == "dashboard")' > /dev/null; do
   sleep 1
 done
 ```

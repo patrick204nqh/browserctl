@@ -32,7 +32,7 @@ Inside the daemon, each browser tab is a **named page**. You give it a name when
 ```bash
 browserctl page open login --url https://app.example.com/login
 browserctl fill login "input[name=email]" me@example.com
-browserctl snapshot login
+browserctl page snapshot login
 browserctl page close login
 ```
 

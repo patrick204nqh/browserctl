@@ -68,11 +68,11 @@ browserctl fill  login --ref e1 --value user@example.com
 browserctl click login --ref e2
 
 # Observation
-browserctl snapshot login                   # interactable elements JSON (use this first for unknown layouts)
-browserctl snapshot login --diff            # only elements changed since last snap
-browserctl snapshot login --format html     # raw HTML
-browserctl screenshot login                 # screenshot → /tmp/
-browserctl screenshot login --out /tmp/my.png --full
+browserctl page snapshot login                   # interactable elements JSON (use this first for unknown layouts)
+browserctl page snapshot login --diff            # only elements changed since last snap
+browserctl page snapshot login --format html     # raw HTML
+browserctl page screenshot login                 # screenshot → /tmp/
+browserctl page screenshot login --out /tmp/my.png --full
 browserctl evaluate  login "document.title" # evaluate a JS expression
 
 # Waiting
@@ -80,9 +80,9 @@ browserctl wait login "button#submit"            # poll until selector appears
 browserctl wait login ".toast" --timeout 5       # fail after 5s
 
 # Recording → workflow → flow (v0.11 replayable loop)
-browserctl record start my_flow              # start capturing commands
-browserctl record stop                       # end capture; recording log at ~/.browserctl/recordings/<name>.jsonl
-browserctl record status                     # check if a recording is active
+browserctl recording start my_flow            # start capturing commands
+browserctl recording stop                     # end capture; recording log at ~/.browserctl/recordings/<name>.jsonl
+browserctl recording status                   # check if a recording is active
 browserctl workflow generate my_flow         # → .browserctl/workflows/my_flow.rb
 browserctl workflow run my_flow --check      # replay + snapshot diff (run until 3× clean)
 browserctl workflow promote my_flow          # → ~/.browserctl/workflows/my_flow.rb (gated by clean streak)
@@ -211,7 +211,7 @@ Or use `selector` values with `fill` and `click`. Prefer `snapshot` over raw HTM
 After the first `snapshot`, use `--diff` to fetch only what changed — avoids re-processing the full DOM on every step:
 
 ```sh
-browserctl snapshot login --diff
+browserctl page snapshot login --diff
 ```
 
 ## Naming pages
@@ -234,7 +234,7 @@ throwaway script. Only harden once the sequence is confirmed reliable.
 ```sh
 browserd --headed &
 browserctl page open main --url https://app.example.com/login
-browserctl snapshot main                      # learn the selectors
+browserctl page snapshot main                 # learn the selectors
 browserctl fill main "input[name=email]" me@example.com
 browserctl fill main "input[name=password]" secret
 browserctl click main "button[type=submit]"
@@ -418,7 +418,7 @@ Use when the default "invoke the bound flow" doesn't fit — the lambda runs in 
 - **Use `wait`** when you need to wait for an element that appears asynchronously — more efficient than polling `snapshot`.
 - **Use named daemons** (`browserd --name X`) when running multiple parallel sessions — each gets an isolated socket and browser.
 - **Use descriptive page names.** Reuse the same name if the page is still open.
-- **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl snapshot <page>`.
+- **Log state at the end** of multi-step tasks: `browserctl url <page>` and `browserctl page snapshot <page>`.
 - **Use `press`** for keyboard shortcuts, form submission (`Enter`), navigation (`Tab`, `Escape`, `ArrowDown`). Prefer it over `evaluate` keyboard dispatch.
 - **Use `dialog accept/dismiss` before the triggering action** — the handler is one-shot and fires when the dialog appears. Register it first, then click the button that triggers it.
 - **Use `ask`** when automation needs a human-supplied value (2FA code, CAPTCHA answer, confirmation) but doesn't need to hand over full browser control. Cleaner than `pause` for value injection.
@@ -430,11 +430,11 @@ Use when the default "invoke the bound flow" doesn't fit — the lambda runs in 
 - **Use `secret_ref:` for credentials** — `param :password, secret_ref: "op://vault/item/field"` resolves the value from your keychain or secret manager at runtime. Never pass credentials as CLI flags or hardcode them in workflow files. `secret_ref:` always implies `secret: true`.
 - **Use `session save/load`** for v0.8/v0.9 callers only — new code should use `state save/load`. The session zip format remains readable through v0.10 with a deprecation warning.
 - **`load_session(fallback:, expired_if:)` is deprecated** — the recovery loop now lives in `load_state`. Existing usages still work through v0.10 but emit a stderr DEPRECATION warning; migrate to `save_state(name, flow: :name)` + `load_state(name)`.
-- **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl record` to capture a live session automatically.
+- **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl recording` to capture a live session automatically.
 
 ## Recording and refs
 
-`browserctl record start <name>` captures a live session. Selector-based interactions replay perfectly. Ref-based interactions (`--ref eN`) cannot replay by ref — they are captured as commented-out TODO stubs in the generated workflow:
+`browserctl recording start <name>` captures a live session. Selector-based interactions replay perfectly. Ref-based interactions (`--ref eN`) cannot replay by ref — they are captured as commented-out TODO stubs in the generated workflow:
 
 ```ruby
 # TODO: ref-based fill on "login" (ref: e1) — replace with a stable CSS selector
@@ -443,7 +443,7 @@ Use when the default "invoke the bound flow" doesn't fit — the lambda runs in 
 # end
 ```
 
-`record stop` prints a warning if any were found. Fix them by replacing the selector with the value from the snapshot JSON for that ref.
+`recording stop` prints a warning if any were found. Fix them by replacing the selector with the value from the snapshot JSON for that ref.
 
 ## The replayable loop (v0.11): explore → generate → check → promote
 
@@ -451,9 +451,9 @@ Once you have a recording, four CLI commands take you from a one-off exploration
 
 ```bash
 # 1. Explore — drive the browser interactively while recording
-browserctl record start my_flow
+browserctl recording start my_flow
 # ... navigate / fill / click ...
-browserctl record stop
+browserctl recording stop
 
 # 2. Generate — emit a Ruby workflow file
 browserctl workflow generate my_flow
@@ -507,7 +507,7 @@ How to read it:
 
 - **All events `rematch` with `score ≥ 0.85`** — the page changed cosmetically (renamed CSS class, refactored container). The workflow is fine. Continue running `--check`; once 3 clean runs land, promote. If you want to lock the new selector in, edit the recorded selector to match `matched_ref`'s current selector.
 - **`rematch` with `0.6 ≤ score < 0.85`** — the matcher is uncertain. Visually verify in `--headed` mode that the right element was hit. If it was, lock the new selector in. If not, re-record.
-- **`reason: "no candidate above threshold"`** — the original element is gone and nothing similar exists. The workflow needs a new step shape; re-record from `record start`.
+- **`reason: "no candidate above threshold"`** — the original element is gone and nothing similar exists. The workflow needs a new step shape; re-record from `recording start`.
 - **Many `rematch` events on a single run** — likely a structural redesign rather than drift. Re-record rather than rematching every step run after run.
 
 The matcher's threshold defaults are conservative; a low-confidence rematch is more likely to be wrong than a high-confidence selector. When in doubt: re-record. When the report is consistent across runs: trust it.

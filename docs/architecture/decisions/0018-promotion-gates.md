@@ -10,7 +10,7 @@
 v0.11's pipeline turns recordings into promoted, replayable artefacts:
 
 ```
-record start → record stop → workflow generate → workflow run --check (× N) → workflow promote
+recording start → recording stop → workflow generate → workflow run --check (× N) → workflow promote
 ```
 
 The generator emits a workflow file from a single recording. That file may pass `--check` once and break the next time — a single clean run is not enough evidence that the workflow is durable. We need a gate that promotes only workflows whose `--check` history shows reliable behaviour.

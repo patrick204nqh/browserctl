@@ -80,7 +80,7 @@ The name (`main`) is what you'll use to address this tab in every subsequent com
 Snapshot the page to see what's on it:
 
 ```bash
-browserctl snapshot main
+browserctl page snapshot main
 ```
 
 You'll get a compact JSON array of every interactable element on the page, each with a short ref ID:
@@ -140,13 +140,13 @@ browserctl url main
 Take a screenshot:
 
 ```bash
-browserctl screenshot main --out /tmp/after-login.png --full
+browserctl page screenshot main --out /tmp/after-login.png --full
 ```
 
 Snapshot again to see what changed — use `--diff` to get only the elements that are different from the last snapshot:
 
 ```bash
-browserctl snapshot main --diff
+browserctl page snapshot main --diff
 ```
 
 ---
