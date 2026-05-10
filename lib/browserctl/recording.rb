@@ -6,6 +6,7 @@ require "time"
 require "fileutils"
 require "tmpdir"
 require "uri"
+require_relative "errors"
 
 module Browserctl
   class Recording # rubocop:disable Metrics/ClassLength
@@ -52,7 +53,7 @@ module Browserctl
 
     def self.stop
       name = active
-      raise "no active recording — run: browserctl record start <name>" unless name
+      raise Browserctl::Error, "no active recording — run: browserctl record start <name>" unless name
 
       File.unlink(STATE_FILE)
       name
@@ -83,7 +84,7 @@ module Browserctl
 
     def self.generate_workflow(name, output_path: nil, keep_log: false)
       log = log_path(name)
-      raise "no recording found for '#{name}'" unless File.exist?(log)
+      raise Browserctl::Error, "no recording found for '#{name}'" unless File.exist?(log)
 
       raw   = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
       lines = raw.reject { |l| l[:cmd] == "_meta" }

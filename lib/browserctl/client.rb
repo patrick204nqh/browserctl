@@ -182,7 +182,7 @@ module Browserctl
     # @param path [String] file path to read cookies from
     # @return [Hash] `{ ok: true, count: }` or `{ error: }`
     def import_cookies(name, path)
-      raise "cookie file not found: #{path}" unless File.exist?(path)
+      raise Browserctl::Error, "cookie file not found: #{path}" unless File.exist?(path)
 
       cookies = JSON.parse(File.read(path), symbolize_names: true)
       call("import_cookies", name: name, cookies: cookies)
@@ -371,10 +371,10 @@ module Browserctl
     end
 
     def read_response(sock)
-      raise "browserd response timeout after 60s" unless sock.wait_readable(60)
+      raise DaemonUnavailableError, "browserd response timeout after 60s" unless sock.wait_readable(60)
 
       raw = sock.gets
-      raise "browserd closed connection" unless raw
+      raise DaemonUnavailableError, "browserd closed connection" unless raw
 
       JSON.parse(raw.chomp, symbolize_names: true)
     end
