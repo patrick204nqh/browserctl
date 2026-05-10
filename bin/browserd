@@ -35,7 +35,7 @@ end
 
 log_path = Browserctl.log_path(assigned_name)
 warn "browserd starting — log: #{log_path}"
-Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path)
+Browserctl.logger = Browserctl.build_logger(opts[:log_level], log_path: log_path, component: "daemon")
 begin
   Browserctl::Server.new(
     headless: !opts[:headed],

@@ -1,3 +1,4 @@
 module Browserctl
-  def self.build_logger: (String level_name, ?log_path: String?) -> untyped
+  def self.build_logger: (String level_name, ?log_path: String?, ?component: String, ?jsonl: bool) -> untyped
+  def self.log_dir: () -> String
 end
