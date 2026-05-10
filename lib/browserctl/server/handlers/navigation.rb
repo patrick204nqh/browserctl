@@ -52,7 +52,7 @@ module Browserctl
 
         def type_into(page, selector, value)
           el = page.at_css(selector)
-          return { error: "selector not found: #{selector}" } unless el
+          return { error: "selector not found: #{selector}", code: "selector_not_found" } unless el
 
           el.focus
           el.evaluate("this.select()")
@@ -62,7 +62,7 @@ module Browserctl
 
         def click_element(page, selector)
           el = page.at_css(selector)
-          return { error: "selector not found: #{selector}" } unless el
+          return { error: "selector not found: #{selector}", code: "selector_not_found" } unless el
 
           # Use the DOM native click() so JS-only event listeners fire.
           # CDP mouse simulation (el.click) dispatches events at screen coordinates
