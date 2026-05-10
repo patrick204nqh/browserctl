@@ -79,11 +79,14 @@ browserctl evaluate  login "document.title" # evaluate a JS expression
 browserctl wait login "button#submit"            # poll until selector appears
 browserctl wait login ".toast" --timeout 5       # fail after 5s
 
-# Recording
+# Recording → workflow → flow (v0.11 replayable loop)
 browserctl record start my_flow              # start capturing commands
-browserctl record stop                       # end capture + auto-save to .browserctl/workflows/
-browserctl record stop --out /tmp/my.rb      # or save to a custom path
+browserctl record stop                       # end capture; recording log at ~/.browserctl/recordings/<name>.jsonl
 browserctl record status                     # check if a recording is active
+browserctl workflow generate my_flow         # → .browserctl/workflows/my_flow.rb
+browserctl workflow run my_flow --check      # replay + snapshot diff (run until 3× clean)
+browserctl workflow promote my_flow          # → ~/.browserctl/workflows/my_flow.rb (gated by clean streak)
+browserctl workflow promote my_flow --as-flow  # also writes ~/.browserctl/flows/my_flow.rb (callable as a flow)
 
 # Keyboard and mouse
 browserctl press  main Enter                             # fire keydown+keyup (Enter, Tab, Escape, ArrowDown, ...)
@@ -441,6 +444,74 @@ Use when the default "invoke the bound flow" doesn't fit — the lambda runs in 
 ```
 
 `record stop` prints a warning if any were found. Fix them by replacing the selector with the value from the snapshot JSON for that ref.
+
+## The replayable loop (v0.11): explore → generate → check → promote
+
+Once you have a recording, four CLI commands take you from a one-off exploration to a globally-invocable flow with no manual editing for the happy path:
+
+```bash
+# 1. Explore — drive the browser interactively while recording
+browserctl record start my_flow
+# ... navigate / fill / click ...
+browserctl record stop
+
+# 2. Generate — emit a Ruby workflow file
+browserctl workflow generate my_flow
+# → .browserctl/workflows/my_flow.rb
+# Inferred: stable selectors, fingerprint comments, wait calls,
+# url/snapshot postcondition asserts, secret_ref placeholders for
+# password/token-shaped values.
+
+# 3. Check — replay with snapshot-diff verification, three exit codes:
+#    0 = :clean   every step passed, no drift
+#    2 = :drift   passed via fingerprint rematch OR snapshot diff non-empty
+#    1 = :fail    a step raised
+browserctl workflow run my_flow --check
+
+# 4. Promote — copy to ~/.browserctl/workflows/, optionally wrap as flow
+browserctl workflow promote my_flow             # gated: 3 clean runs (default)
+browserctl workflow promote my_flow --as-flow   # also write a flow wrapper
+```
+
+### How to react to `--check` output
+
+Every `--check` run appends a verdict to `~/.browserctl/check_ledger.jsonl` and prints a JSON drift report. Read it before retrying:
+
+```json
+{ "drift": true, "rematches": 1, "unresolved": 0,
+  "events": [{"command": "click", "selector": "form .old", "matched_ref": "ea11111", "score": 0.92, "reason": "rematch"}] }
+```
+
+- `:clean` → run again. After 3 consecutive `:clean` runs, you can promote.
+- `:drift` with **rematches only** (high score, no unresolved) → the page shifted but the workflow still works. Either keep running until clean (the rematch is consistent and counts), or update the recorded selector to the rematched one if you want to lock it in. **Do not promote on a drift run** — the streak is reset.
+- `:drift` with **unresolved events** → fingerprint matching couldn't find a candidate above threshold. The workflow is one mutation away from breaking. Re-record before promoting.
+- `:fail` → a step raised. Read the error in the report, fix the selector or the step, re-check.
+
+A fingerprint mismatch is data, not failure. Don't immediately re-record — read the drift report first.
+
+### Promotion gates and overrides
+
+The promotion gate is intentionally strict. Both `:drift` and `:fail` reset the clean streak. To override:
+
+| Flag | When to use |
+|------|-------------|
+| `--threshold N` | Quick smoke (N=1) or extra strict (N=5+). |
+| `--force` | You know the drift is benign and you want to ship. Use sparingly. |
+| `--as-flow` | After promotion, generate a `Browserctl.flow` wrapper at `~/.browserctl/flows/<name>.rb` that runs the workflow via `Runner#run_workflow`. Params are inferred from the workflow's `param_defs`. The flow is registered globally and invocable as `browserctl flow run <name>`. |
+
+Once promoted as a flow, the workflow remains the source of truth — edits to the workflow file flow through to the wrapper without regeneration.
+
+### Secrets in generated workflows
+
+The generator detects password / token / API-key shaped values and replaces them with `params[:secret_<field>]` plus a `param :secret_<field>, secret: true` declaration and a `# TODO: Configure a secret_ref:` header listing candidates. Before the first `--check`, edit the generated file to swap `secret: true` for the right resolver:
+
+```ruby
+param :secret_password, secret_ref: "op://Vault/Item/password"
+param :secret_api_key,  secret_ref: "env://API_KEY"
+param :secret_token,    secret_ref: "keychain://login/token"
+```
+
+This is the only manual edit the happy path requires.
 
 ## Workflow DSL — page lifecycle
 
