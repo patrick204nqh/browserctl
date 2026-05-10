@@ -102,4 +102,6 @@ This is deliberately a hard failure: silently doing something with data we
 don't understand is exactly the kind of bug `version: <int>` exists to
 prevent.
 
-[errors]: ./api-stability.md
+See [errors.md](errors.md) for the full code reference, including `PROTOCOL_MISMATCH`.
+
+[errors]: ./errors.md
