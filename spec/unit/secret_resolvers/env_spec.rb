@@ -24,5 +24,26 @@ RSpec.describe Browserctl::SecretResolvers::Env do
       expect { resolver.resolve("BCTL_MISSING_VAR") }
         .to raise_error(Browserctl::SecretResolverError, /env var 'BCTL_MISSING_VAR' is not set/)
     end
+
+    it "raises with code SECRET_RESOLUTION_FAILED when var is not set" do
+      ENV.delete("BCTL_MISSING_VAR")
+      expect { resolver.resolve("BCTL_MISSING_VAR") }
+        .to raise_error(Browserctl::SecretResolverError) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::SECRET_RESOLUTION_FAILED)
+        end
+    end
+
+    it "resolves an env var whose value is empty string" do
+      ENV["BCTL_EMPTY_VAR"] = ""
+      expect(resolver.resolve("BCTL_EMPTY_VAR")).to eq("")
+    ensure
+      ENV.delete("BCTL_EMPTY_VAR")
+    end
+
+    it "raises SecretResolverError when reference is empty" do
+      ENV.delete("")
+      expect { resolver.resolve("") }
+        .to raise_error(Browserctl::SecretResolverError)
+    end
   end
 end

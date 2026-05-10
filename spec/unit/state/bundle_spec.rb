@@ -200,4 +200,130 @@ RSpec.describe Browserctl::State::Bundle do
         .to raise_error(Browserctl::ProtocolMismatch)
     end
   end
+
+  describe "round-trip across state combinations" do
+    # Each entry exercises a distinct payload shape the codec must carry
+    # without loss, in both plaintext and encrypted modes.
+    payload_variants = {
+      "empty payload" => {},
+      "cookies only" => {
+        "cookies" => [
+          { "name" => "a", "value" => "1", "domain" => ".example.com" },
+          { "name" => "b", "value" => "2", "domain" => ".example.com" }
+        ]
+      },
+      "local_storage only" => {
+        "local_storage" => { "k1" => "v1", "k2" => "v2" }
+      },
+      "session_storage only" => {
+        "session_storage" => { "session" => "xyz" }
+      },
+      "indexeddb-shaped" => {
+        "indexeddb" => { "db1" => { "store1" => [{ "id" => 1, "data" => "blob" }] } }
+      },
+      "all storage types together" => {
+        "cookies" => [{ "name" => "c", "value" => "v", "domain" => ".x.com" }],
+        "local_storage" => { "k" => "v" },
+        "session_storage" => { "k" => "v" },
+        "indexeddb" => { "db" => { "store" => [] } }
+      },
+      "unicode + control chars" => {
+        "local_storage" => { "emoji" => "shrug ¯\\_(ツ)_/¯", "newline" => "a\nb\tc" }
+      },
+      "deeply nested" => {
+        "nested" => { "a" => { "b" => { "c" => { "d" => [1, 2, [3, 4, { "e" => "f" }]] } } } }
+      },
+      "large payload (~64KB)" => {
+        "local_storage" => { "blob" => ("x" * 64_000) }
+      }
+    }
+
+    manifest_variants = {
+      "minimal manifest" => { version: 1, flow: "f", flow_version: "1", origins: [] },
+      "manifest with many origins" => {
+        version: 1, flow: "f", flow_version: "1",
+        origins: Array.new(50) { |i| "host-#{i}.example.com" }
+      }
+    }
+
+    payload_variants.each do |label, p|
+      context "with payload: #{label}" do
+        it "round-trips plaintext" do
+          blob = described_class.encode(manifest: manifest, payload: p)
+          out = described_class.decode(blob)
+          expect(out[:payload]).to eq(p)
+          expect(out[:encrypted]).to be false
+          expect(out[:manifest][:format_version]).to eq(described_class::BUNDLE_FORMAT_VERSION)
+        end
+
+        it "round-trips encrypted" do
+          blob = described_class.encode(manifest: manifest, payload: p, passphrase: "pw")
+          out = described_class.decode(blob, passphrase: "pw")
+          expect(out[:payload]).to eq(p)
+          expect(out[:encrypted]).to be true
+        end
+      end
+    end
+
+    manifest_variants.each do |label, m|
+      it "round-trips with manifest: #{label}" do
+        blob = described_class.encode(manifest: m, payload: { "k" => "v" })
+        out = described_class.decode(blob)
+        expect(out[:manifest]).to eq(m.merge(format_version: described_class::BUNDLE_FORMAT_VERSION))
+      end
+    end
+  end
+
+  describe "additional failure modes" do
+    it "raises BundleError on decode of a non-bundle blob (bad magic)" do
+      junk = ("X" * 200).b
+      expect { described_class.decode(junk) }
+        .to raise_error(described_class::BundleError, /bad magic|too small/)
+    end
+
+    it "raises BundleError on a blob shorter than the minimum header" do
+      expect { described_class.decode("BCTL".b) }
+        .to raise_error(described_class::BundleError, /too small/)
+    end
+
+    it "raises PassphraseError when the salt inside an encrypted payload is mutated" do
+      blob = described_class.encode(manifest: manifest, payload: payload, passphrase: "pw")
+      # Salt sits at the start of the encrypted payload, which begins right
+      # after HEADER_SIZE + LEN_SIZE + manifest_len + LEN_SIZE.
+      header  = described_class::HEADER_SIZE
+      manlen  = blob.byteslice(header, 4).unpack1("N")
+      salt_at = header + 4 + manlen + 4
+      blob.setbyte(salt_at, blob.getbyte(salt_at) ^ 0xFF)
+
+      expect { described_class.decode(blob, passphrase: "pw") }
+        .to raise_error(described_class::PassphraseError)
+    end
+
+    it "raises PassphraseError when the GCM auth tag is mutated" do
+      blob = described_class.encode(manifest: manifest, payload: payload, passphrase: "pw")
+      # Tag is the last 16 bytes before the 32-byte HMAC footer.
+      tag_at = blob.bytesize - described_class::FOOTER_SIZE - 1
+      blob.setbyte(tag_at, blob.getbyte(tag_at) ^ 0xFF)
+
+      expect { described_class.decode(blob, passphrase: "pw") }
+        .to raise_error(described_class::PassphraseError)
+    end
+
+    it "raises BundleError when truncated mid-payload" do
+      blob = described_class.encode(manifest: manifest, payload: payload)
+      truncated = blob.byteslice(0, blob.bytesize - 80)
+      expect { described_class.decode(truncated) }
+        .to raise_error(described_class::BundleError)
+    end
+
+    it "carries a code on every BundleError subclass" do
+      blob = described_class.encode(manifest: manifest, payload: payload)
+      blob.setbyte(blob.bytesize - 1, blob.getbyte(blob.bytesize - 1) ^ 0xFF)
+      begin
+        described_class.decode(blob)
+      rescue described_class::BundleError => e
+        expect(e.code).to eq("bundle_tampered")
+      end
+    end
+  end
 end
