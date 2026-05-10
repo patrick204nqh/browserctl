@@ -26,14 +26,16 @@ RSpec.describe "v0.10 state rotate end-to-end", :integration do
 
     # /login: drops a fresh auth cookie, returns 200.
     server.mount_proc("/login") do |_, res|
-      res["Set-Cookie"] = "#{StateRotateE2E::COOKIE_NAME}=#{COOKIE_FRESH_VALUE}; Path=/"
+      res["Set-Cookie"] = "#{StateRotateE2E::COOKIE_NAME}=#{StateRotateE2E::COOKIE_FRESH_VALUE}; Path=/"
       res["Content-Type"] = "text/html"
       res.body = "<html><body data-test='login-ok'>logged in</body></html>"
     end
 
     # /dashboard: 401 without cookie, 200 with.
     server.mount_proc("/dashboard") do |req, res|
-      cookie = req.cookies.find { |c| c.name == StateRotateE2E::COOKIE_NAME && c.value == COOKIE_FRESH_VALUE }
+      cookie = req.cookies.find do |c|
+        c.name == StateRotateE2E::COOKIE_NAME && c.value == StateRotateE2E::COOKIE_FRESH_VALUE
+      end
       if cookie
         res.status = 200
         res["Content-Type"] = "text/html"
