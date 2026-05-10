@@ -182,17 +182,17 @@ It is the difference between a browser **you restart** and a browser **you steer
 **Goal:** Turn ephemeral AI exploration into durable, version-controlled workflows.
 
 **Stable refs and fingerprints**
-- [ ] Replace `snapshot` — refs derived from `(role, accessible-name, tag, parent-path)` hash; same element → same ref across snapshots (breaking change, no `_v2` suffix)
-- [ ] Fingerprint blob per element (text, ARIA role, neighbor signature, position) emitted alongside ref
-- [ ] Fingerprint-based fuzzy match on replay when selectors fail — Scrapling-style self-healing for recordings
-- [ ] Migration note in CHANGELOG — old recordings re-record, not auto-migrate
+- [x] Replace `snapshot` — refs derived from `(role, accessible-name, tag, parent-path)` hash; same element → same ref across snapshots (breaking change, no `_v2` suffix)
+- [x] Fingerprint blob per element (text, ARIA role, neighbor signature, position) emitted alongside ref
+- [x] Fingerprint-based fuzzy match on replay when selectors fail — Scrapling-style self-healing for recordings
+- [x] Migration note in CHANGELOG — old recordings re-record, not auto-migrate
 
 **Recording → workflow → flow pipeline**
-- [ ] `browserctl workflow generate <recording>` — emits a Ruby workflow with stable selectors, fingerprint fallbacks as comments, secret detection (`secret_ref:` placeholders), inferred waits, postconditions
-- [ ] `browserctl workflow run --check` — replay with snapshot-diff assertions; flag drift
-- [ ] `browserctl workflow promote <name>` — graduate to `~/.browserctl/workflows/`
-- [ ] `browserctl workflow promote --as-flow` — register a workflow as a reusable flow (closes the loop with v0.10)
-- [ ] Skill update — `automate` teaches the AI the explore → generate → check → promote loop
+- [x] `browserctl workflow generate <recording>` — emits a Ruby workflow with stable selectors, fingerprint fallbacks as comments, secret detection (`secret_ref:` placeholders), inferred waits, postconditions
+- [x] `browserctl workflow run --check` — replay with snapshot-diff assertions; flag drift
+- [x] `browserctl workflow promote <name>` — graduate to `~/.browserctl/workflows/`
+- [x] `browserctl workflow promote --as-flow` — register a workflow as a reusable flow (closes the loop with v0.10)
+- [x] Skill update — `automate` teaches the AI the explore → generate → check → promote loop
 
 ### v0.12 — Solid
 **Goal:** Earn the right to call 1.0. Determinism, observability, performance budgets, real test pyramid.
