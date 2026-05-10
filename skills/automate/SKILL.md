@@ -489,6 +489,29 @@ Every `--check` run appends a verdict to `~/.browserctl/check_ledger.jsonl` and 
 
 A fingerprint mismatch is data, not failure. Don't immediately re-record — read the drift report first.
 
+### Fingerprints — what they are, how to reason about them
+
+When the recorder logs a click or fill, it captures more than the CSS selector. Each interacted element ships a **fingerprint**: `{text, role, neighbors, position}`. At replay, if the recorded selector resolves cleanly, the fingerprint is ignored. If the selector misses, the matcher scores every candidate on the page against the fingerprint and picks the best one above threshold.
+
+The drift report exposes the matcher's decision per event:
+
+| Field | Meaning |
+|-------|---------|
+| `command` | The replay command that triggered fallback (`click`, `fill`, …). |
+| `selector` | The selector from the recording that failed to resolve. |
+| `matched_ref` | The ref the matcher chose (or `null` if `unresolved`). |
+| `score` | Weighted similarity, `0.0`–`1.0`. Above ~`0.85` is high-confidence. |
+| `reason` | `rematch` (matched above threshold), `no candidate above threshold`, or a structural reason. |
+
+How to read it:
+
+- **All events `rematch` with `score ≥ 0.85`** — the page changed cosmetically (renamed CSS class, refactored container). The workflow is fine. Continue running `--check`; once 3 clean runs land, promote. If you want to lock the new selector in, edit the recorded selector to match `matched_ref`'s current selector.
+- **`rematch` with `0.6 ≤ score < 0.85`** — the matcher is uncertain. Visually verify in `--headed` mode that the right element was hit. If it was, lock the new selector in. If not, re-record.
+- **`reason: "no candidate above threshold"`** — the original element is gone and nothing similar exists. The workflow needs a new step shape; re-record from `record start`.
+- **Many `rematch` events on a single run** — likely a structural redesign rather than drift. Re-record rather than rematching every step run after run.
+
+The matcher's threshold defaults are conservative; a low-confidence rematch is more likely to be wrong than a high-confidence selector. When in doubt: re-record. When the report is consistent across runs: trust it.
+
 ### Promotion gates and overrides
 
 The promotion gate is intentionally strict. Both `:drift` and `:fail` reset the clean streak. To override:
