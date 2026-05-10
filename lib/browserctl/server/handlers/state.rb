@@ -15,21 +15,23 @@ module Browserctl
           first_session = @global_mutex.synchronize { @pages.values.first }
           return { error: "no open pages — open a page before saving state" } unless first_session
 
-          payload, captured_origins = capture_state_payload
-          manifest = Browserctl::State.save(
-            req[:name],
-            payload: payload,
+          captured, captured_origins = capture_state_payload
+          payload = Browserctl::State::Payload.build(
+            cookies: captured[:cookies],
+            local_storage: captured[:local_storage],
+            session_storage: captured[:session_storage],
             origins: req[:origins] || captured_origins,
             flow: req[:flow],
             flow_version: req[:flow_version],
             passphrase: req[:passphrase]
           )
+          manifest = Browserctl::State.save(req[:name], payload)
 
           {
             ok: true,
             path: Browserctl::State.path(req[:name]),
             origins: manifest[:origins],
-            cookies: payload[:cookies].length,
+            cookies: payload.cookies.length,
             encrypted: manifest[:encrypted]
           }
         rescue Browserctl::Error, ArgumentError => e
