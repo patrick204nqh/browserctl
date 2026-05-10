@@ -18,14 +18,13 @@ Browserctl.workflow "smoke/secret_resolvers" do
   step "assert secret was resolved" do
     assert secret_value == "smoke-secret-ok",
            "expected 'smoke-secret-ok', got: #{secret_value.inspect}"
-    puts "  [ok] env:// resolver returned correct value"
   end
 
   step "assert missing env var raises SecretResolverError" do
     missing = "BCTL_SMOKE_MISSING_#{SecureRandom.hex(8)}"
     Browserctl::SecretResolverRegistry.resolve("env://#{missing}")
     assert false, "expected SecretResolverError was not raised"
-  rescue Browserctl::SecretResolverError => e
-    puts "  [ok] SecretResolverError raised as expected: #{e.message}"
+  rescue Browserctl::SecretResolverError
+    # expected
   end
 end

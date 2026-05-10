@@ -33,7 +33,7 @@ Browserctl.workflow "smoke/store_fetch" do
   step "confirm fetch raises for unknown key" do
     fetch(:nonexistent_key)
     assert false, "expected WorkflowError was not raised"
-  rescue Browserctl::WorkflowError => e
-    puts "  [ok] WorkflowError raised as expected: #{e.message}"
+  rescue Browserctl::WorkflowError
+    # expected
   end
 end

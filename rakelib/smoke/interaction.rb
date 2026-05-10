@@ -40,14 +40,12 @@ Browserctl.workflow "smoke/interaction" do
     page(:int).fill("input#name", "replacement")
     value = page(:int).evaluate("document.getElementById('name').value")
     assert value == "replacement", "expected 'replacement', got: #{value.inspect}"
-    puts "  [ok] fill: value = #{value.inspect}"
   end
 
   step "fill — sets empty field" do
     page(:int).fill("input#email", "smoke@example.com")
     value = page(:int).evaluate("document.getElementById('email').value")
     assert value == "smoke@example.com", "expected email, got: #{value.inspect}"
-    puts "  [ok] fill email: #{value.inspect}"
   end
 
   step "click — triggers onclick handler" do
@@ -55,52 +53,46 @@ Browserctl.workflow "smoke/interaction" do
     page(:int).click("button#btn")
     count = page(:int).evaluate("document.getElementById('btn').dataset.clicked")
     assert count == "2", "expected click count '2', got: #{count.inspect}"
-    puts "  [ok] click: count = #{count}"
   end
 
   step "press — fires key events" do
     page(:int).evaluate("document.getElementById('press-target').focus()")
     page(:int).press("Tab")
-    puts "  [ok] press Tab fired (focus moved)"
   end
 
   step "press — Enter key" do
     page(:int).evaluate("document.getElementById('press-target').focus()")
     page(:int).press("Enter")
-    puts "  [ok] press Enter fired"
   end
 
   step "hover — moves mouse to element" do
     page(:int).hover("#hover-target")
-    puts "  [ok] hover succeeded (no error)"
   end
 
   step "select — changes selected option" do
     page(:int).select("select#lang", "go")
     value = page(:int).evaluate("document.getElementById('lang').value")
     assert value == "go", "expected 'go', got: #{value.inspect}"
-    puts "  [ok] select: value = #{value.inspect}"
   end
 
   step "select — another option" do
     page(:int).select("select#lang", "python")
     value = page(:int).evaluate("document.getElementById('lang').value")
     assert value == "python", "expected 'python', got: #{value.inspect}"
-    puts "  [ok] select again: value = #{value.inspect}"
   end
 
   step "fill raises for unknown selector" do
     page(:int).fill("input#does-not-exist-smoke", "value")
     assert false, "expected WorkflowError was not raised"
-  rescue Browserctl::WorkflowError => e
-    puts "  [ok] fill unknown selector raised: #{e.message}"
+  rescue Browserctl::WorkflowError
+    # expected
   end
 
   step "click raises for unknown selector" do
     page(:int).click("button#does-not-exist-smoke")
     assert false, "expected WorkflowError was not raised"
-  rescue Browserctl::WorkflowError => e
-    puts "  [ok] click unknown selector raised: #{e.message}"
+  rescue Browserctl::WorkflowError
+    # expected
   end
 
   step "teardown" do
