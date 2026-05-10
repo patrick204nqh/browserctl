@@ -27,7 +27,7 @@ RSpec.describe Browserctl::State::Bundle do
       blob = described_class.encode(manifest: manifest, payload: payload)
       out  = described_class.decode(blob)
 
-      expect(out[:manifest]).to eq(manifest)
+      expect(out[:manifest]).to eq(manifest.merge(format_version: described_class::BUNDLE_FORMAT_VERSION))
       expect(out[:payload]).to eq(payload)
       expect(out[:encrypted]).to be false
     end
@@ -64,7 +64,7 @@ RSpec.describe Browserctl::State::Bundle do
       blob = described_class.encode(manifest: manifest, payload: payload, passphrase: passphrase)
       out  = described_class.decode(blob, passphrase: passphrase)
 
-      expect(out[:manifest]).to eq(manifest)
+      expect(out[:manifest]).to eq(manifest.merge(format_version: described_class::BUNDLE_FORMAT_VERSION))
       expect(out[:payload]).to eq(payload)
       expect(out[:encrypted]).to be true
     end
@@ -107,14 +107,15 @@ RSpec.describe Browserctl::State::Bundle do
 
       m = described_class.peek_manifest(blob)
 
-      expect(m).to eq(manifest)
+      expect(m).to eq(manifest.merge(format_version: described_class::BUNDLE_FORMAT_VERSION))
     end
   end
 
   describe ".peek_manifest" do
     it "reads the manifest from a plaintext bundle" do
       blob = described_class.encode(manifest: manifest, payload: payload)
-      expect(described_class.peek_manifest(blob)).to eq(manifest)
+      expect(described_class.peek_manifest(blob))
+        .to eq(manifest.merge(format_version: described_class::BUNDLE_FORMAT_VERSION))
     end
 
     it "raises BundleError on a non-bundle blob" do
@@ -138,6 +139,65 @@ RSpec.describe Browserctl::State::Bundle do
 
       expect { described_class.decode(blob) }
         .to raise_error(described_class::BundleError, /unsupported bundle version/)
+    end
+  end
+
+  describe "manifest format_version" do
+    it "stamps format_version: 1 as the first manifest key on encode" do
+      blob = described_class.encode(manifest: manifest, payload: payload)
+      m = described_class.peek_manifest(blob)
+
+      expect(m[:format_version]).to eq(1)
+      expect(m.keys.first).to eq(:format_version)
+    end
+
+    it "round-trips with format_version: 1" do
+      blob = described_class.encode(manifest: manifest, payload: payload)
+      out  = described_class.decode(blob)
+
+      expect(out[:manifest][:format_version]).to eq(described_class::BUNDLE_FORMAT_VERSION)
+    end
+
+    it "raises ProtocolMismatch with PROTOCOL_MISMATCH code when format_version is unknown" do
+      blob = described_class.encode(
+        manifest: manifest.merge(format_version: 999),
+        payload: payload
+      )
+
+      expect { described_class.decode(blob) }
+        .to raise_error(Browserctl::ProtocolMismatch, /999/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::PROTOCOL_MISMATCH)
+          expect(e.message).to match(/format_version/)
+        end
+    end
+
+    it "raises ProtocolMismatch when format_version is missing (legacy bundle)" do
+      # Hand-build a blob whose manifest has no format_version, simulating a
+      # pre-WS-1 bundle on disk.
+      legacy_manifest = manifest.except(:format_version)
+      manifest_bytes = JSON.generate(legacy_manifest).b
+      payload_bytes  = JSON.generate(payload).b
+      header = described_class::MAGIC + [described_class::VERSION, 0, 0].pack("CCC")
+      body = header +
+             [manifest_bytes.bytesize].pack("N") + manifest_bytes +
+             [payload_bytes.bytesize].pack("N") + payload_bytes
+      footer = OpenSSL::Digest.digest("SHA256", body)
+      blob = body + footer
+
+      expect { described_class.decode(blob) }
+        .to raise_error(Browserctl::ProtocolMismatch, /missing format_version/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::PROTOCOL_MISMATCH)
+        end
+    end
+
+    it "raises ProtocolMismatch from peek_manifest on an unknown format_version" do
+      blob = described_class.encode(
+        manifest: manifest.merge(format_version: 999),
+        payload: payload
+      )
+
+      expect { described_class.peek_manifest(blob) }
+        .to raise_error(Browserctl::ProtocolMismatch)
     end
   end
 end
