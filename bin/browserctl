@@ -32,6 +32,7 @@ require "browserctl/commands/flow"
 require "browserctl/commands/dialog"
 require "browserctl/commands/ask"
 require "browserctl/commands/trace"
+require "browserctl/commands/migrate"
 
 def structured_stderr_payload(res, message)
   code    = (res[:code] || res["code"] || Browserctl::Error::Codes::GENERIC).to_s
@@ -146,6 +147,12 @@ def usage
     Trace:
       trace [<session>]  Pretty timeline of CLI + daemon log events.
 
+    Migrate:
+      migrate <path> [--to-version N] [--dry-run]
+        # Upgrades a persisted artifact (.bctl / .jsonl recording / workflow .rb)
+        # using registered migrations. Empty registry in v0.12 — first real
+        # migration ships post-1.0 when a format actually changes.
+
     Daemon:
       daemon start  [--headed] [--name NAME]
       daemon stop
@@ -191,6 +198,7 @@ begin
   when "init"     then Browserctl::Commands::Init.run(args)
   when "ask"      then Browserctl::Commands::Ask.run(args)
   when "trace"    then Browserctl::Commands::Trace.run(args)
+  when "migrate"  then Browserctl::Commands::Migrate.run(args)
 
   else
     client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
