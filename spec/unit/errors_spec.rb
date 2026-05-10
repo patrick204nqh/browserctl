@@ -18,8 +18,9 @@ RSpec.describe Browserctl::Error do
 end
 
 RSpec.describe Browserctl::SelectorNotFound do
-  it "has code selector_not_found" do
-    expect(described_class.new("x").code).to eq("selector_not_found")
+  it "has code SELECTOR_NOT_FOUND" do
+    expect(described_class.new("x").code).to eq("SELECTOR_NOT_FOUND")
+    expect(described_class.new("x").code).to eq(Browserctl::Error::Codes::SELECTOR_NOT_FOUND)
   end
 end
 
@@ -54,8 +55,23 @@ RSpec.describe Browserctl::KeyNotFound do
 end
 
 RSpec.describe Browserctl::DaemonUnavailableError do
-  it "has code daemon_unavailable" do
-    expect(described_class.new("x").code).to eq("daemon_unavailable")
+  it "has code DAEMON_UNREACHABLE" do
+    expect(described_class.new("x").code).to eq("DAEMON_UNREACHABLE")
+    expect(described_class.new("x").code).to eq(Browserctl::Error::Codes::DAEMON_UNREACHABLE)
+  end
+end
+
+RSpec.describe Browserctl::SecretResolverError do
+  it "has code SECRET_RESOLUTION_FAILED" do
+    expect(described_class.new("x").code).to eq("SECRET_RESOLUTION_FAILED")
+    expect(described_class.new("x").code).to eq(Browserctl::Error::Codes::SECRET_RESOLUTION_FAILED)
+  end
+end
+
+RSpec.describe Browserctl::ProtocolMismatch do
+  it "has code PROTOCOL_MISMATCH" do
+    expect(described_class.new("x").code).to eq("PROTOCOL_MISMATCH")
+    expect(described_class.new("x").code).to eq(Browserctl::Error::Codes::PROTOCOL_MISMATCH)
   end
 end
 
