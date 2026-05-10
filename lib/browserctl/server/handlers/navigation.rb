@@ -50,17 +50,29 @@ module Browserctl
 
         # Adds ref / fingerprint / snapshot_id / postcondition_hint to a successful
         # click/fill response. Recording uses these to build a self-healing log.
+        # When req[:capture_post_snapshot] is true, also takes a fresh snapshot
+        # and attaches its digest so workflow run --check can diff DOM state
+        # against the recorded baseline.
         def enrich_with_recording_metadata(result, session, selector, req)
           return result unless result[:ok]
 
           ref = req[:ref] || session.ref_registry.invert[selector]
           fp  = (ref && session.fingerprint_index[ref]) || session.fingerprint_index[selector]
-          result.merge(
+          enriched = result.merge(
             ref: ref,
             fingerprint: fp,
             snapshot_id: session.snapshot_id,
             postcondition_hint: { url: session.page.current_url }
-          ).compact
+          )
+          enriched[:post_snapshot_digest] = capture_post_snapshot_digest(session) if req[:capture_post_snapshot]
+          enriched.compact
+        end
+
+        def capture_post_snapshot_digest(session)
+          snapshot = @snapshot_builder.call(session.page)
+          Browserctl::Replay::SnapshotDiff.digest(snapshot)
+        rescue StandardError
+          nil
         end
 
         def cmd_url(req)

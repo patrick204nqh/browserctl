@@ -15,6 +15,7 @@ require_relative "handlers/state"
 require_relative "handlers/interaction"
 require_relative "../detectors"
 require_relative "../policy"
+require_relative "../replay/snapshot_diff"
 
 module Browserctl
   class CommandDispatcher
