@@ -93,22 +93,37 @@ module Browserctl
     # @param req [Hash{Symbol => Object}] parsed request; must include `:cmd`
     # @return [Hash{Symbol => Object}] response; always includes `:ok` or `:error`
     def dispatch(req)
-      handler = COMMAND_MAP[req[:cmd]]
-      if handler
-        Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
-        return send(handler, req)
-      end
+      builtin = dispatch_builtin(req)
+      return builtin if builtin
 
-      if (plugin = Browserctl.lookup_plugin_command(req[:cmd]))
-        Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
-        session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
-        return plugin.call(session, req)
-      end
+      plugin = dispatch_plugin(req)
+      return plugin if plugin
 
       { error: "unknown command: #{req[:cmd]}" }
     end
 
     private
+
+    # Routes the request to a builtin handler if `req[:cmd]` is in COMMAND_MAP.
+    # Returns the handler response, or `nil` if the command isn't a builtin.
+    def dispatch_builtin(req)
+      handler = COMMAND_MAP[req[:cmd]]
+      return nil unless handler
+
+      Browserctl.logger.debug("#{req[:cmd]} #{req[:name]}")
+      send(handler, req)
+    end
+
+    # Routes the request to a registered plugin command if one matches.
+    # Returns the plugin response, or `nil` if no plugin handles `req[:cmd]`.
+    def dispatch_plugin(req)
+      plugin = Browserctl.lookup_plugin_command(req[:cmd])
+      return nil unless plugin
+
+      Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
+      session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
+      plugin.call(session, req)
+    end
 
     def with_page(name)
       session = @global_mutex.synchronize { @pages[name] }
