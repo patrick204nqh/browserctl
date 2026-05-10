@@ -16,6 +16,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Supported matrix: Ruby 3.4 on Ubuntu (latest GitHub-hosted runner).
+# See docs/reference/compatibility.md. Anything outside is "may work,
+# no commitment" through 0.x.
+
 jobs:
   lint:
     name: Lint
@@ -28,7 +32,7 @@ jobs:
         run: bundle exec rubocop --parallel
 
   test:
-    name: Test (Ruby 3.3)
+    name: Test (Ruby 3.4)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -38,48 +42,23 @@ jobs:
         run: bundle exec rspec --format progress
 
   replay-matrix:
-    name: Replay (${{ matrix.browser }})
+    # Single-browser CI through 0.x: Chromium only. Chrome stable is
+    # Chromium + branding + codecs from the CDP perspective, so passing
+    # on Chromium is treated as the floor for Chrome too. Brave is out
+    # of CI; reports against it are best-effort.
+    name: Replay (chromium)
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, chromium, brave]
-        include:
-          # Brave install on Ubuntu CI uses the official repo. If the repo
-          # signing/keyring step regresses, mark this cell soft so the rest
-          # of the matrix continues. TODO: revisit once the install path is
-          # stable in CI for a few weeks.
-          - browser: brave
-            soft: true
-    continue-on-error: ${{ matrix.soft == true }}
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-ruby
 
-      - name: Install Chrome
-        if: matrix.browser == 'chrome'
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
-
       - name: Install Chromium
-        if: matrix.browser == 'chromium'
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser
 
-      - name: Install Brave
-        if: matrix.browser == 'brave'
-        run: |
-          sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-            https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" \
-            | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-          sudo apt-get update
-          sudo apt-get install -y brave-browser
-
       - name: Replay matrix spec
         env:
-          BROWSERCTL_BROWSER: ${{ matrix.browser }}
+          BROWSERCTL_BROWSER: chromium
         run: bundle exec rspec spec/integration/workflow_replay_matrix_spec.rb --format documentation
