@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require_relative "cli_output"
+require_relative "../recording"
 
 module Browserctl
   module Commands
     module Workflow
       extend CliOutput
 
-      USAGE = "Usage: browserctl workflow <run|list|describe> [args]"
+      USAGE = "Usage: browserctl workflow <run|list|describe|generate> [args]"
 
       def self.run(runner, args)
         sub = args.shift or abort USAGE
@@ -16,8 +18,25 @@ module Browserctl
         when "run"      then run_workflow(runner, args)
         when "list"     then run_list(runner)
         when "describe" then run_describe(runner, args)
+        when "generate" then run_generate(args)
         else abort "unknown workflow subcommand '#{sub}'\n#{USAGE}"
         end
+      end
+
+      def self.run_generate(args)
+        name = args.shift or abort \
+          "usage: browserctl workflow generate <recording> [--out PATH]"
+        out_idx = args.index("--out")
+        out = if out_idx
+                args.delete_at(out_idx + 1).tap { args.delete_at(out_idx) }
+              else
+                File.join(".browserctl/workflows", "#{name}.rb")
+              end
+        FileUtils.mkdir_p(File.dirname(out))
+        Browserctl::Recording.generate_workflow(name, output_path: out, keep_log: true)
+        puts JSON.generate({ ok: true, name: name, path: out })
+      rescue StandardError => e
+        abort "Error generating workflow: #{e.message}"
       end
 
       EXIT_CODE = { clean: 0, drift: 2, fail: 1 }.freeze
