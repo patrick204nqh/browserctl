@@ -10,6 +10,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/patrick204nqh/browserctl/compare/v0.10.0...v0.11.0) (2026-05-10)
+
+
+### Features
+
+* .bctl bundle codec ([#94](https://github.com/patrick204nqh/browserctl/issues/94)) ([75a4370](https://github.com/patrick204nqh/browserctl/commit/75a43704abf9cf766435fff35409333514fd3c73))
+* auth_required detector ([#99](https://github.com/patrick204nqh/browserctl/issues/99)) ([6d9554f](https://github.com/patrick204nqh/browserctl/commit/6d9554f7cbe9b8e93d22c42b03ff2ce59e594f28))
+* AUTH_REQUIRED structured error code ([#100](https://github.com/patrick204nqh/browserctl/issues/100)) ([9928a4e](https://github.com/patrick204nqh/browserctl/commit/9928a4e7d456d0382b2244096fb38ebeee55013d))
+* browserctl flow run/list/describe CLI ([#89](https://github.com/patrick204nqh/browserctl/issues/89)) ([5016fe5](https://github.com/patrick204nqh/browserctl/commit/5016fe54ee1414b967025f450ded79565ef9bcfb))
+* drift telemetry (WS-2.4) ([#114](https://github.com/patrick204nqh/browserctl/issues/114)) ([712da07](https://github.com/patrick204nqh/browserctl/commit/712da075e623a2aa27a779958b94c0f6e92384c8))
+* element fingerprint (WS-1.2) ([#107](https://github.com/patrick204nqh/browserctl/issues/107)) ([8a8b6b4](https://github.com/patrick204nqh/browserctl/commit/8a8b6b45121cb179919fae8c3f87a4584d4b4bc1))
+* enriched recording log (WS-3.1) ([#115](https://github.com/patrick204nqh/browserctl/issues/115)) ([c00787d](https://github.com/patrick204nqh/browserctl/commit/c00787dc5f208cf69cd4a0326d4df19ed31e3bfc))
+* fingerprint matcher (WS-2.1) ([#111](https://github.com/patrick204nqh/browserctl/issues/111)) ([1d99d20](https://github.com/patrick204nqh/browserctl/commit/1d99d208f5d3815c8ef1e59e3d549d15c3719712))
+* flow registry ([#86](https://github.com/patrick204nqh/browserctl/issues/86)) ([31579dd](https://github.com/patrick204nqh/browserctl/commit/31579dd20156a700ace15137b34b120d16c86b6f))
+* inferred waits (WS-3.3) ([#117](https://github.com/patrick204nqh/browserctl/issues/117)) ([9332754](https://github.com/patrick204nqh/browserctl/commit/93327545b1d21e00c16037c6730f019b574bc572))
+* invoke flows from workflow DSL ([#88](https://github.com/patrick204nqh/browserctl/issues/88)) ([61fdc0a](https://github.com/patrick204nqh/browserctl/commit/61fdc0a6c98fdaf29c5034b80ccc54fdfb447e3a))
+* load_state auto re-run + on_auth_required hook ([#101](https://github.com/patrick204nqh/browserctl/issues/101)) ([8328d13](https://github.com/patrick204nqh/browserctl/commit/8328d1348d2be8ec685ece9dec3cafb0eb26eb90))
+* postcondition extraction (WS-3.4) ([#118](https://github.com/patrick204nqh/browserctl/issues/118)) ([56e76d5](https://github.com/patrick204nqh/browserctl/commit/56e76d50814d9c9a539ea56b20e6936d62509fcf))
+* replay fallback in PageProxy (WS-2.2) ([#112](https://github.com/patrick204nqh/browserctl/issues/112)) ([50714fc](https://github.com/patrick204nqh/browserctl/commit/50714fcd2ff16614af0d18c8b390084e3f32511e))
+* stable ref derivation (v0.11 WS-1.1) ([#106](https://github.com/patrick204nqh/browserctl/issues/106)) ([86df66a](https://github.com/patrick204nqh/browserctl/commit/86df66aaa9fc0b6c7a3a285c572ba2941b301e55))
+* state export/import with file/s3/op transports ([#96](https://github.com/patrick204nqh/browserctl/issues/96)) ([f1dd97b](https://github.com/patrick204nqh/browserctl/commit/f1dd97b895503ee19e60f14bbb9df81dcb321bd1))
+* state rotate ([#97](https://github.com/patrick204nqh/browserctl/issues/97)) ([78bb091](https://github.com/patrick204nqh/browserctl/commit/78bb091194e12e12867d7be0f566d426bdcb3b14))
+* state save/load/list/info/delete ([#95](https://github.com/patrick204nqh/browserctl/issues/95)) ([4502cd1](https://github.com/patrick204nqh/browserctl/commit/4502cd1e8992f486b34ce2288a34a9ef78808617))
+* stdlib flow — cloudflare_solve ([#93](https://github.com/patrick204nqh/browserctl/issues/93)) ([b4411b9](https://github.com/patrick204nqh/browserctl/commit/b4411b94af669d435346006c5f9304258456ba7b))
+* stdlib flow — totp_2fa ([#90](https://github.com/patrick204nqh/browserctl/issues/90)) ([c23e574](https://github.com/patrick204nqh/browserctl/commit/c23e574887e1ef3324e41e988a8f8047079ac998))
+* stdlib flows — basic_auth, magic_link_email ([#91](https://github.com/patrick204nqh/browserctl/issues/91)) ([e401d60](https://github.com/patrick204nqh/browserctl/commit/e401d60b4cf5b4b9f2b4138c45a9b19275a089e7))
+* stdlib flows — oauth_google, oauth_github ([#92](https://github.com/patrick204nqh/browserctl/issues/92)) ([04c9586](https://github.com/patrick204nqh/browserctl/commit/04c9586ff83503b7d94a2c73fe9c3360f01dc4ca))
+* workflow generate (WS-3.2) ([#116](https://github.com/patrick204nqh/browserctl/issues/116)) ([90dca3b](https://github.com/patrick204nqh/browserctl/commit/90dca3bada9b53f91e9be39e3d94d0208dcfa181))
+* workflow promote --as-flow (WS-3.7) ([#121](https://github.com/patrick204nqh/browserctl/issues/121)) ([a5e4b30](https://github.com/patrick204nqh/browserctl/commit/a5e4b30a30559e8fa6b3f4ff3df7189dc3d6bd1e))
+* workflow promote (WS-3.6) ([#120](https://github.com/patrick204nqh/browserctl/issues/120)) ([4355353](https://github.com/patrick204nqh/browserctl/commit/4355353213586dedf9f348f0fd211d1f0d3d72c6))
+* workflow run --check + drift report (WS-2.3) ([#113](https://github.com/patrick204nqh/browserctl/issues/113)) ([7cb4bc7](https://github.com/patrick204nqh/browserctl/commit/7cb4bc7d967f4045e5709eacabb0408edf21f9f1))
+* workflow run --check snapshot-diff (WS-3.5) ([#119](https://github.com/patrick204nqh/browserctl/issues/119)) ([1d131d8](https://github.com/patrick204nqh/browserctl/commit/1d131d85ea6e7948e9e734de6531c2d8dd194388))
+
+
+### Bug Fixes
+
+* pass first open page to flow during load_state auto-rotate ([#105](https://github.com/patrick204nqh/browserctl/issues/105)) ([2c67733](https://github.com/patrick204nqh/browserctl/commit/2c67733fc4f879fc40833194e9e71e32cd3096a8))
+
 ## [0.10.0](https://github.com/patrick204nqh/browserctl/compare/v0.9.0...v0.10.0) (2026-05-09)
 
 
