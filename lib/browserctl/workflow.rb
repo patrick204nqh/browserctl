@@ -15,11 +15,12 @@ module Browserctl
   StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
 
   class WorkflowContext
-    attr_reader :client
+    attr_reader :client, :replay_context
 
-    def initialize(params, client)
+    def initialize(params, client, replay_context: nil)
       @params = params
       @client = client
+      @replay_context = replay_context
     end
 
     def store(key, value)
@@ -47,7 +48,7 @@ module Browserctl
     end
 
     def page(name)
-      PageProxy.new(name.to_s, @client)
+      PageProxy.new(name.to_s, @client, replay_context: @replay_context)
     end
 
     def open_page(page_name, url: nil)
@@ -416,8 +417,8 @@ module Browserctl
       @steps.concat(source.steps)
     end
 
-    def call(params, client)
-      ctx = WorkflowContext.new(resolve_params(params), client)
+    def call(params, client, replay_context: nil)
+      ctx = WorkflowContext.new(resolve_params(params), client, replay_context: replay_context)
       execute_steps(ctx)
     end
 
