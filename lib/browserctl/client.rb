@@ -283,33 +283,6 @@ module Browserctl
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def dialog_dismiss(name)           = call("dialog_dismiss", name: name)
 
-    # Saves the current browser state (cookies, localStorage, open pages) to a named session.
-    # @param session_name [String] name for the saved session
-    # @return [Hash] `{ ok: true, path:, pages: N, cookies: N }` or `{ error: }`
-    def session_save(session_name, encrypt: false)
-      call("session_save", session_name: session_name, encrypt: encrypt)
-    end
-
-    # Restores a previously saved session into the running daemon.
-    # @param session_name [String] name of the session to load
-    # @return [Hash] `{ ok: true, cookies: N, pages: N, local_storage_keys: N }` or `{ error: }`
-    def session_load(session_name)
-      call("session_load", session_name: session_name)
-    end
-
-    # Lists all saved sessions.
-    # @return [Hash] `{ ok: true, sessions: [Hash] }` or `{ error: }`
-    def session_list
-      call("session_list")
-    end
-
-    # Permanently deletes a named session.
-    # @param session_name [String] name of the session to delete
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def session_delete(session_name)
-      call("session_delete", session_name: session_name)
-    end
-
     # Saves browser state (cookies + storage) into a single .bctl bundle.
     # @return [Hash] `{ ok:, path:, origins:, cookies:, encrypted: }` or `{ error: }`
     def state_save(name, origins: nil, flow: nil, flow_version: nil, passphrase: nil)

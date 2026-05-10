@@ -181,93 +181,31 @@ end
 
 `open_page` without a `url:` creates the page but does not navigate. Navigate separately with `page(:name).navigate(url)` or pass `url:` directly.
 
-### `save_session` and `load_session`
+### `save_state` and `load_state`
 
-Persist the full browser state — open pages, cookies, and localStorage — to a named session. Load it back in a later run or on a fresh daemon.
+Persist cookies + storage as a single `.bctl` state bundle, optionally bound to a flow that re-authenticates when the bundle is detected as expired. Load it back in a later run or on a fresh daemon.
 
 ```ruby
-step "save authenticated session" do
-  save_session("github_work")
+step "save authenticated state" do
+  save_state("github_work", flow: :github_login)
 end
 
-step "restore session" do
-  load_session("github_work")
+step "restore state" do
+  load_state("github_work")
 end
 ```
 
-Sessions are stored as plain JSON files in `~/.browserctl/sessions/<name>/`. Use `list_sessions` to see all saved sessions.
+State bundles live under `~/.browserctl/state/<name>.bctl`. Binding a flow at save time lets `load_state` auto-rotate when the daemon detects `AUTH_REQUIRED` while applying the bundle — the bound flow runs, a fresh bundle is saved, and the load is retried. No caller code change required.
 
-#### Recovering from a missing session
-
-Pass `fallback:` to automatically invoke a named login workflow when the session file is missing or fails to load, then retry:
+For bespoke recovery procedures, pass `on_auth_required:` to override the auto path:
 
 ```ruby
-step "restore or login" do
-  load_session("gmail_prod", fallback: "login_gmail")
+step "restore or rotate" do
+  load_state("myapp", on_auth_required: -> { invoke("login_myapp") })
 end
 ```
 
-If `session_load` fails, browserctl calls `invoke("login_gmail")` and retries the load once. The fallback workflow is responsible for saving the refreshed session via `save_session`. If the session is still unavailable after the fallback runs, a `WorkflowError` is raised with a descriptive message.
-
-This replaces the common hand-rolled pattern:
-
-```ruby
-# before — every workflow had to do this manually
-step "restore or login" do
-  if list_sessions.none? { |s| s[:name] == "gmail_prod" }
-    invoke("login_gmail")
-  else
-    load_session("gmail_prod")
-  end
-end
-```
-
-#### Recovering from a server-side expired session
-
-The `fallback:` path above only fires when the **session file is missing**. If the session file exists but the authenticated state has expired server-side (rotated cookie, token TTL, server invalidation), the workflow loads the stale session without error and silently operates on a logged-out page.
-
-Pass `expired_if:` with a lambda that returns `true` when the session is stale. The lambda runs after the session is restored and has access to all DSL methods (`page`, `assert`, etc.).
-
-**Important:** `load_session` restores pages to their saved URLs, not to a specific URL you choose at load time. If your expiry check is URL-based, navigate *inside* the lambda:
-
-```ruby
-step "restore or re-login" do
-  load_session("myapp",
-    fallback: "login_myapp",
-    expired_if: -> {
-      page(:main).navigate("https://app.example.com/dashboard")
-      !page(:main).url.include?("/dashboard")
-    }
-  )
-end
-```
-
-The navigation must happen inside the lambda — it runs after `load_session` restores saved URLs.
-
-For a check that does not require navigation, use cookie or storage state:
-
-```ruby
-step "restore or re-login" do
-  load_session("myapp",
-    fallback: "login_myapp",
-    expired_if: -> { page(:main).evaluate("document.cookie").exclude?("session_id") })
-end
-```
-
-**Behaviour contract:**
-
-1. Load session from disk
-2. If the session was missing and the fallback ran, return immediately (skip the expiry check — the session was just created)
-3. Evaluate `expired_if` — if it returns `false`, return immediately (session is live)
-4. If `expired_if` returns `true`: invoke the fallback, reload the session, re-evaluate `expired_if`
-5. If still expired after fallback: raise `WorkflowError` with a clear message
-
-**Notes:**
-- `expired_if:` must be a lambda (`-> { }`) — plain `Proc` objects are rejected with `ArgumentError` because a bare `return` inside a Proc would unwind the wrong call frame
-- The lambda is called up to twice: once to detect expiry, once to confirm recovery after the fallback runs
-- If `expired_if` raises, it is wrapped in a `WorkflowError` with session context
-
-If `expired_if` is omitted, the check is skipped and the existing missing-session fallback behaviour applies unchanged.
+See [docs/concepts/state.md](../concepts/state.md) for the full state lifecycle.
 
 ### Sourcing secrets with `secret_ref:`
 
@@ -583,51 +521,32 @@ step "wait for results" do
 end
 ```
 
-### Saving and restoring a session
+### Saving and restoring state
 
-Authenticate once, save the full session, then load it in future runs to skip login entirely.
+Authenticate once, save the resulting cookies + storage as a `.bctl` state bundle, then load it in future runs to skip login entirely.
 
 ```bash
-# After a successful login session:
-browserctl session save myapp
+# After a successful login:
+browserctl state save myapp --flow login_myapp
 
 # On the next run (daemon restarted):
-browserctl session load myapp
+browserctl state load myapp
 ```
 
 You can also do this inside a workflow:
 
 ```ruby
-step "restore authenticated session" do
-  load_session("myapp")
+step "save state after login" do
+  save_state("myapp", flow: :login_myapp)
 end
 
-step "save session after login" do
-  save_session("myapp")
-end
-```
-
-To recover automatically when the session file is **missing**, pass `fallback:`:
-
-```ruby
-step "restore or login" do
-  load_session("myapp", fallback: "login_myapp")
-  # session file absent → invokes "login_myapp", then retries the load
+step "restore authenticated state" do
+  load_state("myapp")
+  # bundle bound to login_myapp → daemon auto-rotates when AUTH_REQUIRED is hit
 end
 ```
 
-To also detect when a session file exists but the server-side auth has **expired**, add `expired_if:`. Navigate to the target page first so the URL check is meaningful:
-
-```ruby
-step "restore or re-login" do
-  page(:main).navigate("https://app.example.com/dashboard")
-  load_session("myapp",
-    fallback: "login_myapp",
-    expired_if: -> { !page(:main).url.include?("/dashboard") })
-end
-```
-
-Sessions capture cookies, localStorage, and all open page URLs. The `~/.browserctl/sessions/` directory is git-ignored by default when you run `browserctl init`.
+State bundles live under `~/.browserctl/state/`. The directory is git-ignored by default when you run `browserctl init`.
 
 ---
 

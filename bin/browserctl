@@ -24,7 +24,6 @@ require "browserctl/commands/init"
 require "browserctl/commands/page"
 require "browserctl/commands/cookie"
 require "browserctl/commands/storage"
-require "browserctl/commands/session"
 require "browserctl/commands/state"
 require "browserctl/commands/daemon"
 require "browserctl/commands/workflow"
@@ -104,14 +103,6 @@ def usage
       storage export <page> <path> [--store local|session|all]
       storage import <page> <path>
       storage delete <page> [--store local|session|all]
-
-    Session:
-      session save   <name>
-      session load   <name>
-      session list
-      session delete <name>
-      session export <name> <path>
-      session import <path>
 
     Auth detection:
       auth-check <page> [--cookies] [--state NAME] [--flow NAME]
@@ -208,7 +199,6 @@ begin
     when "page"     then Browserctl::Commands::Page.run(client, args)
     when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
     when "storage"  then Browserctl::Commands::Storage.run(client, args)
-    when "session"  then Browserctl::Commands::Session.run(client, args)
     when "state"    then Browserctl::Commands::State.run(client, args)
     when "daemon"   then Browserctl::Commands::Daemon.run(client, args)
     when "auth-check"

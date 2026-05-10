@@ -109,15 +109,6 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 | `storage_import` | `name`, `path` | — | `ok`, `origins`, `key_count` |
 | `storage_delete` | `name` | `stores` (default `"all"`) | `ok` |
 
-### Session
-
-| Command | Required params | Optional params | Response fields |
-|---------|----------------|----------------|-----------------|
-| `session_save` | `session_name` | — | `ok`, `path`, `pages`, `cookies` |
-| `session_load` | `session_name` | — | `ok`, `cookies`, `pages`, `local_storage_keys` |
-| `session_list` | — | — | `ok`, `sessions` (array of metadata hashes) |
-| `session_delete` | `session_name` | — | `ok` |
-
 ### DevTools
 
 | Command | Required params | Optional params | Response fields |
@@ -147,6 +138,19 @@ CLI process exit codes are also part of this zone — see [exit-codes.md](exit-c
 
 ## Breaking changes log
 
+### v0.13 — Session removal
+
+The `session` CLI commands and the `session_*` JSON-RPC wire commands are removed. `state` is now the only persistence path. Users on v0.12 sessions must regenerate their state with `state save` before upgrading; there is no migrate command.
+
+| Removed wire command | Replacement |
+|---|---|
+| `session_save` | `state_save` |
+| `session_load` | `state_load` |
+| `session_list` | `state_list` |
+| `session_delete` | `state_delete` |
+
+The workflow DSL methods `save_session`, `load_session`, and `list_sessions` are also removed; use `save_state` / `load_state` instead.
+
 ### v0.6 — Protocol version 2
 
 v0.6 is a breaking release. `PROTOCOL_VERSION` was bumped from `"1"` to `"2"`. Clients must check `ping[:protocol_version]` and reject `"1"` daemons.
@@ -161,7 +165,6 @@ v0.6 is a breaking release. `PROTOCOL_VERSION` was bumped from `"1"` to `"2"`. C
 | `clear_cookies` | `delete_cookies` | `delete` prefix convention |
 | `inspect` | `devtools` | descriptive name |
 | — | `storage_get/set/export/import/delete` | new (localStorage/sessionStorage) |
-| — | `session_save/load/list/delete` | new (session persistence) |
 | `pause` | `pause` (+ optional `message:` param) | backward-compatible addition |
 
 ### v0.5 — Protocol version 1

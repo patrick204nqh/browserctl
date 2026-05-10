@@ -94,12 +94,12 @@ RSpec.describe "stdlib flow: cloudflare_solve" do
       end
     end
 
-    it "saves the session under state_name when given" do
+    it "saves the state under state_name when given" do
       url_calls = ["https://x.test/cdn-cgi/challenge-platform/", "https://x.test/dashboard"]
       eval_calls = ["Just a moment...", "Welcome"]
       allow(page).to receive(:url) { url_calls.shift }
       allow(page).to receive(:evaluate) { eval_calls.shift }
-      expect(client).to receive(:session_save).with("post_cf").and_return({ ok: true })
+      expect(client).to receive(:state_save).with("post_cf").and_return({ ok: true })
 
       result, = silence_stderr do
         with_stdin("\n") { flow.run(page: page, client: client, state_name: "post_cf") }
@@ -108,12 +108,12 @@ RSpec.describe "stdlib flow: cloudflare_solve" do
       expect(result).to eq(ok: true)
     end
 
-    it "skips session_save when no state_name is given" do
+    it "skips state_save when no state_name is given" do
       url_calls = ["https://x.test/cdn-cgi/challenge-platform/", "https://x.test/dashboard"]
       eval_calls = ["Just a moment...", "Welcome"]
       allow(page).to receive(:url) { url_calls.shift }
       allow(page).to receive(:evaluate) { eval_calls.shift }
-      expect(client).not_to receive(:session_save)
+      expect(client).not_to receive(:state_save)
 
       result, = silence_stderr do
         with_stdin("\n") { flow.run(page: page, client: client) }

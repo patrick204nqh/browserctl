@@ -81,11 +81,6 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(ctx) { ctx.run_cli(%w[page list]) }
     ),
     CliErrorMatrix::Cell.new(
-      command: "session list", code: "DAEMON_UNREACHABLE",
-      scenario: "no daemon socket",
-      runner: ->(ctx) { ctx.run_cli(%w[session list]) }
-    ),
-    CliErrorMatrix::Cell.new(
       command: "state list", code: "DAEMON_UNREACHABLE",
       scenario: "no daemon socket",
       runner: ->(ctx) { ctx.run_cli(%w[state list]) }
