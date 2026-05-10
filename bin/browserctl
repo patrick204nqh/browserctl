@@ -122,7 +122,7 @@ def usage
       workflow list
       workflow describe <name>
       workflow generate <recording> [--out PATH]
-      workflow promote  <name> [--force] [--threshold N]
+      workflow promote  <name> [--force] [--threshold N] [--as-flow]
 
     Flow:
       flow run      <name|file> [--page NAME] [--params file] [--key value ...]

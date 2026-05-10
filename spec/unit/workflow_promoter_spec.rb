@@ -71,6 +71,25 @@ RSpec.describe Browserctl::Workflow::Promoter do
     end.to raise_error(described_class::NotFoundError, /missing/)
   end
 
+  it "writes a flow wrapper when as_flow: true" do
+    File.write(File.join(@source_dir, "wf.rb"), <<~RUBY)
+      Browserctl.workflow("wf") do
+        desc "wrapped flow"
+        param :token, secret: true
+      end
+    RUBY
+    record_clean("wf", 3)
+    flow_dir = File.join(@tmp, "flows")
+    result = described_class.promote(
+      workflow: "wf", source_dir: @source_dir, ledger_path: @ledger, as_flow: true,
+      flow_dir: flow_dir
+    )
+    expect(File.exist?(File.join(flow_dir, "wf.rb"))).to be(true)
+    expect(File.read(File.join(flow_dir, "wf.rb"))).to include('Browserctl.flow("wf")')
+    expect(File.read(File.join(flow_dir, "wf.rb"))).to include("param :token, secret: true")
+    expect(result[:flow]).to eq(File.join(flow_dir, "wf.rb"))
+  end
+
   it "does not count drift runs toward the streak" do
     record_clean("wf", 2)
     Browserctl::Workflow::PromotionLedger.record(workflow: "wf", verdict: :drift, path: @ledger)
