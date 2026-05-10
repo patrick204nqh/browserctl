@@ -1,9 +1,28 @@
 # ADR-0012: Browser-Agnostic Driver Layer
 
 **Date**: 2026-05-02
-**Status**: accepted
+**Status**: superseded (2026-05-10) — deferred until a second driver exists
 **Extends**: ADR-0002 (Ferrum/CDP remains the implementation; this ADR adds the abstraction layer in front of it)
 **Deciders**: Patrick
+
+## Superseded note (v0.13)
+
+The `Browserctl::Driver::Base` abstraction defined here was deleted in v0.13
+(see `docs/plans/v0.13-lean.md` PR 1). Inspection at the v0.13 cut showed
+`Driver::Base` was a 13-line stub with `Driver::CDP` as the only subclass and
+no handler code interacting with the abstract interface. Brave/Chromium
+support already lives inside `Driver::CDP` via the `browser:` constructor
+parameter — the abstraction earned zero rent.
+
+`Browserctl::Driver::CDP` remains and keeps the `Driver` namespace as the
+extension point. If/when a second protocol driver (e.g. WebDriver for Firefox
+or Safari) is actually being built, revisit this ADR and re-introduce a base
+class shaped by the real second implementation rather than a speculative one.
+
+The rest of this document is preserved for historical context.
+
+---
+
 
 ## Context
 
