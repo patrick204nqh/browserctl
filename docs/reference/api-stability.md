@@ -41,6 +41,7 @@ What is Extension:
 - `Browserctl::Runner` public methods
 - `Browserctl::Recording`
 - `Browserctl.socket_path`, `Browserctl.pid_path`, `Browserctl.log_path`
+- `store` / `fetch` daemon KV wire commands (see "Daemon KV (`store` / `fetch`)" below)
 
 ---
 
@@ -130,10 +131,6 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 |---------|----------------|----------------|-----------------|
 | `ping` | — | — | `ok`, `pid`, `protocol_version` |
 | `shutdown` | — | — | `ok` |
-| `store` | `key`, `value` | — | `ok` |
-| `fetch` | `key` | — | `ok`, `value` |
-
-`fetch` returns `{ error: "key '<key>' not found", code: "key_not_found" }` when the key has never been stored. Values are scoped to the daemon process — they persist across `workflow run` invocations for as long as the daemon is running, and are lost when the daemon stops.
 
 ---
 
@@ -142,6 +139,48 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 CLI command names and their flags map 1-to-1 to wire commands via the subcommand routers in `lib/browserctl/commands/`. There are no abbreviation aliases — CLI names match their wire counterparts exactly.
 
 CLI process exit codes are also part of this zone — see [exit-codes.md](exit-codes.md) for the full table. Error `code` strings (the machine-readable contract on stderr and on the wire) are also Stable — see [errors.md](errors.md) for the full reference.
+
+---
+
+## Extension zone — internal surfaces
+
+### Daemon KV (`store` / `fetch`)
+
+The `store` and `fetch` wire commands provide a small in-memory key/value scratchpad on the daemon. They are **Extension**, not Fixed — shape and semantics may change between minor releases with a changelog entry.
+
+| Command | Required params | Optional params | Response fields |
+|---------|----------------|----------------|-----------------|
+| `store` | `key`, `value` | — | `ok` |
+| `fetch` | `key` | — | `ok`, `value` |
+
+`fetch` returns `{ error: "key '<key>' not found", code: "key_not_found" }` when the key has never been stored.
+
+Known limits, intentional at this stage:
+
+- **No TTL.** Entries live until the daemon stops or is explicitly overwritten.
+- **No scoping.** Keys share a single flat namespace across every page, session, and workflow on the daemon. There is no per-page, per-session, or per-workflow isolation.
+- **Per-daemon, not per-session, lifetime.** Values persist across `workflow run` invocations for as long as the daemon is running, and are lost when the daemon stops. Saving or loading a session does not save or restore KV state.
+
+These limits are why `store`/`fetch` are Extension. A future revision may add scoping, TTLs, or session-bound lifetime, and Extension status leaves room to do that without a major bump.
+
+---
+
+## Known overlapping surfaces — consolidation deferred to v2.0
+
+The Fixed zone today contains two parallel APIs for browser-side persistence:
+
+- Cookies: `set_cookie`, `import_cookies`, `export_cookies` (client-side), `delete_cookies`
+- Web storage: `storage_get`, `storage_set`, `storage_export`, `storage_import`, `storage_delete`
+
+The shapes mirror each other deliberately, but the split between cookies and `localStorage`/`sessionStorage` is a browser-platform distinction, not a browserctl one. A unified persistence surface (single `state_export` / `state_import` covering cookies + storage, with a typed payload) would be a cleaner public API.
+
+That consolidation is **deferred to v2.0**. It is not pursued pre-1.0 because:
+
+- The cost of designing, migrating callers, and re-locking the Fixed zone is high relative to the user-visible benefit before 1.0.
+- Both APIs work today and have integration coverage; the duplication is real but not broken.
+- Locking the Fixed zone at 1.0 with both surfaces present is acceptable — neither will be removed in the 1.x line.
+
+When v2.0 is on the table, this section is the entry point for the consolidation design.
 
 ---
 
