@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
+require_relative "error/codes"
+
 module Browserctl
   # Base error class for all browserctl daemon errors.
   # Subclasses carry a machine-readable `code` that appears in wire responses.
+  # The canonical enum of stable codes lives in {Browserctl::Error::Codes};
+  # the sweep that retrofits every raise to use those codes lands in a later
+  # v0.12 PR.
   # @attr_reader code [String] machine-readable error code
   class Error < StandardError
     def self.default_code = "error"
