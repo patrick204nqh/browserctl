@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "error/codes"
+require_relative "error/exit_codes"
 require_relative "error/suggested_actions"
 
 module Browserctl

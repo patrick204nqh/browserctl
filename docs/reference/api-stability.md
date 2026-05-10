@@ -141,6 +141,8 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 
 CLI command names and their flags map 1-to-1 to wire commands via the subcommand routers in `lib/browserctl/commands/`. There are no abbreviation aliases — CLI names match their wire counterparts exactly.
 
+CLI process exit codes are also part of this zone — see [exit-codes.md](exit-codes.md) for the full table.
+
 ---
 
 ## Breaking changes log
