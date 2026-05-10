@@ -16,6 +16,11 @@ module Browserctl
 
     SENSITIVE_PARAM_PATTERN = /\A(token|key|secret|auth|code|access_token|api_key|client_secret|state)\z/ix
 
+    # Selector tokens that signal a fill is targeting a secret-shaped field.
+    # The captured group (or matched substring) is used as the inferred field
+    # name; that name later drives the generated `secret_ref:` placeholder.
+    SECRET_FIELD_PATTERN = /\b(password|passwd|api[_-]?key|token|secret|otp|pin|client[_-]?secret|access[_-]?token)\b/i
+
     # Bumped when the recording log shape changes in a way that older
     # tooling (workflow generate, replay) cannot read.
     LOG_FORMAT = "v0.11"
@@ -69,7 +74,7 @@ module Browserctl
       end
     end
 
-    def self.generate_workflow(name, output_path: nil)
+    def self.generate_workflow(name, output_path: nil, keep_log: false)
       log = log_path(name)
       raise "no recording found for '#{name}'" unless File.exist?(log)
 
@@ -77,16 +82,18 @@ module Browserctl
       lines = raw.reject { |l| l[:cmd] == "_meta" }
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
-
-      ref_count = lines.count { |l| l[:cmd] == "_ref_interaction" }
-      if ref_count.positive?
-        warn "Warning: #{ref_count} ref-based interaction(s) were captured but cannot be replayed by ref."
-        warn "Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors."
-      end
-
+      warn_about_ref_interactions(lines)
       ruby
     ensure
-      FileUtils.rm_f(log) if log
+      FileUtils.rm_f(log) if log && !keep_log
+    end
+
+    def self.warn_about_ref_interactions(lines)
+      ref_count = lines.count { |l| l[:cmd] == "_ref_interaction" }
+      return unless ref_count.positive?
+
+      warn "Warning: #{ref_count} ref-based interaction(s) were captured but cannot be replayed by ref."
+      warn "Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors."
     end
 
     class << self
@@ -117,16 +124,27 @@ module Browserctl
       end
 
       def build_workflow_ruby(name, commands)
-        steps = commands.map { |c| build_step(c) }.join("\n\n")
+        steps   = commands.map { |c| build_step(c) }.join("\n\n")
+        secrets = commands.map { |c| c[:secret_field] }.compact.uniq
+        header  = secret_header(secrets)
         <<~RUBY
           # frozen_string_literal: true
-
+          #{header}
           Browserctl.workflow #{name.inspect} do
             desc "Recorded on #{Date.today}"
-
+          #{secrets.map { |f| "  param :secret_#{f}, secret: true" }.join("\n")}
           #{steps.gsub(/^/, '  ')}
           end
         RUBY
+      end
+
+      def secret_header(secrets)
+        return "" if secrets.empty?
+
+        lines = ["# TODO: review the following secret-shaped fields detected during recording.",
+                 "# Configure a secret_ref: source for each before running:"]
+        secrets.each { |f| lines << "#   - secret_#{f}" }
+        "\n#{lines.join("\n")}\n"
       end
 
       def build_step(cmd)
@@ -142,12 +160,13 @@ module Browserctl
                  "# end"
         end
 
-        url = cmd[:url].to_s
-        if url.include?("[REDACTED]")
-          "# NOTE: sensitive query params were redacted during recording\nstep #{label.inspect} do\n  #{body}\nend"
-        else
-          "step #{label.inspect} do\n  #{body}\nend"
-        end
+        prefix = []
+        prefix << "# NOTE: sensitive query params were redacted during recording" \
+          if cmd[:url].to_s.include?("[REDACTED]")
+        prefix << "# fingerprint fallback: #{cmd[:fingerprint].to_json}" if cmd[:fingerprint]
+
+        head = prefix.empty? ? "" : "#{prefix.join("\n")}\n"
+        "#{head}step #{label.inspect} do\n  #{body}\nend"
       end
 
       def step_parts(cmd)
@@ -172,8 +191,9 @@ module Browserctl
         page = cmd[:name]
         case cmd[:cmd]
         when "fill"
+          value_arg = cmd[:secret_field] ? "params[:secret_#{cmd[:secret_field]}]" : "params[:fill_value]"
           ["fill #{cmd[:selector]} on #{page}",
-           "page(:#{page}).fill(#{cmd[:selector].inspect}, params[:fill_value])"]
+           "page(:#{page}).fill(#{cmd[:selector].inspect}, #{value_arg})"]
         when "click"
           ["click #{cmd[:selector]} on #{page}",
            "page(:#{page}).click(#{cmd[:selector].inspect})"]
@@ -181,9 +201,25 @@ module Browserctl
       end
 
       def prepare_attrs(cmd, attrs)
-        attrs = attrs.except(:value) if cmd == "fill"
+        if cmd == "fill"
+          attrs = attrs.except(:value)
+          field = infer_secret_field(attrs[:selector])
+          if field
+            attrs[:secret_hint]  = true
+            attrs[:secret_field] = field
+          end
+        end
         attrs[:url] = redact_url(attrs[:url]) if %w[navigate page_open].include?(cmd) && attrs[:url]
         attrs
+      end
+
+      def infer_secret_field(selector)
+        return nil unless selector
+
+        match = selector.match(SECRET_FIELD_PATTERN)
+        return nil unless match
+
+        match[1].downcase.gsub(/[^a-z0-9]/, "_")
       end
 
       def redact_url(url)

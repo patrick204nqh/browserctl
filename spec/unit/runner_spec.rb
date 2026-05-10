@@ -153,4 +153,23 @@ RSpec.describe Browserctl::Commands::Workflow do
       expect(parsed["workflows"].first["name"]).to eq("login")
     end
   end
+
+  describe ".run generate" do
+    it "calls Recording.generate_workflow with keep_log: true and reports the output path" do
+      allow(FileUtils).to receive(:mkdir_p)
+      expect(Browserctl::Recording).to receive(:generate_workflow)
+        .with("checkout", output_path: a_string_including("checkout.rb"), keep_log: true)
+      output = capture_stdout { described_class.run(double, %w[generate checkout]) }
+      parsed = JSON.parse(output)
+      expect(parsed).to include("ok" => true, "name" => "checkout")
+      expect(parsed["path"]).to include("checkout.rb")
+    end
+
+    it "honours --out PATH" do
+      allow(FileUtils).to receive(:mkdir_p)
+      expect(Browserctl::Recording).to receive(:generate_workflow)
+        .with("checkout", output_path: "/tmp/foo.rb", keep_log: true)
+      capture_stdout { described_class.run(double, %w[generate checkout --out /tmp/foo.rb]) }
+    end
+  end
 end

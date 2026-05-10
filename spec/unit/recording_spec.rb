@@ -145,6 +145,58 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "workflow generate (v0.11 WS-3.2)" do
+    before { described_class.start("gen") }
+
+    it "marks fills against secret-shaped fields with secret_hint and secret_field" do
+      described_class.append("fill", name: "login", selector: 'input[name="password"]', value: "hunter2")
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "gen.jsonl")).last)
+      expect(entry).to include("secret_hint" => true, "secret_field" => "password")
+      expect(entry).not_to have_key("value")
+    end
+
+    it "ignores non-secret fills" do
+      described_class.append("fill", name: "login", selector: 'input[name="email"]', value: "a@b.c")
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "gen.jsonl")).last)
+      expect(entry).not_to have_key("secret_hint")
+    end
+
+    it "emits secret_ref params and TODO header in the generated workflow" do
+      described_class.append("fill", name: "login", selector: 'input[name="api_key"]', value: "k")
+      described_class.append("fill", name: "login", selector: 'input[type="password"]', value: "p")
+      ruby = described_class.generate_workflow("gen", keep_log: true)
+      expect(ruby).to include("# TODO: review the following secret-shaped fields")
+      expect(ruby).to include("#   - secret_api_key")
+      expect(ruby).to include("#   - secret_password")
+      expect(ruby).to include("param :secret_api_key, secret: true")
+      expect(ruby).to include("page(:login).fill(\"input[name=\\\"api_key\\\"]\", params[:secret_api_key])")
+      expect(ruby).to include("page(:login).fill(\"input[type=\\\"password\\\"]\", params[:secret_password])")
+    end
+
+    it "emits a fingerprint fallback comment when the recorded event has one" do
+      described_class.append(
+        "click",
+        response: { ok: true, fingerprint: { text: "Sign in", role: "button" } },
+        name: "login", selector: "button.go"
+      )
+      ruby = described_class.generate_workflow("gen", keep_log: true)
+      expect(ruby).to match(/# fingerprint fallback: \{.*"text":"Sign in".*\}/)
+      expect(ruby).to include('page(:login).click("button.go")')
+    end
+
+    it "keeps the recording log when keep_log: true" do
+      described_class.append("click", name: "p", selector: "a")
+      described_class.generate_workflow("gen", keep_log: true)
+      expect(File.exist?(File.join(@tmp_dir, "gen.jsonl"))).to be(true)
+    end
+
+    it "deletes the log by default (record stop semantics)" do
+      described_class.append("click", name: "p", selector: "a")
+      described_class.generate_workflow("gen")
+      expect(File.exist?(File.join(@tmp_dir, "gen.jsonl"))).to be(false)
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")
