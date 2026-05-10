@@ -27,9 +27,10 @@ module Browserctl
 
       def self.run_promote(args)
         name = args.shift or abort \
-          "usage: browserctl workflow promote <name> [--force] [--threshold N]"
+          "usage: browserctl workflow promote <name> [--force] [--threshold N] [--as-flow]"
 
-        force = !args.delete("--force").nil?
+        force   = !args.delete("--force").nil?
+        as_flow = !args.delete("--as-flow").nil?
 
         threshold_idx = args.index("--threshold")
         threshold = if threshold_idx
@@ -41,7 +42,7 @@ module Browserctl
                     end
 
         result = Browserctl::Workflow::Promoter.promote(
-          workflow: name, force: force, threshold: threshold
+          workflow: name, force: force, threshold: threshold, as_flow: as_flow
         )
         puts JSON.generate(ok: true, **result)
       rescue Browserctl::Workflow::Promoter::IneligibleError => e

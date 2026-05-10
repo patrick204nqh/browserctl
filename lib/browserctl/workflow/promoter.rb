@@ -3,6 +3,7 @@
 require "fileutils"
 require_relative "../constants"
 require_relative "promotion_ledger"
+require_relative "flow_wrapper"
 
 module Browserctl
   module Workflow
@@ -52,8 +53,9 @@ module Browserctl
       # @param source_dir [String] override the source directory (testing)
       # @param ledger_path [String] override the ledger path (testing)
       # @return [Hash] `{ workflow:, source:, target:, streak:, threshold:, forced: }`
-      def promote(workflow:, force: false, threshold: PromotionLedger::DEFAULT_THRESHOLD,
-                  source_dir: DEFAULT_SOURCE_DIR, ledger_path: PromotionLedger.ledger_path)
+      def promote(workflow:, force: false, threshold: PromotionLedger::DEFAULT_THRESHOLD, # rubocop:disable Metrics/ParameterLists
+                  as_flow: false, source_dir: DEFAULT_SOURCE_DIR,
+                  ledger_path: PromotionLedger.ledger_path, flow_dir: nil)
         src = source_path(workflow, source_dir: source_dir)
         raise NotFoundError, "workflow file not found: #{src}" unless File.exist?(src)
 
@@ -66,7 +68,7 @@ module Browserctl
         FileUtils.mkdir_p(File.dirname(dst))
         FileUtils.cp(src, dst)
 
-        {
+        result = {
           workflow: workflow,
           source: src,
           target: dst,
@@ -74,6 +76,20 @@ module Browserctl
           threshold: threshold,
           forced: force && streak < threshold
         }
+
+        result[:flow] = wrap_as_flow(workflow, dst, flow_dir) if as_flow
+        result
+      end
+
+      # Loads the just-promoted workflow file, infers params from its
+      # WorkflowDefinition, and writes a flow wrapper at `flow_dir`
+      # (defaults to `~/.browserctl/flows/<name>.rb`).
+      def wrap_as_flow(workflow, workflow_path, flow_dir)
+        load workflow_path
+        defn = Browserctl.lookup_workflow(workflow.to_s) or
+          raise NotFoundError, "workflow '#{workflow}' did not register after load"
+
+        FlowWrapper.write(defn, overwrite: true, dir: flow_dir)
       end
     end
   end
