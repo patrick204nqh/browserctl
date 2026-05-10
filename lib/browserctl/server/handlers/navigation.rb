@@ -33,7 +33,8 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            type_into(session.page, sel, req[:value])
+            result = type_into(session.page, sel, req[:value])
+            enrich_with_recording_metadata(result, session, sel, req)
           end
         end
 
@@ -42,8 +43,24 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            click_element(session.page, sel)
+            result = click_element(session.page, sel)
+            enrich_with_recording_metadata(result, session, sel, req)
           end
+        end
+
+        # Adds ref / fingerprint / snapshot_id / postcondition_hint to a successful
+        # click/fill response. Recording uses these to build a self-healing log.
+        def enrich_with_recording_metadata(result, session, selector, req)
+          return result unless result[:ok]
+
+          ref = req[:ref] || session.ref_registry.invert[selector]
+          fp  = (ref && session.fingerprint_index[ref]) || session.fingerprint_index[selector]
+          result.merge(
+            ref: ref,
+            fingerprint: fp,
+            snapshot_id: session.snapshot_id,
+            postcondition_hint: { url: session.page.current_url }
+          ).compact
         end
 
         def cmd_url(req)

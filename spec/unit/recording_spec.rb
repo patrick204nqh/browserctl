@@ -51,7 +51,9 @@ RSpec.describe Browserctl::Recording do
       described_class.start("test")
       described_class.append("ping")
       log = File.join(@tmp_dir, "test.jsonl")
-      expect(File.read(log)).to be_empty
+      lines = File.readlines(log).map { |l| JSON.parse(l) }
+      expect(lines.size).to eq(1) # only the _meta header
+      expect(lines.first["cmd"]).to eq("_meta")
     end
 
     it "does nothing when no active recording" do
@@ -92,6 +94,57 @@ RSpec.describe Browserctl::Recording do
     end
   end
 
+  describe "enriched recording log (v0.11)" do
+    before { described_class.start("rich") }
+
+    it "writes a _meta header as the first line on start" do
+      log = File.readlines(File.join(@tmp_dir, "rich.jsonl"))
+      meta = JSON.parse(log.first)
+      expect(meta).to include(
+        "cmd" => "_meta",
+        "log_format" => Browserctl::Recording::LOG_FORMAT,
+        "recording" => "rich"
+      )
+      expect(meta["started_at"]).to match(/\A\d{4}-\d{2}-\d{2}T/)
+    end
+
+    it "captures ref / fingerprint / snapshot_id / postcondition_hint from the daemon response" do
+      response = {
+        ok: true,
+        ref: "ea1b2c3",
+        fingerprint: { text: "Sign in", role: "button" },
+        snapshot_id: "deadbeef00",
+        postcondition_hint: { url: "https://example.com/dashboard" }
+      }
+      described_class.append("click", response: response, name: "main", selector: "button.sign-in")
+      log = File.readlines(File.join(@tmp_dir, "rich.jsonl"))
+      entry = JSON.parse(log.last)
+      expect(entry).to include(
+        "cmd" => "click",
+        "selector" => "button.sign-in",
+        "ref" => "ea1b2c3",
+        "snapshot_id" => "deadbeef00"
+      )
+      expect(entry["fingerprint"]).to include("text" => "Sign in", "role" => "button")
+      expect(entry["postcondition_hint"]).to eq({ "url" => "https://example.com/dashboard" })
+    end
+
+    it "omits replay metadata fields the response doesn't supply" do
+      described_class.append("click", response: { ok: true }, name: "main", selector: "button")
+      entry = JSON.parse(File.readlines(File.join(@tmp_dir, "rich.jsonl")).last)
+      expect(entry).not_to have_key("ref")
+      expect(entry).not_to have_key("fingerprint")
+      expect(entry).not_to have_key("snapshot_id")
+    end
+
+    it "skips _meta lines when generating a workflow" do
+      described_class.append("page_open", name: "cart", url: "https://example.com/cart")
+      ruby = described_class.generate_workflow("rich")
+      expect(ruby).not_to include("_meta")
+      expect(ruby).to include('page(:cart).navigate("https://example.com/cart")')
+    end
+  end
+
   describe "secure file permissions" do
     it "creates the JSONL file with mode 0600" do
       described_class.start("secure_test")
@@ -106,8 +159,8 @@ RSpec.describe Browserctl::Recording do
 
     it "redacts sensitive query params in navigate URLs" do
       described_class.append("navigate", name: "main", url: "https://example.com/auth?token=abc123&page=1")
-      log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
-      parsed = JSON.parse(log.strip)
+      log = File.readlines(File.join(@tmp_dir, "redact_test.jsonl"))
+      parsed = JSON.parse(log.last)
       expect(parsed["url"]).to include("[REDACTED]")
       expect(parsed["url"]).not_to include("abc123")
       expect(parsed["url"]).to include("page=1")
@@ -115,24 +168,24 @@ RSpec.describe Browserctl::Recording do
 
     it "redacts sensitive params in page_open URLs" do
       described_class.append("page_open", name: "main", url: "https://example.com/?code=xyz&ref=home")
-      log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
-      parsed = JSON.parse(log.strip)
+      log = File.readlines(File.join(@tmp_dir, "redact_test.jsonl"))
+      parsed = JSON.parse(log.last)
       expect(parsed["url"]).to include("[REDACTED]")
       expect(parsed["url"]).to include("ref=home")
     end
 
     it "does not redact clean URLs" do
       described_class.append("navigate", name: "main", url: "https://example.com/path?page=2&sort=asc")
-      log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
-      parsed = JSON.parse(log.strip)
+      log = File.readlines(File.join(@tmp_dir, "redact_test.jsonl"))
+      parsed = JSON.parse(log.last)
       expect(parsed["url"]).to eq("https://example.com/path?page=2&sort=asc")
     end
 
     it "returns the original URL on malformed input" do
       bad_url = "not a valid url ][]["
       described_class.append("navigate", name: "main", url: bad_url)
-      log = File.read(File.join(@tmp_dir, "redact_test.jsonl"))
-      parsed = JSON.parse(log.strip)
+      log = File.readlines(File.join(@tmp_dir, "redact_test.jsonl"))
+      parsed = JSON.parse(log.last)
       expect(parsed["url"]).to eq(bad_url)
     end
 

@@ -15,7 +15,7 @@ module Browserctl
 
     def call(cmd, **params)
       result = communicate(JSON.generate({ cmd: cmd }.merge(params)))
-      Recording.append(cmd, **params) if result[:ok]
+      Recording.append(cmd, response: result, **params) if result[:ok]
       result
     rescue Errno::ENOENT, Errno::ECONNREFUSED
       raise DaemonUnavailableError, "browserd is not running — start it with: browserd"
