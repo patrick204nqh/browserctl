@@ -92,6 +92,49 @@ incompatibility.
 Bundles, recordings, and (future) drift reports keep the strict
 `PROTOCOL_MISMATCH` behaviour described below.
 
+## Migration registry
+
+`Browserctl::Migrations` (`lib/browserctl/migrations.rb`) is the registry
+of upgraders that move an artifact written by an older browserctl up to
+the current build's format version. Operators trigger it with:
+
+```
+browserctl migrate <path> [--to-version N] [--dry-run]
+```
+
+- The CLI detects the format from the file extension (`.bctl` →
+  `:bundle`, `.jsonl` → `:recording`, `.rb` → `:workflow`), reads the
+  declared `format_version`, and chains registered migrations from the
+  current version up to `--to-version` (or the latest registered target).
+- `--dry-run` prints the plan and exits without rewriting the file.
+- On a current-version artifact the command is a no-op and exits 0:
+  `No migrations registered for <format> v<n>; nothing to do.`
+- Unknown format or no chain to the target exits with
+  `PROTOCOL_MISMATCH` (exit code 5).
+
+Registering a migration:
+
+```ruby
+Browserctl::Migrations.register(format: :bundle, from_version: 1, to_version: 2) do |path:, **|
+  # Read `path`, transform, write back at v2.
+end
+```
+
+The block is responsible for rewriting the file in place. The registry
+handles ordering and chains hops via BFS, so you only register one
+upgrader per adjacent version pair (`1 → 2`, `2 → 3`, …) — `migrate`
+walks the chain.
+
+`Browserctl::Migrations` is **separate** from
+`verify_format_version!` (in bundle/recording/workflow). The latter
+stays strict: a reader that encounters an unknown version raises
+`PROTOCOL_MISMATCH`. `migrate` is the only blessed path to mutate an
+old artifact in place.
+
+**The registry ships empty in v0.12.** The first real migration arrives
+only when a format actually changes post-1.0. The plumbing exists now
+so the operator invocation is stable the day a real migration lands.
+
 ## Unknown-version error
 
 A reader that encounters a version it does not recognise raises
