@@ -8,7 +8,10 @@ RSpec.describe Browserctl::Runner, "#run_workflow with check: true" do
 
   let(:client) { instance_double(Browserctl::Client) }
 
-  before { allow(Browserctl::Client).to receive(:new).and_return(client) }
+  before do
+    allow(Browserctl::Client).to receive(:new).and_return(client)
+    allow(Browserctl::Replay::Telemetry).to receive(:emit).and_return(0)
+  end
 
   def define_workflow(name, &block)
     Browserctl.workflow(name) do
@@ -33,6 +36,24 @@ RSpec.describe Browserctl::Runner, "#run_workflow with check: true" do
     expect { captured = runner.run_workflow("drifty", check: true) }
       .to output(/"drift": true.*"rematches": 1/m).to_stdout
     expect(captured).to eq(:drift)
+  end
+
+  it "emits drift telemetry on the check path" do
+    define_workflow("telemetry") do
+      replay_context.record(command: :click, selector: ".old",
+                            matched_ref: "eabc", score: 0.9, reason: "rematch")
+    end
+    expect(Browserctl::Replay::Telemetry).to receive(:emit) do |ctx, workflow:|
+      expect(workflow).to eq("telemetry")
+      expect(ctx.drift_events.size).to eq(1)
+    end.and_return(1)
+    expect { runner.run_workflow("telemetry", check: true) }.to output.to_stdout
+  end
+
+  it "does not emit telemetry when check is false" do
+    define_workflow("no_check_telemetry") { nil }
+    expect(Browserctl::Replay::Telemetry).not_to receive(:emit)
+    runner.run_workflow("no_check_telemetry")
   end
 
   it "returns :fail when a step raises, regardless of drift" do
