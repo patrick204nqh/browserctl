@@ -15,7 +15,7 @@ module BrowserctlHelpers
     old.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
   end
 
-  def start_daemon(headed: false, name: nil)
+  def start_daemon(headed: false, name: nil, browser: ENV.fetch("BROWSERCTL_BROWSER", "chrome"))
     socket = Browserctl.socket_path(name)
     pid_f  = Browserctl.pid_path(name)
 
@@ -24,6 +24,7 @@ module BrowserctlHelpers
       $stderr.reopen(File::NULL)
       Browserctl::Server.new(
         headless: !headed,
+        browser: browser,
         socket_path: socket,
         pid_path: pid_f
       ).run
@@ -64,9 +65,18 @@ RSpec.configure do |config|
   config.include BrowserctlHelpers
 
   config.before(:each, :integration) do
-    chrome_bins = %w[chromium-browser google-chrome chromium chrome]
-    available = chrome_bins.any? { |b| system("which #{b}", out: File::NULL, err: File::NULL) }
-    skip "Chrome not available — install chromium or google-chrome to run integration tests" unless available
+    requested = ENV.fetch("BROWSERCTL_BROWSER", "chrome")
+    bins = case requested
+           when "chromium" then %w[chromium-browser chromium]
+           when "brave"    then %w[brave-browser brave]
+           else                 %w[google-chrome chrome chromium-browser chromium]
+           end
+    available = bins.any? { |b| system("which #{b}", out: File::NULL, err: File::NULL) }
+    brave_path = ENV.fetch("BRAVE_PATH", nil)
+    chromium_path = ENV.fetch("CHROMIUM_PATH", nil)
+    available ||= requested == "brave" && brave_path && File.executable?(brave_path)
+    available ||= requested == "chromium" && chromium_path && File.executable?(chromium_path)
+    skip "#{requested} not available — install it or set BROWSERCTL_BROWSER" unless available
   end
 
   config.expect_with :rspec do |expectations|
