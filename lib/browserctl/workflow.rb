@@ -16,7 +16,7 @@ module Browserctl
   StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
 
   class WorkflowContext
-    attr_reader :client, :replay_context
+    attr_reader :client, :replay_context, :params
 
     def initialize(params, client, replay_context: nil)
       @params = params
