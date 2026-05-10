@@ -68,5 +68,104 @@ RSpec.describe Browserctl::SecretResolverRegistry do
       expect { described_class.resolve("raises://something") }
         .to raise_error(Browserctl::SecretResolverError, %r{secret resolution failed for "raises://something"})
     end
+
+    it "carries SECRET_RESOLUTION_FAILED code for unknown scheme" do
+      expect { described_class.resolve("unknown://foo") }
+        .to raise_error(Browserctl::SecretResolverError) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::SECRET_RESOLUTION_FAILED)
+        end
+    end
+
+    it "carries SECRET_RESOLUTION_FAILED code when wrapping unexpected errors" do
+      described_class.register(raising_resolver_class)
+      expect { described_class.resolve("raises://x") }
+        .to raise_error(Browserctl::SecretResolverError) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::SECRET_RESOLUTION_FAILED)
+        end
+    end
+
+    it "treats a reference with no scheme separator as an unknown scheme" do
+      # When `secret_ref` has no `://`, split returns [ref, nil] and the
+      # registry will look up the resolver under the full string.
+      expect { described_class.resolve("no-scheme-here") }
+        .to raise_error(Browserctl::SecretResolverError, /unknown secret resolver scheme/)
+    end
+  end
+
+  describe ".registered?" do
+    it "returns false for an unregistered scheme" do
+      expect(described_class.registered?("nope")).to be false
+    end
+  end
+
+  describe "resolved-value instrumentation" do
+    it "records the resolved value so the redactor can scrub it from traces" do
+      described_class.register(resolver_class)
+      described_class.resolve("test://alpha")
+      expect(described_class.resolved_values).to include("resolved:alpha")
+    end
+
+    it "deduplicates repeated resolutions of the same value" do
+      described_class.register(resolver_class)
+      3.times { described_class.resolve("test://same") }
+      expect(described_class.resolved_values.count("resolved:same")).to eq(1)
+    end
+
+    it "does not record empty strings" do
+      empty_class = Class.new(Browserctl::SecretResolvers::Base) do
+        def self.scheme = "empty"
+        def resolve(_reference) = ""
+      end
+      described_class.register(empty_class)
+      described_class.resolve("empty://nothing")
+      expect(described_class.resolved_values).not_to include("")
+    end
+
+    it "does not record non-string values" do
+      numeric_class = Class.new(Browserctl::SecretResolvers::Base) do
+        def self.scheme = "numeric"
+        def resolve(_reference) = 42
+      end
+      described_class.register(numeric_class)
+      described_class.resolve("numeric://foo")
+      expect(described_class.resolved_values).to be_empty
+    end
+
+    it "returns a copy so callers cannot mutate internal state" do
+      described_class.register(resolver_class)
+      described_class.resolve("test://copy")
+      described_class.resolved_values << "leaked"
+      expect(described_class.resolved_values).not_to include("leaked")
+    end
+
+    it "clears recorded values on reset!" do
+      described_class.register(resolver_class)
+      described_class.resolve("test://x")
+      expect(described_class.resolved_values).not_to be_empty
+      described_class.reset!
+      expect(described_class.resolved_values).to be_empty
+    end
+  end
+
+  describe "thread safety" do
+    it "does not double-record when many threads resolve the same key" do
+      described_class.register(resolver_class)
+      threads = Array.new(20) do
+        Thread.new { described_class.resolve("test://shared") }
+      end
+      threads.each(&:join)
+      expect(described_class.resolved_values.count("resolved:shared")).to eq(1)
+    end
+
+    it "records distinct values from concurrent resolutions" do
+      described_class.register(resolver_class)
+      threads = 10.times.map do |i|
+        Thread.new { described_class.resolve("test://k#{i}") }
+      end
+      threads.each(&:join)
+      10.times do |i|
+        expect(described_class.resolved_values).to include("resolved:k#{i}")
+      end
+    end
   end
 end
