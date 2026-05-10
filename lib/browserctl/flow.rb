@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-require "timeout"
+require_relative "callable_definition"
 require_relative "errors"
-require_relative "secret_resolvers"
 
 module Browserctl
-  FlowParamDef    = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
-  FlowStepDef     = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
   FlowConditionDef = Struct.new(:kind, :label, :block, keyword_init: true)
+
+  # Back-compat aliases — flow_wrapper specs reference these directly.
+  FlowParamDef = CallableDefinition::ParamDef
+  FlowStepDef  = CallableDefinition::StepDef
 
   class FlowContext
     attr_reader :page, :client, :params
@@ -29,29 +30,26 @@ module Browserctl
     end
   end
 
-  class Flow
+  class Flow < CallableDefinition
     SEMVER_RE = /\A\d+\.\d+\.\d+\z/
 
-    attr_reader :name,
-                :version_string,
-                :description,
-                :param_defs,
-                :steps,
+    attr_reader :version_string,
                 :preconditions,
                 :postconditions,
                 :produces_state_block,
                 :min_browserctl_version
 
     def initialize(name)
-      @name                   = name.to_s
+      super
       @version_string         = "0.0.0"
-      @description            = nil
-      @param_defs             = {}
-      @steps                  = []
       @preconditions          = []
       @postconditions         = []
       @produces_state_block   = nil
       @min_browserctl_version = nil
+    end
+
+    def callable_kind
+      :flow
     end
 
     def version(value)
@@ -62,27 +60,6 @@ module Browserctl
     def requires_browserctl(value)
       validate_semver!(value, label: "requires_browserctl")
       @min_browserctl_version = value.to_s
-    end
-
-    def desc(text)
-      @description = text.to_s
-    end
-
-    def param(name, required: false, secret: false, default: nil, secret_ref: nil)
-      secret = true if secret_ref
-      @param_defs[name] = FlowParamDef.new(
-        name: name,
-        required: required,
-        secret: secret,
-        default: default,
-        secret_ref: secret_ref
-      )
-    end
-
-    def step(label, retry_count: 0, timeout: nil, &block)
-      raise ArgumentError, "flow step '#{label}' requires a block" unless block
-
-      @steps << FlowStepDef.new(label: label, block: block, retry_count: retry_count, timeout: timeout)
     end
 
     def precondition(label = "precondition", &block)
@@ -103,6 +80,24 @@ module Browserctl
       @produces_state_block = block
     end
 
+    # Definition-time guard against cross-type composition. A flow may only
+    # compose other flows; pulling steps from a workflow would smuggle
+    # `store`/`fetch` into a flow context that has no daemon-backed
+    # persistence.
+    def compose(target_name)
+      name = target_name.to_s
+      if Browserctl.respond_to?(:lookup_workflow) && Browserctl.lookup_workflow(name)
+        raise ArgumentError,
+              "flow '#{@name}' cannot compose workflow '#{name}': flows return state, " \
+              "workflows share state — composition across kinds is not supported"
+      end
+
+      source = Browserctl.lookup_flow(name)
+      raise ArgumentError, "flow '#{name}' not found for composition" unless source
+
+      @steps.concat(source.steps)
+    end
+
     def run(page: nil, client: nil, **params)
       ctx = FlowContext.new(page: page, client: client, params: resolve_params(params))
 
@@ -121,20 +116,12 @@ module Browserctl
       raise ArgumentError, "#{label} must be MAJOR.MINOR.PATCH (got #{value.inspect})"
     end
 
-    def resolve_params(provided)
-      @param_defs.each_with_object({}) do |(name, defn), out|
-        val = if defn.secret_ref
-                SecretResolverRegistry.resolve(defn.secret_ref)
-              elsif provided.key?(name)
-                provided[name]
-              else
-                defn.default
-              end
+    def missing_param_error(name)
+      FlowParamError.new("flow '#{@name}' requires param '#{name}'")
+    end
 
-        raise FlowParamError, "flow '#{@name}' requires param '#{name}'" if defn.required && val.nil?
-
-        out[name] = val
-      end
+    def step_timeout_error(defn)
+      FlowStepError.new("flow '#{@name}' step '#{defn.label}' timed out after #{defn.timeout}s")
     end
 
     def run_conditions(ctx, conditions, error_class:)
@@ -166,17 +153,6 @@ module Browserctl
       end
       raise FlowStepError,
             "flow '#{@name}' step '#{defn.label}' failed: #{last_error.message}"
-    end
-
-    def execute_step_block(ctx, defn)
-      if defn.timeout
-        ::Timeout.timeout(defn.timeout) { ctx.instance_exec(&defn.block) }
-      else
-        ctx.instance_exec(&defn.block)
-      end
-    rescue ::Timeout::Error
-      raise FlowStepError,
-            "flow '#{@name}' step '#{defn.label}' timed out after #{defn.timeout}s"
     end
 
     def produce_state(ctx)

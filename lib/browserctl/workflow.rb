@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require "timeout"
+require_relative "callable_definition"
 require_relative "client"
+require_relative "contextual_persistence"
 require_relative "errors"
 require_relative "flow_registry"
 require_relative "replay/context"
 require_relative "replay/fingerprint_matcher"
 require_relative "replay/snapshot_diff"
-require_relative "secret_resolvers"
 
 module Browserctl
   # Workflow-file format version. Workflows are Ruby files; the schema gate
@@ -65,31 +65,21 @@ module Browserctl
     version
   end
 
-  ParamDef = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
+  # Back-compat aliases — exposed in the public surface (flow_wrapper specs,
+  # workflow specs reference these directly).
+  ParamDef = CallableDefinition::ParamDef
+  StepDef  = CallableDefinition::StepDef
   StepResult = Struct.new(:name, :ok, :error, keyword_init: true)
-  StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
 
   class WorkflowContext
+    include ContextualPersistence
+
     attr_reader :client, :replay_context, :params
 
     def initialize(params, client, replay_context: nil)
       @params = params
       @client = client
       @replay_context = replay_context
-    end
-
-    def store(key, value)
-      res = @client.store(key.to_s, value)
-      raise WorkflowError, res[:error] if res[:error]
-
-      value
-    end
-
-    def fetch(key)
-      res = @client.fetch(key.to_s)
-      raise WorkflowError, res[:error] if res[:error]
-
-      res[:value]
     end
 
     def method_missing(name, *args)
@@ -118,32 +108,6 @@ module Browserctl
       raise WorkflowError, res[:error] if res[:error]
 
       res
-    end
-
-    # Persists the daemon's current cookies + storage as a .bctl bundle.
-    # Optional flow binding lets `load_state` auto-rotate when the bundle
-    # is detected as needing authentication.
-    def save_state(name, flow: nil, origins: nil, encrypt: false)
-      passphrase = encrypt ? ENV.fetch("BROWSERCTL_STATE_PASSPHRASE", nil) : nil
-      res = @client.state_save(name.to_s,
-                               flow: flow&.to_s, origins: origins, passphrase: passphrase)
-      raise WorkflowError, res[:error] if res[:error]
-
-      res
-    end
-
-    # Restores a .bctl bundle. When the daemon detects AUTH_REQUIRED before
-    # applying (e.g. expired cookies in the payload), this rotates the bound
-    # flow and retries — no caller code change required.
-    #
-    # @param on_auth_required [Proc, nil] override the auto-rotate path. The
-    #   block runs in the workflow context, in lieu of invoking the manifest's
-    #   bound flow. Use this when the recovery procedure is bespoke.
-    def load_state(name, on_auth_required: nil)
-      res = @client.state_load(name.to_s)
-      return res unless auth_required_response?(res)
-
-      recover_auth_required_state(name.to_s, res, on_auth_required)
     end
 
     def ask(prompt)
@@ -193,45 +157,6 @@ module Browserctl
     end
 
     private
-
-    def auth_required_response?(res)
-      (res[:code] || res["code"]) == "AUTH_REQUIRED"
-    end
-
-    def recover_auth_required_state(name, initial_res, on_auth_required)
-      if on_auth_required
-        on_auth_required.call
-      else
-        flow_name = initial_res[:suggested_flow] || initial_res["suggested_flow"]
-        unless flow_name && !flow_name.to_s.empty?
-          raise WorkflowError,
-                "state '#{name}' needs auth but bundle has no bound flow — " \
-                "save with `save_state('#{name}', flow: :NAME)` or pass on_auth_required:"
-        end
-
-        # Match the daemon's `state load` preflight: it auth-checks the first
-        # open page (insertion order). Passing that same name to the flow
-        # gives stdlib flows a `page` proxy to drive (oauth_github reads
-        # `page.url`, totp_2fa calls `page.fill`, etc.). Falls back to no
-        # page only when nothing is open — `state_save` would have errored
-        # earlier in that case, so this is a defence-in-depth nil.
-        invoke(flow_name, page: first_open_page)
-      end
-
-      after_save = @client.state_save(name)
-      raise WorkflowError, after_save[:error] if after_save[:error]
-
-      retry_res = @client.state_load(name, skip_auth_check: true)
-      raise WorkflowError, retry_res[:error] if retry_res[:error]
-
-      retry_res.merge(rotated: true)
-    end
-
-    def first_open_page
-      res = @client.page_list
-      pages = res[:pages] || res["pages"] || []
-      pages.first
-    end
 
     def invoke_stack
       @invoke_stack ||= []
@@ -376,32 +301,24 @@ module Browserctl
     end
   end
 
-  class WorkflowDefinition
-    attr_reader :name, :description, :param_defs, :steps
-
-    def initialize(name)
-      @name = name
-      @description = nil
-      @param_defs  = {}
-      @steps       = []
+  class WorkflowDefinition < CallableDefinition
+    def callable_kind
+      :workflow
     end
 
-    def desc(text)
-      @description = text
-    end
-
-    def param(name, required: false, secret: false, default: nil, secret_ref: nil)
-      secret = true if secret_ref
-      @param_defs[name] =
-        ParamDef.new(name: name, required: required, secret: secret, default: default, secret_ref: secret_ref)
-    end
-
-    def step(label, retry_count: 0, timeout: nil, &block)
-      @steps << StepDef.new(label: label, block: block, retry_count: retry_count, timeout: timeout)
-    end
-
+    # Definition-time guard: composing a flow into a workflow would copy
+    # flow steps that may close over `page` (a flow-only DSL) into a
+    # context that doesn't expose it. Cross-kind composition is rejected
+    # here rather than failing later inside an `instance_exec`.
     def compose(workflow_name)
-      source = Browserctl.lookup_workflow(workflow_name.to_s)
+      name = workflow_name.to_s
+      if Browserctl.lookup_flow(name)
+        raise ArgumentError,
+              "workflow '#{@name}' cannot compose flow '#{name}': flows return state, " \
+              "workflows share state — composition across kinds is not supported"
+      end
+
+      source = Browserctl.lookup_workflow(name)
       raise WorkflowError, "workflow '#{workflow_name}' not found for composition" unless source
 
       @steps.concat(source.steps)
@@ -414,6 +331,14 @@ module Browserctl
 
     private
 
+    def missing_param_error(name)
+      WorkflowError.new("required param '#{name}' missing")
+    end
+
+    def step_timeout_error(defn)
+      WorkflowError.new("step '#{defn.label}' timed out after #{defn.timeout}s")
+    end
+
     def execute_steps(ctx)
       @steps.map { |defn| run_step(ctx, defn) }.each do |r|
         raise WorkflowError, "step '#{r.name}' failed: #{r.error}" unless r.ok
@@ -423,35 +348,12 @@ module Browserctl
     def run_step(ctx, defn)
       last_error = nil
       (defn.retry_count + 1).times do
-        execute_block(ctx, defn)
+        execute_step_block(ctx, defn)
         return StepResult.new(name: defn.label, ok: true)
       rescue StandardError => e
         last_error = e
       end
       StepResult.new(name: defn.label, ok: false, error: last_error.message)
-    end
-
-    def execute_block(ctx, defn)
-      if defn.timeout
-        ::Timeout.timeout(defn.timeout) { ctx.instance_exec(&defn.block) }
-      else
-        ctx.instance_exec(&defn.block)
-      end
-    rescue ::Timeout::Error
-      raise WorkflowError, "step '#{defn.label}' timed out after #{defn.timeout}s"
-    end
-
-    def resolve_params(provided)
-      @param_defs.each_with_object({}) do |(name, defn), out|
-        val = if defn.secret_ref
-                SecretResolverRegistry.resolve(defn.secret_ref)
-              else
-                provided[name] || defn.default
-              end
-        raise WorkflowError, "required param '#{name}' missing" if defn.required && val.nil?
-
-        out[name] = val
-      end
     end
   end
 
