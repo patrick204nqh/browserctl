@@ -7,12 +7,12 @@ RSpec.describe Browserctl::Error::Codes do
   describe "constants" do
     it "exposes every canonical v0.12 code as a frozen string" do
       {
-        AUTH_REQUIRED:            "AUTH_REQUIRED",
-        SELECTOR_NOT_FOUND:       "SELECTOR_NOT_FOUND",
-        STATE_EXPIRED:            "STATE_EXPIRED",
+        AUTH_REQUIRED: "AUTH_REQUIRED",
+        SELECTOR_NOT_FOUND: "SELECTOR_NOT_FOUND",
+        STATE_EXPIRED: "STATE_EXPIRED",
         SECRET_RESOLUTION_FAILED: "SECRET_RESOLUTION_FAILED",
-        DAEMON_UNREACHABLE:       "DAEMON_UNREACHABLE",
-        PROTOCOL_MISMATCH:        "PROTOCOL_MISMATCH"
+        DAEMON_UNREACHABLE: "DAEMON_UNREACHABLE",
+        PROTOCOL_MISMATCH: "PROTOCOL_MISMATCH"
       }.each do |const, value|
         actual = described_class.const_get(const)
         expect(actual).to eq(value)
