@@ -44,13 +44,30 @@ module Browserctl
 
           snapshot = @snapshot_builder.call(session.page)
           registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
+          fp_index = build_fingerprint_index(snapshot)
 
           prev = session.prev_snapshot
-          session.ref_registry  = registry
-          session.prev_snapshot = snapshot
+          session.ref_registry      = registry
+          session.fingerprint_index = fp_index
+          session.snapshot_id       = nonce
+          session.prev_snapshot     = snapshot
           result = diff && prev ? compute_diff(prev, snapshot) : snapshot
 
           { ok: true, snapshot: result, challenge: challenge, nonce: nonce }
+        end
+
+        def build_fingerprint_index(snapshot)
+          index = {}
+          snapshot.each do |el|
+            ref = el[:ref]
+            sel = el[:selector]
+            fp  = el[:fingerprint]
+            next unless fp
+
+            index[ref] = fp if ref
+            index[sel] = fp if sel
+          end
+          index
         end
 
         def compute_diff(prev, current)

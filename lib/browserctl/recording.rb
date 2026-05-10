@@ -2,6 +2,7 @@
 
 require "json"
 require "date"
+require "time"
 require "fileutils"
 require "tmpdir"
 require "uri"
@@ -15,6 +16,10 @@ module Browserctl
 
     SENSITIVE_PARAM_PATTERN = /\A(token|key|secret|auth|code|access_token|api_key|client_secret|state)\z/ix
 
+    # Bumped when the recording log shape changes in a way that older
+    # tooling (workflow generate, replay) cannot read.
+    LOG_FORMAT = "v0.11"
+
     def self.start(name)
       FileUtils.mkdir_p(RECORDINGS_DIR, mode: 0o700)
       FileUtils.mkdir_p(File.dirname(STATE_FILE))
@@ -22,6 +27,14 @@ module Browserctl
       FileUtils.rm_f(log_path(name))
       FileUtils.touch(log_path(name))
       File.chmod(0o600, log_path(name))
+      File.open(log_path(name), "a") do |f|
+        f.puts JSON.generate(
+          cmd: "_meta",
+          log_format: LOG_FORMAT,
+          recording: name,
+          started_at: Time.now.utc.iso8601
+        )
+      end
       name
     end
 
@@ -37,20 +50,22 @@ module Browserctl
       File.exist?(STATE_FILE) ? File.read(STATE_FILE).strip : nil
     end
 
-    def self.append(cmd, **attrs)
+    def self.append(cmd, response: nil, **attrs)
       name = active
       return unless name
       return unless RECORDABLE.include?(cmd.to_s)
 
       if %w[click fill].include?(cmd.to_s) && attrs[:selector].nil?
-        record_ref_interaction(name, cmd.to_s, attrs)
+        record_ref_interaction(name, cmd.to_s, attrs, response)
         return
       end
 
       attrs = prepare_attrs(cmd.to_s, attrs)
+      entry = { cmd: cmd.to_s }.merge(attrs.transform_keys(&:to_s))
+      entry.merge!(replay_metadata(response)) if response
 
       File.open(log_path(name), "a") do |f|
-        f.puts JSON.generate({ cmd: cmd.to_s }.merge(attrs.transform_keys(&:to_s)))
+        f.puts JSON.generate(entry)
       end
     end
 
@@ -58,7 +73,8 @@ module Browserctl
       log = log_path(name)
       raise "no recording found for '#{name}'" unless File.exist?(log)
 
-      lines = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
+      raw   = File.readlines(log).map { |l| JSON.parse(l, symbolize_names: true) }
+      lines = raw.reject { |l| l[:cmd] == "_meta" }
       ruby  = build_workflow_ruby(name, lines)
       File.write(output_path, ruby) if output_path
 
@@ -80,11 +96,24 @@ module Browserctl
         File.join(RECORDINGS_DIR, "#{name}.jsonl")
       end
 
-      def record_ref_interaction(recording_name, cmd, attrs)
+      def record_ref_interaction(recording_name, cmd, attrs, response)
         entry = { cmd: "_ref_interaction", action: cmd, ref: attrs[:ref], name: attrs[:name] }
+        entry.merge!(replay_metadata(response)) if response
         File.open(log_path(recording_name), "a") do |f|
           f.puts JSON.generate(entry)
         end
+      end
+
+      # Pulls the replay-relevant fields out of a daemon response. Each
+      # is optional — older daemons or non-resolving commands may omit
+      # any of them.
+      def replay_metadata(response)
+        meta = {}
+        meta[:ref]                = response[:ref]                if response[:ref]
+        meta[:fingerprint]        = response[:fingerprint]        if response[:fingerprint]
+        meta[:snapshot_id]        = response[:snapshot_id]        if response[:snapshot_id]
+        meta[:postcondition_hint] = response[:postcondition_hint] if response[:postcondition_hint]
+        meta.transform_keys(&:to_s)
       end
 
       def build_workflow_ruby(name, commands)
