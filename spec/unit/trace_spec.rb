@@ -9,6 +9,7 @@ require "tmpdir"
 RSpec.describe Browserctl::Commands::Trace do
   let(:tmp_dir) { Dir.mktmpdir("browserctl-trace") }
   let(:out)     { StringIO.new }
+  let(:err)     { StringIO.new }
 
   after { FileUtils.remove_entry(tmp_dir) if File.directory?(tmp_dir) }
 
@@ -86,6 +87,44 @@ RSpec.describe Browserctl::Commands::Trace do
 
       described_class.run([], log_dir: tmp_dir, out: out)
       expect(out.string).not_to include("\e[")
+    end
+  end
+
+  describe "redaction" do
+    around do |example|
+      original = ENV.fetch("FAKE_API_TOKEN", nil)
+      ENV["FAKE_API_TOKEN"] = "tk_fakesecretvalue123"
+      example.run
+    ensure
+      if original.nil?
+        ENV.delete("FAKE_API_TOKEN")
+      else
+        ENV["FAKE_API_TOKEN"] = original
+      end
+    end
+
+    it "redacts ENV-pattern secret values from output by default" do
+      write_log("cli.log", [
+                  { ts: "2026-05-10T06:00:00.000Z", level: "INFO", component: "cli",
+                    event: "auth", header: "Bearer tk_fakesecretvalue123" }
+                ])
+
+      described_class.run([], log_dir: tmp_dir, out: out, err: err)
+      expect(out.string).not_to include("tk_fakesecretvalue123")
+      expect(out.string).to include("[REDACTED]")
+      expect(err.string).to be_empty
+    end
+
+    it "passes secrets through with --no-redact and warns on stderr" do
+      write_log("cli.log", [
+                  { ts: "2026-05-10T06:00:00.000Z", level: "INFO", component: "cli",
+                    event: "auth", header: "Bearer tk_fakesecretvalue123" }
+                ])
+
+      described_class.run(["--no-redact"], log_dir: tmp_dir, out: out, err: err)
+      expect(out.string).to include("tk_fakesecretvalue123")
+      expect(out.string).not_to include("[REDACTED]")
+      expect(err.string).to include("unredacted secret values")
     end
   end
 end
