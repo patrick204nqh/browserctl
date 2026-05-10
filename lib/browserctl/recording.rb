@@ -172,6 +172,7 @@ module Browserctl
         header  = secret_header(secrets)
         <<~RUBY
           # frozen_string_literal: true
+          # format_version: #{Browserctl::WORKFLOW_FORMAT_VERSION}
           #{header}
           Browserctl.workflow #{name.inspect} do
             desc "Recorded on #{Date.today}"

@@ -11,6 +11,61 @@ require_relative "secret_resolvers"
 require_relative "session"
 
 module Browserctl
+  # Workflow-file format version. Workflows are Ruby files; the schema gate
+  # is a top-of-file comment header:
+  #
+  #   # format_version: 1
+  #
+  # Unlike bundles and recordings, an unsupported or missing version on a
+  # workflow file is a *warning*, not a hard failure. Workflows are
+  # human-authored Ruby — the loader prefers to surface drift via stderr
+  # and let the file run, rather than block execution. See
+  # docs/reference/format-versions.md.
+  WORKFLOW_FORMAT_VERSION = 1
+  SUPPORTED_WORKFLOW_FORMAT_VERSIONS = [WORKFLOW_FORMAT_VERSION].freeze
+
+  # Matches a leading-line comment of the form `# format_version: <int>`.
+  # Tolerates leading whitespace inside the comment body and ignores the
+  # `# frozen_string_literal: true` magic comment that conventionally
+  # precedes it.
+  WORKFLOW_FORMAT_VERSION_HEADER = /^\s*#\s*format_version:\s*(\d+)\s*$/
+
+  # Parses the `# format_version: N` header from a workflow file's source.
+  # Scans only the contiguous leading comment block (and blank lines) so
+  # the header cannot be smuggled in mid-file. Returns the integer if
+  # present, or nil if the file has no version header.
+  def self.parse_workflow_format_version(source)
+    source.each_line do |line|
+      stripped = line.strip
+      next if stripped.empty?
+      break unless stripped.start_with?("#")
+
+      if (m = line.match(WORKFLOW_FORMAT_VERSION_HEADER))
+        return Integer(m[1])
+      end
+    end
+    nil
+  end
+
+  # Reads a workflow file and warns to stderr when the `format_version:`
+  # header is missing or declares an unsupported version. Always returns
+  # the parsed integer (or nil) — never raises. Callers should still
+  # `load` the file regardless.
+  def self.verify_workflow_format_version!(path)
+    source = File.read(path)
+    version = parse_workflow_format_version(source)
+
+    if version.nil?
+      warn "[browserctl] workflow #{path} is missing a `# format_version: N` header " \
+           "(expected #{WORKFLOW_FORMAT_VERSION}); proceeding anyway"
+    elsif !SUPPORTED_WORKFLOW_FORMAT_VERSIONS.include?(version)
+      warn "[browserctl] workflow #{path} format_version=#{version} is not supported " \
+           "(expected #{WORKFLOW_FORMAT_VERSION}); proceeding anyway"
+    end
+
+    version
+  end
+
   ParamDef = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
   StepResult = Struct.new(:name, :ok, :error, keyword_init: true)
   StepDef = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
