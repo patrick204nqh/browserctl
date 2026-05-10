@@ -286,7 +286,7 @@ This flow:
 | Name | Default | Notes |
 |---|---|---|
 | `prompt` | "Cloudflare challenge detected. Solve it in the browser, then press Enter to continue." | |
-| `state_name` | `nil` | When set, calls `client.session_save(state_name)` after the challenge clears. |
+| `state_name` | `nil` | When set, calls `client.state_save(state_name)` after the challenge clears. |
 
 ### From a workflow
 

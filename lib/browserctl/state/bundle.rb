@@ -8,7 +8,7 @@ require_relative "../error/codes"
 
 module Browserctl
   module State
-    # Single-file portable codec for browserctl session state — the .bctl
+    # Single-file portable codec for browserctl persisted state — the .bctl
     # bundle. Wraps a plaintext manifest (origins, flow binding, timestamps)
     # alongside a payload of cookies + storage. The manifest is always
     # readable without a passphrase (so `state info` can show origins and
@@ -37,9 +37,6 @@ module Browserctl
     #   first 32 bytes are the AES-256-GCM encryption key, last 32 bytes are
     #   the HMAC-SHA-256 key.
     #
-    # Reuses the same AES-256-GCM primitive as v0.8 session encryption
-    # (lib/browserctl/session.rb). The two will share a Crypto module in a
-    # follow-up; duplicated here to keep this PR focused.
     class Bundle
       MAGIC          = "BCTL\x00".b.freeze
       VERSION        = 1

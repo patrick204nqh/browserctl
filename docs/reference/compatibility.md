@@ -40,6 +40,12 @@ Chromium is installed on Ubuntu CI via `apt-get install chromium-browser`.
 
 `docs/reference/compatibility.md` matches `.github/workflows/ci.yml` exactly. Any divergence is a bug — either the doc is stale, or CI is testing something we don't claim to support. Open an issue.
 
+## Removed surfaces
+
+| Version | Removed | Replacement |
+|---------|---------|-------------|
+| v0.13 | `session` CLI commands and `session_*` wire commands | `state` CLI commands and `state_*` wire commands. Users on v0.12 sessions must regenerate via `state save` before upgrading. |
+
 ## Out of scope
 
 - macOS in CI (unsupported through 0.x; should still work for development)

@@ -5,8 +5,8 @@ require_relative "../../flow"
 
 # Pauses for a human to solve a Cloudflare challenge (Turnstile, "Just a
 # moment...", interactive checkbox), then verifies the challenge cleared
-# before returning. Optionally saves the post-solve session under a name
-# you can reload later with `state load` or `session_load`.
+# before returning. Optionally saves the post-solve state under a name
+# you can reload later with `state load`.
 #
 # Reuses Browserctl::Detectors.cloudflare? — the server-side detector
 # already shipped in v0.8 — by adapting the client-facing PageProxy to
@@ -34,7 +34,7 @@ Browserctl.flow("cloudflare_solve") do
 
   param :prompt,
         default: "Cloudflare challenge detected. Solve it in the browser, then press Enter to continue."
-  param :state_name # optional — if set, session_save is called after the challenge clears
+  param :state_name # optional — if set, state_save is called after the challenge clears
 
   precondition("page proxy is present") { !page.nil? }
   precondition("cloudflare challenge is present") do
@@ -54,6 +54,6 @@ Browserctl.flow("cloudflare_solve") do
   produces_state do
     next nil unless state_name && client
 
-    client.session_save(state_name)
+    client.state_save(state_name)
   end
 end

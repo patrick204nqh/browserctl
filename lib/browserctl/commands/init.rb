@@ -14,15 +14,15 @@ module Browserctl
       YAML
 
       GITIGNORE_CONTENT = <<~GITIGNORE
-        # Cookie session exports — contain credentials, never commit
-        sessions/
+        # State bundles — contain credentials, never commit
+        state/
       GITIGNORE
 
       def self.run(_args)
         FileUtils.mkdir_p(".browserctl/workflows")
         FileUtils.touch(".browserctl/workflows/.keep")
 
-        FileUtils.mkdir_p(".browserctl/sessions")
+        FileUtils.mkdir_p(".browserctl/state")
 
         gitignore_path = ".browserctl/.gitignore"
         File.write(gitignore_path, GITIGNORE_CONTENT) unless File.exist?(gitignore_path)
@@ -32,7 +32,7 @@ module Browserctl
 
         puts "Initialised browserctl project:"
         puts "  .browserctl/workflows/   (place workflow .rb files here)"
-        puts "  .browserctl/sessions/    (cookie exports — git-ignored)"
+        puts "  .browserctl/state/       (state bundles — git-ignored)"
         puts "  .browserctl/config.yml   (project settings)"
       end
     end

@@ -22,8 +22,6 @@ devtools     cookies      set_cookie
 delete_cookies            import_cookies
 storage_get  storage_set  storage_export
 storage_import            storage_delete
-session_save session_load session_list
-session_delete
 store        fetch
 ```
 
@@ -60,12 +58,6 @@ v0.6 uses **noun-verb subcommand groups** for related commands and **full Englis
 | `storage export` | `storage_export` | subcommand group |
 | `storage import` | `storage_import` | subcommand group |
 | `storage delete` | `storage_delete` | subcommand group |
-| `session save` | `session_save` | subcommand group |
-| `session load` | `session_load` | subcommand group |
-| `session list` | `session_list` | subcommand group |
-| `session delete` | `session_delete` | subcommand group |
-| `session export` | client-side | zips session directory |
-| `session import` | client-side | unzips session archive |
 | `daemon ping` | `ping` | subcommand group |
 | `daemon status` | client-side | reads `ping` + `page_list` + `url` per page |
 | `daemon start` | client-side | spawns `browserd` subprocess |
@@ -94,8 +86,6 @@ cookies      set_cookie   delete_cookies
 export_cookies            import_cookies
 storage_get  storage_set  storage_export
 storage_import            storage_delete
-session_save session_load session_list
-session_delete
 store        fetch
 ping         shutdown
 ```

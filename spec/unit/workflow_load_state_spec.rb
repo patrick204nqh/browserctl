@@ -99,19 +99,3 @@ RSpec.describe "WorkflowContext#save_state" do
     expect { ctx.save_state("github") }.to raise_error(Browserctl::WorkflowError, "not allowed")
   end
 end
-
-RSpec.describe "WorkflowContext#load_session deprecation" do
-  let(:client) { instance_double(Browserctl::Client) }
-  let(:ctx)    { Browserctl::WorkflowContext.new({}, client) }
-
-  it "warns when fallback: is used" do
-    allow(client).to receive(:session_load).with("my-session").and_return(ok: true)
-    expect { ctx.load_session("my-session", fallback: :setup) }
-      .to output(/DEPRECATION.*load_state/m).to_stderr
-  end
-
-  it "does not warn when called without fallback / expired_if" do
-    allow(client).to receive(:session_load).with("my-session").and_return(ok: true)
-    expect { ctx.load_session("my-session") }.not_to output(/DEPRECATION/).to_stderr
-  end
-end

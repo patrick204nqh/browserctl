@@ -140,21 +140,6 @@ browserctl ask "Enter 2FA code:"
 
 ---
 
-## Session
-
-A session bundles everything needed to resume a browser state: all open pages (names + URLs), all cookies, and localStorage for each origin. Session files live in `~/.browserctl/sessions/<name>/`. By default they are plain JSON with `0o600` permissions; `--encrypt` stores them as AES-256-GCM blobs with the key in macOS Keychain.
-
-| Command | Description |
-|---|---|
-| `session save <name> [--encrypt]` | Save the current browser state; `--encrypt` stores sensitive files as AES-256-GCM blobs (macOS only) |
-| `session load <name>` | Restore a saved session into the running daemon |
-| `session list` | List all saved sessions |
-| `session delete <name>` | Delete a saved session |
-| `session export <name> <path> [--encrypt]` | Zip a session to a portable archive; `--encrypt` prompts for a passphrase and uses PBKDF2+AES-256-GCM |
-| `session import <path>` | Unzip a session archive; automatically detects and decrypts an encrypted archive |
-
----
-
 ## Recording
 
 | Command | Description |
@@ -286,9 +271,6 @@ Use `--ref <id>` with `fill` and `click` to interact without writing selectors. 
 | `open_page(name, url: nil)` | Open a named page, optionally navigating to a URL |
 | `close_page(name)` | Close a named page |
 | `page(:name)` | Return a `PageProxy` for the named page |
-| `save_session(name, encrypt: false)` | Save the current browser state; `encrypt: true` uses macOS Keychain (darwin only) |
-| `load_session(name, fallback: nil, expired_if: nil)` | Restore a saved session; `fallback:` names a workflow to run and retry if the session is missing or expired; `expired_if:` is a lambda called after restore — if it returns `true`, the fallback is invoked to re-authenticate |
-| `list_sessions` | Return all saved session metadata |
 | `invoke "workflow", **overrides` | Call another workflow by name |
 | `assert condition, "message"` | Raise `WorkflowError` if condition is false |
 | `store :key, value` | Store a value for use in later steps |
