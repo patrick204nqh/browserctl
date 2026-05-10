@@ -59,7 +59,7 @@ module Browserctl
       def parent_path(node)
         parts = []
         cur = node.parent
-        while cur&.respond_to?(:name) && cur.name != "html" && cur.name != "document"
+        while cur.respond_to?(:name) && cur.name != "html" && cur.name != "document"
           parts.unshift(cur.name)
           cur = cur.parent
         end
