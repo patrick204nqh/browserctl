@@ -17,3 +17,6 @@
 | [0013](0013-flow-dsl.md) | Flow DSL — separate registry, lifetime, stdlib split | accepted | 2026-05-09 |
 | [0014](0014-bctl-bundle-format.md) | `.bctl` bundle format — HMAC, manifest, transports, origin scope | accepted | 2026-05-09 |
 | [0015](0015-auth-required-detection.md) | `auth_required` detection — signals, false positives, pluggability | accepted | 2026-05-09 |
+| [0016](0016-stable-ref-scheme.md) | Stable ref scheme — hash inputs, collision handling, replace don't version | accepted | 2026-05-10 |
+| [0017](0017-fingerprint-algorithm.md) | Fingerprint algorithm — signal selection, weighting, threshold defaults | accepted | 2026-05-10 |
+| [0018](0018-promotion-gates.md) | Promotion gates — N successful runs, `--force`, disqualifications | accepted | 2026-05-10 |
