@@ -14,10 +14,10 @@ browserctl uses a different model: **refs** — and as of v0.11, refs are stable
 
 ## The snapshot
 
-`browserctl snapshot <page>` inspects the live page and returns a compact JSON array of every interactable element — inputs, buttons, links, selects, textareas. Static elements that cannot be acted on are omitted.
+`browserctl page snapshot <name>` inspects the live page and returns a compact JSON array of every interactable element — inputs, buttons, links, selects, textareas. Static elements that cannot be acted on are omitted.
 
 ```bash
-browserctl snapshot login
+browserctl page snapshot login
 ```
 
 ```json
@@ -142,7 +142,7 @@ The replay layer scores candidate elements in the new DOM against this fingerpri
 After the first snapshot, subsequent snapshots can return only the elements that changed since the last one:
 
 ```bash
-browserctl snapshot login --diff
+browserctl page snapshot login --diff
 ```
 
 This is useful in two situations:
@@ -155,7 +155,7 @@ This is useful in two situations:
 
 ## Refs and recording
 
-When you record a session with `browserctl record start <name>`, each command is captured and later replayed as a workflow. Selector-based interactions replay directly. Ref-based interactions now replay through two layers:
+When you record a session with `browserctl recording start <name>`, each command is captured and later replayed as a workflow. Selector-based interactions replay directly. Ref-based interactions now replay through two layers:
 
 1. The recorded ref is looked up against the current snapshot. Because refs are stable, this works whenever the page is semantically unchanged.
 2. If the ref no longer resolves (e.g. the page was redesigned and the parent path shifted), the recorded **fingerprint** is matched against the new DOM. If a match scores above the threshold, replay continues silently and the rematch is logged.
@@ -169,7 +169,7 @@ Workflow generation (v0.11) prefers stable selectors, with the fingerprint shipp
 When a model needs to understand page structure rather than interact with specific elements, pass `--format html`:
 
 ```bash
-browserctl snapshot login --format html
+browserctl page snapshot login --format html
 ```
 
 This returns the full page HTML. Useful for reading content, understanding layout, or extracting information. For interaction, use the default JSON format.

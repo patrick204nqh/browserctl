@@ -40,13 +40,13 @@ This is not a workaround. It is the intended workflow.
 
 ### 2. Reproduce anything. Share it as code.
 
-The `record` command captures a live browser session as a replayable Ruby workflow. Reproduce a bug once, record the steps, hand the script to a colleague.
+The `recording` command captures a live browser session as a replayable Ruby workflow. Reproduce a bug once, record the steps, hand the script to a colleague.
 
 ```bash
 # Record the session
-browserctl record start my-bug
+browserctl recording start my-bug
 # ... interact in the browser ...
-browserctl record stop
+browserctl recording stop
 
 # Later: replay it against any environment
 browserctl workflow run my-bug --url https://staging.example.com

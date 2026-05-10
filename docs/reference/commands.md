@@ -20,6 +20,8 @@ All commands require `browserd` to be running unless noted.
 | `page close <name>` | Close a named tab |
 | `page list` | List all open named pages and their current URLs |
 | `page focus <name>` | Bring a tab to front (headed mode only) |
+| `page snapshot <name> [--format elements\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
+| `page screenshot <name> [--out PATH] [--full]` | Take a screenshot |
 
 ---
 
@@ -34,8 +36,6 @@ Page is always the first argument after the verb.
 | `fill <page> --ref <id> --value <v>` | Fill an input field by snapshot ref |
 | `click <page> <selector>` | Click an element by CSS selector |
 | `click <page> --ref <id>` | Click an element by snapshot ref |
-| `snapshot <page> [--format elements\|html] [--diff]` | Snapshot DOM; `--diff` returns only changed elements |
-| `screenshot <page> [--out PATH] [--full]` | Take a screenshot |
 | `evaluate <page> <expression>` | Evaluate a JavaScript expression |
 | `url <page>` | Print the current URL |
 | `wait <page> <selector> [--timeout N]` | Wait until selector appears (default: 30s) |
@@ -50,7 +50,7 @@ Page is always the first argument after the verb.
 | `dialog dismiss <page>` | Pre-register a one-shot handler to dismiss the next JS dialog |
 | `ask <prompt>` | Pause and prompt the human for a value via stdin (orchestration-level — takes no `<page>` argument; reads from operator stdin) |
 
-`navigate` and `snapshot` responses include `"challenge": true` when a Cloudflare interstitial is detected. See [Handling Challenges](../guides/handling-challenges.md).
+`navigate` and `page snapshot` responses include `"challenge": true` when a Cloudflare interstitial is detected. See [Handling Challenges](../guides/handling-challenges.md).
 
 > `navigate` steers an already-open page. Use `page open --url` to create a new tab and navigate in one step.
 
@@ -159,9 +159,9 @@ A session bundles everything needed to resume a browser state: all open pages (n
 
 | Command | Description |
 |---|---|
-| `record start <name>` | Begin recording commands as a replayable workflow |
-| `record stop [--out PATH]` | End recording; saves to `.browserctl/workflows/` or custom path |
-| `record status` | Show whether a recording is active |
+| `recording start <name>` | Begin recording commands as a replayable workflow |
+| `recording stop [--out PATH]` | End recording; saves to `.browserctl/workflows/` or custom path |
+| `recording status` | Show whether a recording is active |
 
 ---
 
@@ -244,7 +244,7 @@ If `--daemon` is omitted, `browserctl` connects to the default socket (`browserd
 
 ## Snapshot format
 
-`browserctl snapshot <page>` returns a JSON array of interactable elements:
+`browserctl page snapshot <name>` returns a JSON array of interactable elements:
 
 ```json
 [

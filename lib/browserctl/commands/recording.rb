@@ -7,8 +7,8 @@ require "browserctl/recording"
 
 module Browserctl
   module Commands
-    class Record
-      USAGE = "Usage: browserctl record start <name> | stop [--out PATH] | status"
+    class Recording
+      USAGE = "Usage: browserctl recording start <name> | stop [--out PATH] | status"
 
       def self.run(args)
         subcmd = args.shift
@@ -17,7 +17,7 @@ module Browserctl
         when "stop"   then run_stop(args)
         when "status" then run_status
         else
-          abort "#{USAGE}\nRun 'browserctl record <subcommand> --help' for details."
+          abort "#{USAGE}\nRun 'browserctl recording <subcommand> --help' for details."
         end
       end
 
@@ -25,28 +25,28 @@ module Browserctl
         private
 
         def run_start(args)
-          Optimist.options(args) { banner "Usage: browserctl record start <name>" }
-          name = args.shift or abort "usage: browserctl record start <name>"
+          Optimist.options(args) { banner "Usage: browserctl recording start <name>" }
+          name = args.shift or abort "usage: browserctl recording start <name>"
           abort "Invalid recording name #{name.inspect} — use only letters, digits, _ or -" \
             unless name =~ /\A[a-zA-Z0-9_-]{1,64}\z/
-          Recording.start(name)
+          Browserctl::Recording.start(name)
           puts JSON.generate({ ok: true, name: name })
         end
 
         def run_stop(args)
           opts = Optimist.options(args) do
-            banner "Usage: browserctl record stop [--out PATH]"
+            banner "Usage: browserctl recording stop [--out PATH]"
             opt :out, "Output path for workflow file", type: :string, short: "-o"
           end
-          name = Recording.stop
+          name = Browserctl::Recording.stop
           out  = opts[:out] || File.join(".browserctl/workflows", "#{name}.rb")
           FileUtils.mkdir_p(File.dirname(out))
-          Recording.generate_workflow(name, output_path: out)
+          Browserctl::Recording.generate_workflow(name, output_path: out)
           puts JSON.generate({ ok: true, name: name, path: out })
         end
 
         def run_status
-          active = Recording.active
+          active = Browserctl::Recording.active
           puts JSON.generate({ active: active })
         end
       end

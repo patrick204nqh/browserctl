@@ -18,7 +18,7 @@ require "browserctl/commands/fill"
 require "browserctl/commands/click"
 require "browserctl/commands/snapshot"
 require "browserctl/commands/screenshot"
-require "browserctl/commands/record"
+require "browserctl/commands/recording"
 require "browserctl/commands/resume"
 require "browserctl/commands/init"
 require "browserctl/commands/page"
@@ -64,10 +64,12 @@ def usage
       init
 
     Page:
-      page open <name> [--url URL]
-      page close <name>
+      page open       <name> [--url URL]
+      page close      <name>
       page list
-      page focus <name>
+      page focus      <name>
+      page snapshot   <name> [--format elements|html] [--diff]
+      page screenshot <name> [--out PATH] [--full]
 
     Interaction (page is always first arg after verb):
       navigate <page> <url>
@@ -75,8 +77,6 @@ def usage
                <page> --ref <ref> --value <value>
       click    <page> <selector>
                <page> --ref <ref>
-      snapshot <page> [--format elements|html] [--diff]
-      screenshot <page> [--out PATH] [--full]
       evaluate <page> <expression>
       url      <page>
       wait     <page> <selector> [--timeout N]
@@ -128,9 +128,9 @@ def usage
       state import <source> [--name NAME]
 
     Recording:
-      record start <name>
-      record stop  [--out PATH]
-      record status
+      recording start <name>
+      recording stop  [--out PATH]
+      recording status
 
     Workflow:
       workflow run      <name|file> [--check] [--params file] [--key value ...]
@@ -193,9 +193,9 @@ runner = Browserctl::Runner.new
 
 begin
   case cmd
-  when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
-  when "record"   then Browserctl::Commands::Record.run(args)
-  when "init"     then Browserctl::Commands::Init.run(args)
+  when "workflow"  then Browserctl::Commands::Workflow.run(runner, args)
+  when "recording" then Browserctl::Commands::Recording.run(args)
+  when "init"      then Browserctl::Commands::Init.run(args)
   when "ask"      then Browserctl::Commands::Ask.run(args)
   when "trace"    then Browserctl::Commands::Trace.run(args)
   when "migrate"  then Browserctl::Commands::Migrate.run(args)
@@ -229,8 +229,6 @@ begin
     when "navigate" then print_result(client.navigate(args[0], args[1]))
     when "fill"     then Browserctl::Commands::Fill.run(client, args)
     when "click"    then Browserctl::Commands::Click.run(client, args)
-    when "snapshot" then Browserctl::Commands::Snapshot.run(client, args)
-    when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
     when "evaluate" then print_result(client.evaluate(args[0], args[1]))
     when "url"      then print_result(client.url(args[0]))
     when "wait"

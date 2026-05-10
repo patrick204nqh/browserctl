@@ -63,7 +63,7 @@ module Browserctl
 
     def self.stop
       name = active
-      raise Browserctl::Error, "no active recording — run: browserctl record start <name>" unless name
+      raise Browserctl::Error, "no active recording — run: browserctl recording start <name>" unless name
 
       File.unlink(STATE_FILE)
       name

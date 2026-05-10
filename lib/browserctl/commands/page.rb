@@ -2,21 +2,25 @@
 
 require "optimist"
 require_relative "cli_output"
+require_relative "snapshot"
+require_relative "screenshot"
 
 module Browserctl
   module Commands
     module Page
       extend CliOutput
 
-      USAGE = "Usage: browserctl page <open|close|list|focus> [args]"
+      USAGE = "Usage: browserctl page <open|close|list|focus|snapshot|screenshot> [args]"
 
       def self.run(client, args)
         sub = args.shift or abort USAGE
         case sub
-        when "open"  then run_open(client, args)
-        when "close" then run_close(client, args)
-        when "list"  then run_list(client)
-        when "focus" then run_focus(client, args)
+        when "open"       then run_open(client, args)
+        when "close"      then run_close(client, args)
+        when "list"       then run_list(client)
+        when "focus"      then run_focus(client, args)
+        when "snapshot"   then Browserctl::Commands::Snapshot.run(client, args)
+        when "screenshot" then Browserctl::Commands::Screenshot.run(client, args)
         else abort "unknown page subcommand '#{sub}'\n#{USAGE}"
         end
       end

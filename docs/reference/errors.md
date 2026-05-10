@@ -50,7 +50,7 @@ Branch on the `code` field, not on the prose `error`/`message`.
 ```bash
 out=$(browserctl click checkout "#submit" 2>&1 1>/dev/null)
 case $(printf '%s' "$out" | jq -r '.code // "GENERIC"') in
-  SELECTOR_NOT_FOUND) browserctl snapshot checkout > /dev/null && retry ;;
+  SELECTOR_NOT_FOUND) browserctl page snapshot checkout > /dev/null && retry ;;
   AUTH_REQUIRED)      browserctl state rotate checkout ;;
   *)                  echo "unhandled: $out" >&2; exit 1 ;;
 esac

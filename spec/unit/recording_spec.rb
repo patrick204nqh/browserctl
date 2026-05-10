@@ -4,7 +4,7 @@ require "tmpdir"
 require "stringio"
 require "json"
 require "browserctl/recording"
-require "browserctl/commands/record"
+require "browserctl/commands/recording"
 
 RSpec.describe Browserctl::Recording do
   around do |example|
@@ -190,7 +190,7 @@ RSpec.describe Browserctl::Recording do
       expect(File.exist?(File.join(@tmp_dir, "gen.jsonl"))).to be(true)
     end
 
-    it "deletes the log by default (record stop semantics)" do
+    it "deletes the log by default (recording stop semantics)" do
       described_class.append("click", name: "p", selector: "a")
       described_class.generate_workflow("gen")
       expect(File.exist?(File.join(@tmp_dir, "gen.jsonl"))).to be(false)
@@ -439,7 +439,7 @@ RSpec.describe Browserctl::Recording do
   end
 end
 
-RSpec.describe Browserctl::Commands::Record do
+RSpec.describe Browserctl::Commands::Recording do
   def capture_stdout
     original = $stdout
     $stdout = StringIO.new
@@ -449,7 +449,7 @@ RSpec.describe Browserctl::Commands::Record do
     $stdout = original
   end
 
-  describe "record start" do
+  describe "recording start" do
     it "emits JSON with ok and name on start" do
       allow(Browserctl::Recording).to receive(:start)
       output = capture_stdout { described_class.run(%w[start my-rec]) }
@@ -459,7 +459,7 @@ RSpec.describe Browserctl::Commands::Record do
     end
   end
 
-  describe "record stop" do
+  describe "recording stop" do
     it "emits JSON with ok, name, and path on stop" do
       allow(Browserctl::Recording).to receive(:stop).and_return("my-workflow")
       allow(Browserctl::Recording).to receive(:generate_workflow)
@@ -472,7 +472,7 @@ RSpec.describe Browserctl::Commands::Record do
     end
   end
 
-  describe "record status" do
+  describe "recording status" do
     it "emits JSON with active name when recording" do
       allow(Browserctl::Recording).to receive(:active).and_return("my-rec")
       output = capture_stdout { described_class.run(["status"]) }

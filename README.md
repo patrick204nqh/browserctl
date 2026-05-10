@@ -21,7 +21,7 @@ Every browser automation tool restarts the browser when your script ends. That m
 ```bash
 browserd &                                               # start the daemon (headless)
 browserctl page open main --url https://example.com/login
-browserctl snapshot main                                 # AI-friendly JSON snapshot with ref IDs
+browserctl page snapshot main                                 # AI-friendly JSON snapshot with ref IDs
 browserctl fill main --ref e1 --value me@example.com    # interact by ref, no selectors needed
 browserctl click main --ref e2
 browserctl daemon stop
@@ -42,7 +42,7 @@ browserd &
 browserctl page open main --url https://moatazeldebsy.github.io/test-automation-practices/#/auth
 
 # 4. Snapshot — returns JSON with a ref ID per interactable element
-browserctl snapshot main
+browserctl page snapshot main
 # → [{"ref":"e1","tag":"input","attrs":{"data-test":"username-input"}}, {"ref":"e2",...}, {"ref":"e3","tag":"button","text":"Login",...}]
 
 # 5. Interact using the ref IDs from the snapshot
@@ -52,7 +52,7 @@ browserctl click main --ref e3
 
 # 6. Observe
 browserctl url main
-browserctl snapshot main --diff   # only what changed
+browserctl page snapshot main --diff       # only what changed
 
 # Session persistence: save now, pick up later
 browserctl session save my-session

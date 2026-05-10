@@ -38,7 +38,7 @@ res[:challenge]   # => true when Cloudflare interstitial is detected
 ```
 
 ```bash
-browserctl snapshot main   # JSON includes "challenge": true when blocked
+browserctl page snapshot main   # JSON includes "challenge": true when blocked
 ```
 
 When `challenge` is true, the workflow decides what to do: pause and wait, retry the navigation, or abort.

@@ -131,14 +131,14 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(ctx) { ctx.run_cli(%w[click any #x]) }
     ),
     CliErrorMatrix::Cell.new(
-      command: "snapshot", code: "DAEMON_UNREACHABLE",
+      command: "page snapshot", code: "DAEMON_UNREACHABLE",
       scenario: "no daemon socket",
-      runner: ->(ctx) { ctx.run_cli(%w[snapshot any]) }
+      runner: ->(ctx) { ctx.run_cli(%w[page snapshot any]) }
     ),
     CliErrorMatrix::Cell.new(
-      command: "screenshot", code: "DAEMON_UNREACHABLE",
+      command: "page screenshot", code: "DAEMON_UNREACHABLE",
       scenario: "no daemon socket",
-      runner: ->(ctx) { ctx.run_cli(%w[screenshot any]) }
+      runner: ->(ctx) { ctx.run_cli(%w[page screenshot any]) }
     ),
     CliErrorMatrix::Cell.new(
       command: "press", code: "DAEMON_UNREACHABLE",
