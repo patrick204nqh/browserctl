@@ -16,13 +16,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Supported matrix: Ruby 3.4 on macOS 14+. See docs/reference/compatibility.md.
-# Anything outside is "may work, no commitment" through 0.x.
+# Supported matrix: Ruby 3.4 on Ubuntu (latest GitHub-hosted runner).
+# See docs/reference/compatibility.md. Anything outside is "may work,
+# no commitment" through 0.x.
 
 jobs:
   lint:
     name: Lint
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
@@ -32,7 +33,7 @@ jobs:
 
   test:
     name: Test (Ruby 3.4)
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
@@ -42,17 +43,17 @@ jobs:
 
   replay-matrix:
     name: Replay (${{ matrix.browser }})
-    runs-on: macos-14
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         browser: [chrome, chromium, brave]
         include:
-          # Brave install on macOS uses Homebrew cask. If the cask install
-          # regresses, mark this cell soft so the rest of the matrix
-          # continues. TODO: revisit once the install path is stable in
-          # CI for a few weeks.
+          # Brave install on Ubuntu CI uses the official repo. If the repo
+          # signing/keyring step regresses, mark this cell soft so the rest
+          # of the matrix continues. TODO: revisit once the install path is
+          # stable in CI for a few weeks.
           - browser: brave
             soft: true
     continue-on-error: ${{ matrix.soft == true }}
@@ -62,15 +63,25 @@ jobs:
 
       - name: Install Chrome
         if: matrix.browser == 'chrome'
-        run: brew install --cask google-chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
 
       - name: Install Chromium
         if: matrix.browser == 'chromium'
-        run: brew install --cask chromium --no-quarantine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
 
       - name: Install Brave
         if: matrix.browser == 'brave'
-        run: brew install --cask brave-browser
+        run: |
+          sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
+            https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" \
+            | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+          sudo apt-get update
+          sudo apt-get install -y brave-browser
 
       - name: Replay matrix spec
         env:
