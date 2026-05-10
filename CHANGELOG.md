@@ -10,6 +10,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0](https://github.com/patrick204nqh/browserctl/compare/v0.12.0...v0.13.0) (2026-05-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* `--output` is now a reserved global flag on every browserctl command. Existing invocations are unaffected (default mode `text` preserves prior byte-for-byte output), but commands that previously consumed `--output` as a positional or sub-flag would now collide. None ship in this gem.
+* The CLI subcommands `snapshot`, `screenshot`, and `record` are removed with no aliases. Use `page snapshot`, `page screenshot`, and `recording start|stop|status` respectively.
+* The `session` CLI commands and the `session_*` JSON-RPC wire commands are removed. Users on v0.12 sessions must regenerate state via `state save` before upgrading. The workflow DSL methods `save_session`, `load_session`, and `list_sessions` are also removed; use `save_state` / `load_state` instead.
+* `store` and `fetch` wire commands are no longer part of the Fixed zone. They move to Extension and may change between minor releases with a changelog entry. The wire shape is unchanged in v0.13; the change is to the stability promise.
+
+### Features
+
+* narrow Fixed zone — store/fetch and known overlaps ([#158](https://github.com/patrick204nqh/browserctl/issues/158)) ([067cb42](https://github.com/patrick204nqh/browserctl/commit/067cb423b5966784abc8be2395808b5e4fa92ac0))
+* noun-verb CLI consistency ([#162](https://github.com/patrick204nqh/browserctl/issues/162)) ([8ceb729](https://github.com/patrick204nqh/browserctl/commit/8ceb72998008a8e6983cb4bad13ac5f286ad9ee8))
+* remove session commands and code path ([#161](https://github.com/patrick204nqh/browserctl/issues/161)) ([12d58d9](https://github.com/patrick204nqh/browserctl/commit/12d58d9aa26b2609c98e4b34ce072a6dbb8baafe))
+* unified --output {json,text,silent} on every CLI command ([#164](https://github.com/patrick204nqh/browserctl/issues/164)) ([f8947c6](https://github.com/patrick204nqh/browserctl/commit/f8947c655bc0b1f21bbf6067a059d6ab0b7d8b9e))
+
 ## [0.12.0](https://github.com/patrick204nqh/browserctl/compare/v0.11.0...v0.12.0) (2026-05-10)
 
 
