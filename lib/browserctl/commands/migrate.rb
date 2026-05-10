@@ -4,6 +4,7 @@ require_relative "../migrations"
 require_relative "../errors"
 require_relative "../error/codes"
 require_relative "../error/exit_codes"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -43,21 +44,42 @@ module Browserctl
       end
 
       def self.execute(path, target_version:, dry_run:, out:, err:)
-        format = Browserctl::Migrations.detect_format(path)
-        unless format
-          err.puts "Error: could not detect format for #{path} (expected .bctl, .jsonl, or .rb)"
-          exit Browserctl::Error::ExitCodes::PROTOCOL_MISMATCH
-        end
-
+        format = detect_format!(path, err: err)
         current = Browserctl::Migrations.detect_version(path, format)
-        out.puts "Detected: format=#{format} version=#{current.inspect} path=#{path}"
+        emit_detected(format, current, path, out)
 
-        if dry_run
-          plan_dry_run(format, current, target_version, out)
-          return
-        end
+        return plan_dry_run(format, current, target_version, out) if dry_run
 
         result = Browserctl::Migrations.run(path, target_version: target_version)
+        emit_applied(format, current, result, out)
+      end
+
+      def self.detect_format!(path, err:)
+        format = Browserctl::Migrations.detect_format(path)
+        return format if format
+
+        err.puts "Error: could not detect format for #{path} (expected .bctl, .jsonl, or .rb)"
+        exit Browserctl::Error::ExitCodes::PROTOCOL_MISMATCH
+      end
+      private_class_method :detect_format!
+
+      def self.emit_detected(format, current, path, out)
+        return unless OutputFormat.current.text?
+
+        out.puts "Detected: format=#{format} version=#{current.inspect} path=#{path}"
+      end
+      private_class_method :emit_detected
+
+      def self.emit_applied(format, current, result, out)
+        fmt = OutputFormat.current
+        if fmt.json?
+          fmt.emit({ ok: true, format: format, from: result.from, to: result.to,
+                     applied: result.applied.map { |m| { from: m.from_version, to: m.to_version } } },
+                   io: out)
+          return
+        end
+        return if fmt.silent?
+
         if result.applied.empty?
           out.puts "No migrations registered for #{format} v#{current}; nothing to do."
         else
@@ -65,11 +87,36 @@ module Browserctl
           result.applied.each { |m| out.puts "  - #{format} v#{m.from_version} -> v#{m.to_version}" }
         end
       end
+      private_class_method :emit_applied
 
       def self.plan_dry_run(format, current, target_version, out)
         target = target_version || latest_target(format, current)
         chain  = Browserctl::Migrations.find_path(format: format, from: current, to: target)
+        emit_plan(format, current, target, chain, out)
+      end
 
+      def self.emit_plan(format, current, target, chain, out)
+        fmt = OutputFormat.current
+        if fmt.json?
+          fmt.emit(plan_payload(format, current, target, chain), io: out)
+          return
+        end
+        return if fmt.silent?
+
+        emit_plan_text(format, current, target, chain, out)
+      end
+      private_class_method :emit_plan
+
+      def self.plan_payload(format, current, target, chain)
+        {
+          format: format, from: current, to: target, dry_run: true,
+          plan: chain&.map { |m| { from: m.from_version, to: m.to_version } },
+          registered: registered_for(format)
+        }
+      end
+      private_class_method :plan_payload
+
+      def self.emit_plan_text(format, current, target, chain, out)
         if chain.nil?
           out.puts "No migration path #{format} v#{current} -> v#{target} (registered: " \
                    "#{registered_for(format).inspect})"
@@ -80,6 +127,7 @@ module Browserctl
           chain.each { |m| out.puts "  - #{format} v#{m.from_version} -> v#{m.to_version}" }
         end
       end
+      private_class_method :emit_plan_text
 
       def self.latest_target(format, current)
         targets = registered_for(format)

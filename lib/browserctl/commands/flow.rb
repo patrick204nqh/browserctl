@@ -2,6 +2,7 @@
 
 require "json"
 require_relative "cli_output"
+require_relative "output_format"
 require_relative "../flow_registry"
 require_relative "../runner"
 
@@ -31,22 +32,22 @@ module Browserctl
         page_proxy = page_name ? Browserctl::PageProxy.new(page_name, client) : nil
 
         result = flow.run(page: page_proxy, client: client, **params)
-        puts JSON.generate(ok: true, flow: flow.name, result: serialisable(result))
+        OutputFormat.current.emit({ ok: true, flow: flow.name, result: serialisable(result) })
       rescue Browserctl::FlowError => e
         warn "Error: #{e.message}"
-        puts JSON.generate(ok: false, code: e.code, error: e.message)
+        OutputFormat.current.emit({ ok: false, code: e.code, error: e.message }) unless OutputFormat.current.silent?
         exit 1
       end
 
       def self.run_list
         entries = Browserctl::FlowRegistry.list
-        puts JSON.generate(flows: entries)
+        OutputFormat.current.emit({ flows: entries })
       end
 
       def self.run_describe(args)
         name = args.shift or abort "usage: browserctl flow describe <name>"
         flow = resolve(name)
-        puts JSON.pretty_generate(
+        payload = {
           name: flow.name,
           desc: flow.description,
           version: flow.version_string,
@@ -56,7 +57,8 @@ module Browserctl
           steps: flow.steps.map(&:label),
           postconditions: flow.postconditions.map(&:label),
           produces_state: !flow.produces_state_block.nil?
-        )
+        }
+        OutputFormat.current.emit(payload, JSON.pretty_generate(payload))
       end
 
       def self.resolve(name_or_path)

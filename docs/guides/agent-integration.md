@@ -179,6 +179,48 @@ Each daemon has its own socket, its own browser, and its own session state.
 
 ---
 
+## Output formats: `--output {json,text,silent}`
+
+Every command accepts `--output` and honours `BROWSERCTL_OUTPUT` (env var). Resolution order is **flag → env → `text` (default)**.
+
+| Mode     | Stdout                                                                                                          | When to use                                          |
+| -------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `text`   | Human-readable (today's default — JSON for most commands, prose for `init`/`pause`/`devtools`/`migrate`/`trace`). | Interactive shell use.                               |
+| `json`   | A JSON document on stdout. Stable shape per command.                                                            | Agents and scripts.                                  |
+| `silent` | Nothing. Exit code carries the result; structured error payload still goes to stderr.                           | Side-effect-only steps where output is noise.        |
+
+Errors always emit a structured JSON line on stderr (regardless of `--output`) — see [errors.md](../reference/errors.md).
+
+```bash
+# One-off: ask a single command for JSON.
+browserctl page list --output json
+
+# Run an entire agent session in JSON mode via env.
+export BROWSERCTL_OUTPUT=json
+browserctl page open main --url https://example.com
+browserctl page snapshot main                # JSON array of refs
+browserctl click main --ref e3
+browserctl page close main --output silent   # don't care about the response
+```
+
+A minimal Python tool wrapper:
+
+```python
+import json, os, subprocess
+
+env = {**os.environ, "BROWSERCTL_OUTPUT": "json"}
+
+def ctl(*args):
+    r = subprocess.run(["browserctl", *args], env=env, capture_output=True, text=True)
+    if r.returncode != 0:
+        # last line of stderr is the structured error payload
+        err = json.loads(r.stderr.strip().splitlines()[-1])
+        raise RuntimeError(f"{err['code']}: {err['message']}")
+    return json.loads(r.stdout) if r.stdout.strip() else None
+```
+
+---
+
 ## What next?
 
 - [Sessions and Pages](../concepts/sessions-and-pages.md) — how named pages and session persistence work

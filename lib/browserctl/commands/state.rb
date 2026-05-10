@@ -3,6 +3,7 @@
 require "io/console"
 require "json"
 require_relative "cli_output"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -131,7 +132,7 @@ module Browserctl
         destination = args.shift or abort "usage: browserctl state export <name> <destination>"
         require "browserctl/state"
         result = Browserctl::State.export(name, destination)
-        puts result.to_json
+        OutputFormat.current.emit(result)
       rescue Browserctl::State::Transport::TransportError, Browserctl::Error, ArgumentError => e
         warn "Error: #{e.message}"
         exit 1
@@ -142,7 +143,7 @@ module Browserctl
         source        = args.shift or abort "usage: browserctl state import <source> [--name NAME]"
         require "browserctl/state"
         result = Browserctl::State.import(source, name: name_override)
-        puts result.to_json
+        OutputFormat.current.emit(result)
       rescue Browserctl::State::Transport::TransportError,
              Browserctl::State::Bundle::BundleError,
              Browserctl::Error, ArgumentError => e

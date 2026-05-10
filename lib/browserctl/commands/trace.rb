@@ -5,6 +5,7 @@ require "time"
 require_relative "../logger"
 require_relative "../redactor"
 require_relative "../secret_resolver_registry"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -49,27 +50,55 @@ module Browserctl
         args = args.dup
         redact = !args.delete("--no-redact")
         session_filter = args.shift
+        redactor = resolve_redactor(redact, err)
+        records = collect_records(log_dir, session_filter, out)
+        emit_records(records, redactor, out) if records
+      end
 
-        if redact
-          redactor = build_redactor
-        else
-          redactor = nil
-          warn_no_redact(err)
-        end
+      def self.resolve_redactor(redact, err)
+        return nil unless redact
 
+        build_redactor
+      ensure
+        warn_no_redact(err) unless redact
+      end
+
+      def self.collect_records(log_dir, session_filter, out)
         records = load_records(log_dir)
         if records.empty?
-          out.puts "No log entries found in #{log_dir}"
-          return
+          emit_empty("No log entries found in #{log_dir}", out)
+          return nil
         end
 
         records = filter_session(records, session_filter)
         if records.empty?
-          out.puts "No entries match session=#{session_filter}"
-          return
+          emit_empty("No entries match session=#{session_filter}", out)
+          return nil
         end
 
-        render(records, out: out, redactor: redactor)
+        records
+      end
+
+      def self.emit_empty(message, out)
+        OutputFormat.current.emit({ records: [], message: message }, message, io: out)
+      end
+
+      def self.emit_records(records, redactor, out)
+        fmt = OutputFormat.current
+        if fmt.json?
+          fmt.emit({ records: records.map { |r| redact_record(r, redactor) } }, io: out)
+        elsif !fmt.silent?
+          render(records, out: out, redactor: redactor)
+        end
+      end
+
+      def self.redact_record(record, redactor)
+        return record unless redactor
+
+        line = JSON.generate(record)
+        JSON.parse(redactor.redact(line))
+      rescue JSON::ParserError
+        record
       end
 
       def self.build_redactor

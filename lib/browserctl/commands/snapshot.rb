@@ -2,6 +2,7 @@
 
 require "json"
 require "optimist"
+require_relative "output_format"
 
 module Browserctl
   module Commands
@@ -31,7 +32,11 @@ module Browserctl
             warn "Error: #{res[:error]}"
             exit 1
           end
-          puts(format == "elements" ? JSON.pretty_generate(res[:snapshot]) : res[:html])
+          if format == "elements"
+            OutputFormat.current.emit(res[:snapshot], JSON.pretty_generate(res[:snapshot]))
+          else
+            OutputFormat.current.emit({ html: res[:html] }, res[:html])
+          end
         end
       end
     end
