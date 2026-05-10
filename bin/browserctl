@@ -149,6 +149,17 @@ daemon_name = if daemon_idx
                 ARGV.delete_at(daemon_idx)
               end
 
+log_level_idx = ARGV.index("--log-level") || ARGV.index("-l")
+log_level     = if log_level_idx
+                  ARGV.delete_at(log_level_idx)
+                  ARGV.delete_at(log_level_idx)
+                end || ENV["BROWSERCTL_LOG_LEVEL"] || "info"
+
+# CLI invocations write structured JSON Lines to ~/.browserctl/logs/cli.log
+# alongside the existing stderr behaviour. Stderr stays human-readable so
+# scripted callers see no change.
+Browserctl.logger = Browserctl.build_logger(log_level, component: "cli")
+
 cmd  = ARGV.shift
 args = ARGV.dup
 
