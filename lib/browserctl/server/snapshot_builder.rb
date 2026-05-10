@@ -2,6 +2,7 @@
 
 require "nokogiri"
 require "browserctl/snapshot/ref"
+require "browserctl/snapshot/fingerprint"
 
 module Browserctl
   class SnapshotBuilder
@@ -9,8 +10,9 @@ module Browserctl
                       [role=button] [role=link] [role=menuitem]].freeze
     ATTRS        = %w[type name placeholder href aria-label role].freeze
 
-    def initialize(ref_deriver: Snapshot::RefDeriver.new)
+    def initialize(ref_deriver: Snapshot::RefDeriver.new, fingerprint: Snapshot::Fingerprint.new)
       @ref_deriver = ref_deriver
+      @fingerprint = fingerprint
     end
 
     def call(page)
@@ -27,7 +29,8 @@ module Browserctl
 
     def element_entry(elem, ref)
       { ref: ref, tag: elem.name, text: elem.text.strip.slice(0, 80),
-        selector: css_path(elem), attrs: element_attrs(elem) }
+        selector: css_path(elem), attrs: element_attrs(elem),
+        fingerprint: @fingerprint.build(elem) }
     end
 
     def element_attrs(elem)
