@@ -31,6 +31,7 @@ require "browserctl/commands/workflow"
 require "browserctl/commands/flow"
 require "browserctl/commands/dialog"
 require "browserctl/commands/ask"
+require "browserctl/commands/trace"
 
 def print_result(res)
   if res.is_a?(Hash) && (res[:error] || res["error"])
@@ -129,6 +130,9 @@ def usage
       flow list
       flow describe <name>
 
+    Trace:
+      trace [<session>]  Pretty timeline of CLI + daemon log events.
+
     Daemon:
       daemon start  [--headed] [--name NAME]
       daemon stop
@@ -172,6 +176,7 @@ when "workflow" then Browserctl::Commands::Workflow.run(runner, args)
 when "record"   then Browserctl::Commands::Record.run(args)
 when "init"     then Browserctl::Commands::Init.run(args)
 when "ask"      then Browserctl::Commands::Ask.run(args)
+when "trace"    then Browserctl::Commands::Trace.run(args)
 
 else
   client = Browserctl::Client.new(Browserctl.socket_path(daemon_name))
