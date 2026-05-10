@@ -1,67 +1,31 @@
 # frozen_string_literal: true
 
-require "nokogiri"
-require "browserctl/snapshot/ref"
-require "browserctl/snapshot/fingerprint"
+require "browserctl/snapshot/extractor"
+require "browserctl/snapshot/annotator"
+require "browserctl/snapshot/serializer"
 
 module Browserctl
+  # Orchestrates the snapshot pipeline:
+  #
+  #   page.body  ──Extractor──▶  [nodes]
+  #              ──Annotator──▶  [entries with ref + fingerprint]
+  #              ──Serializer─▶  wire-shape array
+  #
+  # Each stage is independently testable. Inject alternates via the keyword
+  # args for tests that want to isolate one stage.
   class SnapshotBuilder
-    INTERACTABLE = %w[a button input select textarea
-                      [role=button] [role=link] [role=menuitem]].freeze
-    ATTRS        = %w[type name placeholder href aria-label role].freeze
-
-    def initialize(ref_deriver: Snapshot::RefDeriver.new, fingerprint: Snapshot::Fingerprint.new)
-      @ref_deriver = ref_deriver
-      @fingerprint = fingerprint
+    def initialize(extractor: Snapshot::Extractor.new,
+                   annotator: Snapshot::Annotator.new,
+                   serializer: Snapshot::Serializer.new)
+      @extractor = extractor
+      @annotator = annotator
+      @serializer = serializer
     end
 
     def call(page)
-      doc = Nokogiri::HTML(page.body)
-      taken = {}
-      doc.css(INTERACTABLE.join(",")).map do |el|
-        ref = @ref_deriver.disambiguate(@ref_deriver.derive(el), taken)
-        taken[ref] = true
-        element_entry(el, ref)
-      end
-    end
-
-    private
-
-    def element_entry(elem, ref)
-      { ref: ref, tag: elem.name, text: elem.text.strip.slice(0, 80),
-        selector: css_path(elem), attrs: element_attrs(elem),
-        fingerprint: @fingerprint.build(elem) }
-    end
-
-    def element_attrs(elem)
-      elem.attributes.transform_values(&:value).slice(*ATTRS)
-    end
-
-    def css_path(node)
-      ancestors_until_html(node).map { |n| path_segment(n) }.join(" > ")
-    end
-
-    def ancestors_until_html(node)
-      [].tap do |acc|
-        while node && node.name != "html"
-          acc.unshift(node)
-          node = node.parent
-        end
-      end
-    end
-
-    def path_segment(node)
-      node.name + id_fragment(node) + class_fragment(node)
-    end
-
-    def id_fragment(node)
-      (id = node["id"]) && !id.empty? ? "##{id}" : ""
-    end
-
-    def class_fragment(node)
-      return "" if node["id"] && !node["id"].empty?
-
-      (klass = node["class"]&.split&.first) ? ".#{klass}" : ""
+      nodes = @extractor.call(page.body)
+      entries = @annotator.call(nodes)
+      @serializer.call(entries)
     end
   end
 end
