@@ -8,7 +8,7 @@ The narrow, defended support surface for browserctl through 0.x. Anything outsid
 |------|-------|
 | Ruby | 3.4 |
 | OS | Ubuntu (latest GitHub-hosted runner; `ubuntu-22.04` for the browser-replay job) |
-| Browsers | Chrome (stable), Chromium, Brave |
+| Browser | Chromium |
 
 CI exercises exactly this combination — see `.github/workflows/ci.yml`. If something is not in CI, it is not supported.
 
@@ -28,13 +28,13 @@ CI runs on Ubuntu (`ubuntu-latest` and `ubuntu-22.04`) GitHub-hosted runners. ma
 
 Practical assumption: a build that passes on Ubuntu also works on a developer's macOS for everyday use. Bugs that show up only on macOS or Windows are accepted as user reports without an SLA.
 
-### Browsers
+### Chromium only
 
-Chromium-family only. All three are installed on Ubuntu CI:
+Single-browser CI through 0.x. From the CDP/Ferrum perspective, Chrome stable is Chromium plus branding and proprietary codecs — passing on Chromium is treated as the floor for Chrome too. Brave (also Chromium-based) was previously a soft job and is now out of CI entirely.
 
-- **Chrome** via `browser-actions/setup-chrome@v1` (stable channel).
-- **Chromium** via `apt-get install chromium-browser`.
-- **Brave** via the official Brave apt repo. Marked **soft** in CI — failure does not fail the build until the install path has been stable for several weeks.
+Practical assumption: a build that passes on Chromium also works on Chrome and Brave for everyday use. Reports of Chrome/Brave-specific breakage are accepted but have no SLA.
+
+Chromium is installed on Ubuntu CI via `apt-get install chromium-browser`.
 
 ## Drift policy
 
@@ -46,6 +46,7 @@ Chromium-family only. All three are installed on Ubuntu CI:
 - Windows native or WSL2 (unsupported through 0.x)
 - Ruby 3.2 and earlier (never in CI)
 - Ruby 3.3 (gemspec-supported but not in CI — see above)
+- Chrome stable, Brave (Chromium-based; should work, no CI signal — see above)
 - Firefox, Safari, WebKit (out of scope; the driver is CDP-only)
 
 After 1.0, broaden as funded by either community contribution or sustained maintainer time.
