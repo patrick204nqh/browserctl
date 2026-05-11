@@ -132,7 +132,8 @@ module Browserctl
     log.progname  = component
     log.formatter = JsonlFormatter.new(component: component)
     log
-  rescue StandardError
+  rescue Errno::EACCES, Errno::ENOENT, Errno::EISDIR, Errno::ENOSPC, Errno::EROFS, IOError => e
+    warn "browserctl: failed to build jsonl logger (#{e.class}: #{e.message})"
     nil
   end
 

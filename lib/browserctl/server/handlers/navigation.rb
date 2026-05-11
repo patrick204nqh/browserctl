@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "json"
+require "timeout"
+
 module Browserctl
   class CommandDispatcher
     module Handlers
@@ -75,7 +78,8 @@ module Browserctl
         def capture_post_snapshot_digest(session)
           snapshot = @snapshot_builder.call(session.page)
           Browserctl::Replay::SnapshotDiff.digest(snapshot)
-        rescue StandardError
+        rescue JSON::ParserError, Timeout::Error, Browserctl::Error => e
+          Browserctl.logger.debug("post-snapshot digest skipped: #{e.class}: #{e.message}")
           nil
         end
 

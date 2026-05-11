@@ -128,4 +128,32 @@ RSpec.describe "Browserctl logger (structured JSONL)" do
       expect(File).not_to exist(File.join(Browserctl.log_dir, "daemon.log"))
     end
   end
+
+  describe ".build_jsonl_logger" do
+    it "returns nil and warns when filesystem errors occur (Errno::EACCES)" do
+      allow(FileUtils).to receive(:mkdir_p).and_raise(Errno::EACCES, "permission denied")
+
+      expect do
+        result = Browserctl.build_jsonl_logger(Logger::INFO, "daemon")
+        expect(result).to be_nil
+      end.to output(/failed to build jsonl logger.*EACCES/).to_stderr
+    end
+
+    it "returns nil and warns when an IOError is raised" do
+      allow(Browserctl::HeaderlessLogDevice).to receive(:new).and_raise(IOError, "device closed")
+
+      expect do
+        result = Browserctl.build_jsonl_logger(Logger::INFO, "daemon")
+        expect(result).to be_nil
+      end.to output(/failed to build jsonl logger.*IOError/).to_stderr
+    end
+
+    it "propagates unexpected exceptions (no longer rescued by bare StandardError)" do
+      allow(FileUtils).to receive(:mkdir_p).and_raise(RuntimeError, "unexpected")
+
+      expect do
+        Browserctl.build_jsonl_logger(Logger::INFO, "daemon")
+      end.to raise_error(RuntimeError, "unexpected")
+    end
+  end
 end
