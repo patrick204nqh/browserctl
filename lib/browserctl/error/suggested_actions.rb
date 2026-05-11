@@ -28,6 +28,17 @@ module Browserctl
           "Add the domain to your policy allowlist or use an allowed URL.",
         Codes::KEY_NOT_FOUND =>
           "Verify the key was stored in this daemon session before fetching.",
+        Codes::VALIDATION_FAILED =>
+          "Check the argument or DSL usage against the documented contract, then retry.",
+        Codes::INVALID_SELECTOR_REF =>
+          "Pass either a CSS selector or a stable ref — one is required.",
+        Codes::INVALID_STATE_NAME =>
+          "Use only letters, digits, '_' or '-' (max 64 chars) for state names.",
+        Codes::INVALID_DSL_USAGE =>
+          "Check the workflow/flow DSL call against docs/reference/style-guide.md; " \
+          "required blocks or arguments are missing.",
+        Codes::INVALID_FORMAT_VERSION =>
+          "Use a non-negative Integer for the format version header; see docs/reference/format-versions.md.",
         Codes::GENERIC => DEFAULT
       }.freeze
 

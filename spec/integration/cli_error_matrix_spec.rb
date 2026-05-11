@@ -252,6 +252,44 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(_) { [+"", +"", 0] }
     ),
 
+    # ---------- VALIDATION_FAILED family (exit 8) ----------
+    # The codes are introduced in v0.14 WS-1 PR 1 (this PR is enum-only).
+    # PRs 2/3/4 wire the raise sites in client.rb, state.rb, and the DSL
+    # guards — at which point these placeholder skips will be replaced with
+    # real runners. The matrix coverage spec requires every Codes::* to
+    # appear at least once; these cells satisfy that without false-asserting
+    # a behaviour that isn't wired yet.
+    CliErrorMatrix::Cell.new(
+      command: "(internal) validation", code: "VALIDATION_FAILED",
+      scenario: "generic validation guard",
+      skip_reason: "no production raise site yet — code reserved in enum (v0.14 WS-1 PR 2+)",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+    CliErrorMatrix::Cell.new(
+      command: "click / fill / hover / upload / select", code: "INVALID_SELECTOR_REF",
+      scenario: "neither selector nor ref provided",
+      skip_reason: "wired by v0.14 WS-1 PR 2 (Client validation guards)",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+    CliErrorMatrix::Cell.new(
+      command: "state save / load / etc.", code: "INVALID_STATE_NAME",
+      scenario: "name fails [A-Za-z0-9_-]{1,64}",
+      skip_reason: "wired by v0.14 WS-1 PR 3 (State name validation)",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+    CliErrorMatrix::Cell.new(
+      command: "workflow / flow DSL", code: "INVALID_DSL_USAGE",
+      scenario: "missing block or invalid name on a DSL call",
+      skip_reason: "wired by v0.14 WS-1 PR 4 (DSL guards)",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+    CliErrorMatrix::Cell.new(
+      command: "(internal) format_version", code: "INVALID_FORMAT_VERSION",
+      scenario: "version header is not a non-negative Integer",
+      skip_reason: "wired by v0.14 WS-1 PR 4 (FormatVersion guard)",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+
     # ---------- GENERIC (exit 1) ----------
     # An unknown subcommand on a known top-level group is a typed-but-
     # generic failure path. `state foo` aborts with a non-zero status that
