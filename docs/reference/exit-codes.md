@@ -18,6 +18,7 @@ For the meaning of each `Codes::*` string and its suggested-action template, see
 | `5`       | `PROTOCOL_MISMATCH`  | A persisted artifact's `version:` header is newer (or otherwise unsupported) than this build can read. | `PROTOCOL_MISMATCH`           | Loading a state bundle, recording, or workflow saved by a future browserctl.     |
 | `6`       | `SELECTOR_NOT_FOUND` | A CSS selector or stable ref did not match anything on the page.                        | `SELECTOR_NOT_FOUND`          | `click <page> "#missing"`; ref invalidated by a re-render.                       |
 | `7`       | `STATE_EXPIRED`      | A state bundle's TTL window has passed and it cannot be safely reused.                  | `STATE_EXPIRED`               | `state load` on a bundle past its `expires_at`.                                  |
+| `8`       | `VALIDATION_FAILED`  | A caller-side validation guard rejected the request. Covers the whole `VALIDATION_FAILED` family — agents can branch on `$? == 8` for any validation failure without caring which specific guard tripped. | `VALIDATION_FAILED`, `INVALID_SELECTOR_REF`, `INVALID_STATE_NAME`, `INVALID_DSL_USAGE`, `INVALID_FORMAT_VERSION` | `click` with no selector or ref; `state save "bad name!"`; flow DSL missing a required block. |
 
 ## Lookup contract
 

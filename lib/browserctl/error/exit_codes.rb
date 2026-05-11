@@ -25,6 +25,7 @@ module Browserctl
       PROTOCOL_MISMATCH  = 5
       SELECTOR_NOT_FOUND = 6
       STATE_EXPIRED      = 7
+      VALIDATION_FAILED  = 8
 
       # Canonical Codes string → exit status integer. Codes without an entry
       # (e.g. DOMAIN_NOT_ALLOWED, KEY_NOT_FOUND, SECRET_RESOLUTION_FAILED,
@@ -34,12 +35,22 @@ module Browserctl
       # DRIFT (2) is reserved for a future Codes::DRIFT and currently has no
       # entry in this table — drift-related raises fall through to GENERIC
       # until that code is introduced.
+      #
+      # The validation family (VALIDATION_FAILED parent plus INVALID_*
+      # specialisations) all map to exit code 8 — agents and scripts can
+      # branch on `$? == 8` for any caller-side validation failure without
+      # caring which specific guard tripped.
       TABLE = {
         Codes::AUTH_REQUIRED => AUTH_REQUIRED,
         Codes::DAEMON_UNREACHABLE => DAEMON_UNREACHABLE,
         Codes::PROTOCOL_MISMATCH => PROTOCOL_MISMATCH,
         Codes::SELECTOR_NOT_FOUND => SELECTOR_NOT_FOUND,
-        Codes::STATE_EXPIRED => STATE_EXPIRED
+        Codes::STATE_EXPIRED => STATE_EXPIRED,
+        Codes::VALIDATION_FAILED => VALIDATION_FAILED,
+        Codes::INVALID_SELECTOR_REF => VALIDATION_FAILED,
+        Codes::INVALID_STATE_NAME => VALIDATION_FAILED,
+        Codes::INVALID_DSL_USAGE => VALIDATION_FAILED,
+        Codes::INVALID_FORMAT_VERSION => VALIDATION_FAILED
       }.freeze
 
       # @param code [String, nil] a canonical code from {Browserctl::Error::Codes}

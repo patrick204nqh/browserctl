@@ -5,14 +5,19 @@ require "browserctl/errors"
 
 RSpec.describe Browserctl::Error::Codes do
   describe "constants" do
-    it "exposes every canonical v0.12 code as a frozen string" do
+    it "exposes every canonical code as a frozen string" do
       {
         AUTH_REQUIRED: "AUTH_REQUIRED",
         SELECTOR_NOT_FOUND: "SELECTOR_NOT_FOUND",
         STATE_EXPIRED: "STATE_EXPIRED",
         SECRET_RESOLUTION_FAILED: "SECRET_RESOLUTION_FAILED",
         DAEMON_UNREACHABLE: "DAEMON_UNREACHABLE",
-        PROTOCOL_MISMATCH: "PROTOCOL_MISMATCH"
+        PROTOCOL_MISMATCH: "PROTOCOL_MISMATCH",
+        VALIDATION_FAILED: "VALIDATION_FAILED",
+        INVALID_SELECTOR_REF: "INVALID_SELECTOR_REF",
+        INVALID_STATE_NAME: "INVALID_STATE_NAME",
+        INVALID_DSL_USAGE: "INVALID_DSL_USAGE",
+        INVALID_FORMAT_VERSION: "INVALID_FORMAT_VERSION"
       }.each do |const, value|
         actual = described_class.const_get(const)
         expect(actual).to eq(value)
@@ -32,6 +37,11 @@ RSpec.describe Browserctl::Error::Codes do
         "PROTOCOL_MISMATCH",
         "DOMAIN_NOT_ALLOWED",
         "KEY_NOT_FOUND",
+        "VALIDATION_FAILED",
+        "INVALID_SELECTOR_REF",
+        "INVALID_STATE_NAME",
+        "INVALID_DSL_USAGE",
+        "INVALID_FORMAT_VERSION",
         "GENERIC"
       )
       expect(described_class.all).to be_frozen

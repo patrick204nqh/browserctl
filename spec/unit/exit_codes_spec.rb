@@ -6,7 +6,7 @@ require "browserctl/errors"
 
 RSpec.describe Browserctl::Error::ExitCodes do
   describe "stable integer constants" do
-    it "pins each named status to its v0.12 wire-stable integer" do
+    it "pins each named status to its wire-stable integer" do
       {
         OK: 0,
         GENERIC: 1,
@@ -15,7 +15,8 @@ RSpec.describe Browserctl::Error::ExitCodes do
         DAEMON_UNREACHABLE: 4,
         PROTOCOL_MISMATCH: 5,
         SELECTOR_NOT_FOUND: 6,
-        STATE_EXPIRED: 7
+        STATE_EXPIRED: 7,
+        VALIDATION_FAILED: 8
       }.each do |const, value|
         expect(described_class.const_get(const)).to eq(value)
       end
@@ -29,7 +30,12 @@ RSpec.describe Browserctl::Error::ExitCodes do
         Browserctl::Error::Codes::DAEMON_UNREACHABLE => 4,
         Browserctl::Error::Codes::PROTOCOL_MISMATCH => 5,
         Browserctl::Error::Codes::SELECTOR_NOT_FOUND => 6,
-        Browserctl::Error::Codes::STATE_EXPIRED => 7
+        Browserctl::Error::Codes::STATE_EXPIRED => 7,
+        Browserctl::Error::Codes::VALIDATION_FAILED => 8,
+        Browserctl::Error::Codes::INVALID_SELECTOR_REF => 8,
+        Browserctl::Error::Codes::INVALID_STATE_NAME => 8,
+        Browserctl::Error::Codes::INVALID_DSL_USAGE => 8,
+        Browserctl::Error::Codes::INVALID_FORMAT_VERSION => 8
       }.each do |code, expected|
         expect(described_class.for(code)).to eq(expected)
       end

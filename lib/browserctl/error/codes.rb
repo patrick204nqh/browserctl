@@ -18,6 +18,18 @@ module Browserctl
       PROTOCOL_MISMATCH        = "PROTOCOL_MISMATCH"
       DOMAIN_NOT_ALLOWED       = "DOMAIN_NOT_ALLOWED"
       KEY_NOT_FOUND            = "KEY_NOT_FOUND"
+
+      # Validation family — introduced in v0.14 WS-1 to retire the remaining
+      # bare ArgumentError raises on public APIs and DSL guards.
+      # VALIDATION_FAILED is the parent code; the four INVALID_* members are
+      # specialisations that all share exit code 8. See docs/reference/errors.md
+      # for the per-code triggers.
+      VALIDATION_FAILED        = "VALIDATION_FAILED"
+      INVALID_SELECTOR_REF     = "INVALID_SELECTOR_REF"
+      INVALID_STATE_NAME       = "INVALID_STATE_NAME"
+      INVALID_DSL_USAGE        = "INVALID_DSL_USAGE"
+      INVALID_FORMAT_VERSION   = "INVALID_FORMAT_VERSION"
+
       GENERIC                  = "GENERIC"
 
       ALL = [
@@ -29,6 +41,11 @@ module Browserctl
         PROTOCOL_MISMATCH,
         DOMAIN_NOT_ALLOWED,
         KEY_NOT_FOUND,
+        VALIDATION_FAILED,
+        INVALID_SELECTOR_REF,
+        INVALID_STATE_NAME,
+        INVALID_DSL_USAGE,
+        INVALID_FORMAT_VERSION,
         GENERIC
       ].freeze
 
