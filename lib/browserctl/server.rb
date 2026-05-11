@@ -6,6 +6,7 @@ require "fileutils"
 require "timeout"
 require_relative "constants"
 require_relative "logger"
+require_relative "orphan_sweeper"
 require_relative "driver/cdp_page"
 require_relative "driver/cdp"
 require_relative "server/command_dispatcher"
@@ -23,6 +24,7 @@ module Browserctl
 
     def run
       guard_already_running!
+      OrphanSweeper.sweep
       write_pid
       server, idle = setup_server
       serve(server)
