@@ -1,0 +1,4 @@
+06:21:48.500 . INFO  daemon  ready                  port=1234
+06:21:49.000 . INFO  cli     click                  selector=#submit
+06:21:49.500 S INFO  cli     snap_a                 snapshot=snap_a url=https://example.com/page
+06:21:50.000 ! ERROR daemon  kaboom                 code=E_BOOM
