@@ -25,18 +25,39 @@ RSpec.describe RuboCop::Cop::Browserctl::TypedError do
     RUBY
   end
 
-  it "accepts a raise with code: matching a canonical SCREAMING_SNAKE string" do
+  it "accepts a raise Browserctl::Error.new(..., code: Codes::...) form" do
     expect(offenses_for(<<~RUBY)).to be_empty
-      raise Browserctl::Error, "auth", code: "AUTH_REQUIRED"
+      raise Browserctl::Error.new(
+        "expired",
+        code: Browserctl::Error::Codes::STATE_EXPIRED
+      )
     RUBY
   end
 
-  it "flags a raise whose explicit code: is a non-canonical string literal" do
+  it "flags ANY string literal passed as code:, even a canonical SCREAMING_SNAKE one" do
+    # Tightened in v0.14 WS-1 PR 5: every `code:` must be a Codes constant so
+    # renames in the enum propagate. No stale whitelist of allowed strings.
+    offenses = offenses_for(<<~RUBY)
+      raise Browserctl::Error, "auth", code: "AUTH_REQUIRED"
+    RUBY
+    expect(offenses.size).to eq(1)
+    expect(offenses.first.message).to include("string literal \"AUTH_REQUIRED\"")
+  end
+
+  it "flags a non-canonical string literal in code:" do
     offenses = offenses_for(<<~RUBY)
       raise Browserctl::Error, "boom", code: "state_expired"
     RUBY
     expect(offenses.size).to eq(1)
     expect(offenses.first.message).to include("string literal \"state_expired\"")
+  end
+
+  it "flags a string literal in the .new(..., code:) shape too" do
+    offenses = offenses_for(<<~RUBY)
+      raise Browserctl::Error.new("boom", code: "STATE_EXPIRED")
+    RUBY
+    expect(offenses.size).to eq(1)
+    expect(offenses.first.message).to include("string literal \"STATE_EXPIRED\"")
   end
 
   it "ignores plain Ruby raises that are not Browserctl errors" do
