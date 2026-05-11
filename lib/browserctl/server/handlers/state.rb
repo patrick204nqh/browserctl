@@ -8,7 +8,7 @@ module Browserctl
     module Handlers
       # Top-level state management — collapses cookies + localStorage +
       # sessionStorage into a single `.bctl` bundle. See lib/browserctl/state.rb.
-      module State
+      module StateRpc
         private
 
         def cmd_state_save(req)
