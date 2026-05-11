@@ -33,9 +33,18 @@ RSpec.describe Browserctl::State do
       expect { described_class.validate_name!("github_prod-1") }.not_to raise_error
     end
 
-    it "rejects unsafe names" do
-      expect { described_class.validate_name!("../oops") }.to raise_error(ArgumentError)
-      expect { described_class.validate_name!("with space") }.to raise_error(ArgumentError)
+    it "rejects unsafe names with a typed INVALID_STATE_NAME error" do
+      [
+        "../oops",
+        "with space",
+        "bang!",
+        "slash/in/name",
+        ("x" * 65)
+      ].each do |bad|
+        expect { described_class.validate_name!(bad) }.to raise_error(Browserctl::Error) { |err|
+          expect(err.code).to eq(Browserctl::Error::Codes::INVALID_STATE_NAME)
+        }
+      end
     end
   end
 

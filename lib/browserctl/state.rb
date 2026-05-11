@@ -83,7 +83,11 @@ module Browserctl
     def self.validate_name!(name)
       return if SAFE_NAME.match?(name.to_s)
 
-      raise ArgumentError, "invalid state name #{name.inspect} — use letters, digits, _ or - (max 64 chars)"
+      raise Browserctl::Error.new(
+        "invalid state name #{name.inspect} — use letters, digits, _ or - (max 64 chars)",
+        code: Browserctl::Error::Codes::INVALID_STATE_NAME,
+        context: { name: name }
+      )
     end
 
     # Persist a bundle. `payload` is a `State::Payload` value object carrying
