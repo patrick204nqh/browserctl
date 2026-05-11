@@ -48,7 +48,13 @@ module Browserctl
     end
 
     def step(label, retry_count: 0, timeout: nil, &block)
-      raise ArgumentError, "#{callable_kind} step '#{label}' requires a block" unless block
+      unless block
+        raise Browserctl::Error.new(
+          "#{callable_kind} step '#{label}' requires a block",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: callable_kind, action: :step, label: label }
+        )
+      end
 
       @steps << StepDef.new(label: label, block: block, retry_count: retry_count, timeout: timeout)
     end

@@ -63,19 +63,37 @@ module Browserctl
     end
 
     def precondition(label = "precondition", &block)
-      raise ArgumentError, "precondition '#{label}' requires a block" unless block
+      unless block
+        raise Browserctl::Error.new(
+          "precondition '#{label}' requires a block",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: :flow, action: :precondition, label: label }
+        )
+      end
 
       @preconditions << FlowConditionDef.new(kind: :precondition, label: label, block: block)
     end
 
     def postcondition(label = "postcondition", &block)
-      raise ArgumentError, "postcondition '#{label}' requires a block" unless block
+      unless block
+        raise Browserctl::Error.new(
+          "postcondition '#{label}' requires a block",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: :flow, action: :postcondition, label: label }
+        )
+      end
 
       @postconditions << FlowConditionDef.new(kind: :postcondition, label: label, block: block)
     end
 
     def produces_state(&block)
-      raise ArgumentError, "produces_state requires a block" unless block
+      unless block
+        raise Browserctl::Error.new(
+          "produces_state requires a block",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: :flow, action: :produces_state }
+        )
+      end
 
       @produces_state_block = block
     end
@@ -87,13 +105,22 @@ module Browserctl
     def compose(target_name)
       name = target_name.to_s
       if Browserctl.respond_to?(:lookup_workflow) && Browserctl.lookup_workflow(name)
-        raise ArgumentError,
-              "flow '#{@name}' cannot compose workflow '#{name}': flows return state, " \
-              "workflows share state — composition across kinds is not supported"
+        raise Browserctl::Error.new(
+          "flow '#{@name}' cannot compose workflow '#{name}': flows return state, " \
+          "workflows share state — composition across kinds is not supported",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: :flow, action: :compose, source: @name, target: name, reason: :cross_kind }
+        )
       end
 
       source = Browserctl.lookup_flow(name)
-      raise ArgumentError, "flow '#{name}' not found for composition" unless source
+      unless source
+        raise Browserctl::Error.new(
+          "flow '#{name}' not found for composition",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { dsl: :flow, action: :compose, source: @name, target: name, reason: :not_found }
+        )
+      end
 
       @steps.concat(source.steps)
     end
@@ -113,7 +140,11 @@ module Browserctl
     def validate_semver!(value, label:)
       return if value.to_s.match?(SEMVER_RE)
 
-      raise ArgumentError, "#{label} must be MAJOR.MINOR.PATCH (got #{value.inspect})"
+      raise Browserctl::Error.new(
+        "#{label} must be MAJOR.MINOR.PATCH (got #{value.inspect})",
+        code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+        context: { dsl: :flow, action: :validate_semver, label: label, value: value.to_s }
+      )
     end
 
     def missing_param_error(name)
@@ -166,7 +197,13 @@ module Browserctl
   @flow_registry       = {}
 
   def self.flow(name, &block)
-    raise ArgumentError, "Browserctl.flow requires a block" unless block
+    unless block
+      raise Browserctl::Error.new(
+        "Browserctl.flow requires a block",
+        code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+        context: { dsl: :flow, action: :define, name: name.to_s }
+      )
+    end
 
     flow = Flow.new(name).tap { |f| f.instance_exec(&block) }
     register_flow(flow)

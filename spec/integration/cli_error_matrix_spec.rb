@@ -68,6 +68,23 @@ RSpec.describe "CLI error code matrix" do
     path
   end
 
+  # Build a workflow .rb file whose body trips a DSL guard at load
+  # time — `step` declared without a block. `workflow run <file>`
+  # `load`s the file before any params are inspected, so the typed
+  # INVALID_DSL_USAGE error surfaces through the CLI's top-level
+  # Browserctl::Error rescue with exit 8.
+  def write_dsl_violation_workflow(dir)
+    path = File.join(dir, "bad_dsl.rb")
+    File.write(path, <<~RUBY)
+      # frozen_string_literal: true
+      # format_version: 1
+      Browserctl.workflow "bad_dsl" do
+        step "no-block-here"
+      end
+    RUBY
+    path
+  end
+
   # Each cell: [command_label, code, scenario, skip_reason_or_nil, runner_proc]
   # The runner_proc returns [out, err, status] for that scenario.
   matrix = [
@@ -279,15 +296,20 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(_) { [+"", +"", 0] }
     ),
     CliErrorMatrix::Cell.new(
-      command: "workflow / flow DSL", code: "INVALID_DSL_USAGE",
-      scenario: "missing block or invalid name on a DSL call",
-      skip_reason: "wired by v0.14 WS-1 PR 4 (DSL guards)",
-      runner: ->(_) { [+"", +"", 0] }
+      command: "workflow run (DSL)", code: "INVALID_DSL_USAGE",
+      scenario: "missing block on a step DSL call",
+      runner: lambda do |ctx|
+        Dir.mktmpdir do |dir|
+          path = ctx.write_dsl_violation_workflow(dir)
+          ctx.run_cli(["workflow", "run", path])
+        end
+      end
     ),
     CliErrorMatrix::Cell.new(
       command: "(internal) format_version", code: "INVALID_FORMAT_VERSION",
       scenario: "version header is not a non-negative Integer",
-      skip_reason: "wired by v0.14 WS-1 PR 4 (FormatVersion guard)",
+      skip_reason: "covered by unit spec — FormatVersion.stamp is an internal " \
+                   "writer; no CLI surface accepts a user-supplied version int",
       runner: ->(_) { [+"", +"", 0] }
     ),
 

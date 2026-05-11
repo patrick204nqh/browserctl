@@ -31,7 +31,9 @@ RSpec.describe Browserctl::Migrations do
 
     it "rejects registration without an upgrade block" do
       expect { described_class.register(format: :bundle, from_version: 1, to_version: 2) }
-        .to raise_error(ArgumentError, /upgrade block required/)
+        .to raise_error(Browserctl::Error, /upgrade block required/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+        end
     end
   end
 

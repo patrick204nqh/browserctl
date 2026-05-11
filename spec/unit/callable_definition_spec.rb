@@ -52,11 +52,10 @@ RSpec.describe Browserctl::CallableDefinition do
         step("noop") { :ok }
       end
 
-      expect do
-        Browserctl.flow(:composing_flow) do
-          compose :my_wf
-        end
-      end.to raise_error(ArgumentError, /cannot compose workflow/)
+      define = -> { Browserctl.flow(:composing_flow) { compose :my_wf } }
+      expect(&define).to raise_error(Browserctl::Error, /cannot compose workflow/) do |e|
+        expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+      end
     end
 
     it "allows a workflow to compose another workflow" do
