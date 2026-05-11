@@ -60,7 +60,11 @@ module Browserctl
     def self.validate_name!(name)
       return if SAFE_NAME.match?(name.to_s)
 
-      raise ArgumentError, "invalid flow name: #{name.inspect} — use letters, digits, _ and - only"
+      raise Browserctl::Error.new(
+        "invalid flow name: #{name.inspect} — use letters, digits, _ and - only",
+        code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+        context: { name: name.to_s }
+      )
     end
   end
 end

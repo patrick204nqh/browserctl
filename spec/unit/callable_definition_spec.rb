@@ -44,7 +44,10 @@ RSpec.describe Browserctl::CallableDefinition do
         Browserctl.workflow("composing_wf") do
           compose :my_flow
         end
-      end.to raise_error(ArgumentError, /cannot compose flow/)
+      end.to raise_error(Browserctl::Error) { |err|
+        expect(err.message).to match(/cannot compose flow/)
+        expect(err.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+      }
     end
 
     it "rejects a flow composing a workflow" do

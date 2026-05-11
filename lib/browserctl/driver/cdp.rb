@@ -80,7 +80,11 @@ module Browserctl
         when "brave"
           resolve_brave_path
         else
-          raise ArgumentError, "Unknown browser: #{@browser.inspect}"
+          raise Browserctl::Error.new(
+            "Unknown browser: #{@browser.inspect}",
+            code: Browserctl::Error::Codes::VALIDATION_FAILED,
+            context: { browser: @browser }
+          )
         end
       end
 
