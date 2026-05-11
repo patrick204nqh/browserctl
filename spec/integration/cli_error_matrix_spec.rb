@@ -268,7 +268,8 @@ RSpec.describe "CLI error code matrix" do
     CliErrorMatrix::Cell.new(
       command: "click / fill / hover / upload / select", code: "INVALID_SELECTOR_REF",
       scenario: "neither selector nor ref provided",
-      skip_reason: "wired by v0.14 WS-1 PR 2 (Client validation guards)",
+      skip_reason: "covered by unit spec (spec/unit/client_validation_guards_spec.rb) — " \
+                   "CLI subcommands abort with usage text before reaching the Client guard",
       runner: ->(_) { [+"", +"", 0] }
     ),
     CliErrorMatrix::Cell.new(
