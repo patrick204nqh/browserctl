@@ -29,7 +29,7 @@ module Browserctl
     include Handlers::DevTools
     include Handlers::DaemonControl
     include Handlers::Storage
-    include Handlers::State
+    include Handlers::StateRpc
     include Handlers::Interaction
 
     COMMAND_MAP = {
