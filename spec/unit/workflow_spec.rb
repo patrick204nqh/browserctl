@@ -105,8 +105,14 @@ RSpec.describe Browserctl::WorkflowDefinition do
 end
 
 RSpec.describe "compose" do
-  before { Browserctl.instance_variable_set(:@registry, {}) }
-  after  { Browserctl.instance_variable_set(:@registry, {}) }
+  before do
+    Browserctl.instance_variable_set(:@registry, {})
+    Browserctl.flow_registry_reset!
+  end
+  after do
+    Browserctl.instance_variable_set(:@registry, {})
+    Browserctl.flow_registry_reset!
+  end
 
   it "inlines steps from another workflow" do
     Browserctl.workflow "shared" do

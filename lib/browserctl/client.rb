@@ -4,18 +4,19 @@ require "fileutils"
 require "socket"
 require "json"
 require_relative "constants"
-require_relative "recording"
+require_relative "client/recording_interceptor"
 
 module Browserctl
   # Thin IPC client that wraps each browserd command as a Ruby method call.
   class Client
-    def initialize(socket_path = nil)
+    def initialize(socket_path = nil, recording_interceptor: nil)
       @socket_path = socket_path || auto_discover_socket
+      @recording_interceptor = recording_interceptor
     end
 
     def call(cmd, **params)
       result = communicate(JSON.generate({ cmd: cmd }.merge(params)))
-      Recording.append(cmd, response: result, **params) if result[:ok]
+      recording_interceptor.append(cmd, response: result, params: params)
       result
     rescue Errno::ENOENT, Errno::ECONNREFUSED
       raise DaemonUnavailableError, "browserd is not running — start it with: browserd"
@@ -57,7 +58,7 @@ module Browserctl
       end
 
       call("click", name: name, selector: selector, ref: ref,
-                    capture_post_snapshot: Recording.active ? true : nil)
+                    capture_post_snapshot: recording_interceptor.capture_post_snapshot_flag)
     end
 
     # Fills an input element with a value.
@@ -76,7 +77,7 @@ module Browserctl
       end
 
       call("fill", name: name, selector: selector, ref: ref, value: value,
-                   capture_post_snapshot: Recording.active ? true : nil)
+                   capture_post_snapshot: recording_interceptor.capture_post_snapshot_flag)
     end
 
     # Takes a screenshot of a named page.
@@ -356,6 +357,10 @@ module Browserctl
     end
 
     private
+
+    def recording_interceptor
+      @recording_interceptor ||= RecordingInterceptor.new
+    end
 
     def auto_discover_socket
       default = Browserctl.socket_path
