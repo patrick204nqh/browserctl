@@ -27,6 +27,8 @@ What is Stable:
 - `Browserctl::Client` public method names and keyword arguments
 - `PageProxy` public methods (the workflow DSL page object)
 
+The Stable surface is locked by `spec/fixtures/public_surface.yml` and enforced by `spec/public_surface_spec.rb`. Drift (any added, removed, or renamed public symbol on `Browserctl::Client`, `Browserctl::PageProxy`, or the `bin/browserctl` top-level command dispatch table) fails CI. Any PR that intentionally changes the Stable surface must update `spec/fixtures/public_surface.yml` in the same commit; `public_surface_spec` enforces parity.
+
 ### Extension — Plugin & Workflow layer
 **The plugin registration API, workflow DSL, and internal Ruby APIs.**
 
