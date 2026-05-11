@@ -48,7 +48,13 @@ module Browserctl
     # @param ref [String, nil] snapshot ref (e.g. "e3")
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def click(name, selector = nil, ref: nil)
-      raise ArgumentError, "click: provide selector or ref:" unless selector || ref
+      unless selector || ref
+        raise Browserctl::Error.new(
+          "click: provide selector or ref",
+          code: Browserctl::Error::Codes::INVALID_SELECTOR_REF,
+          context: { method: :click, name: name }
+        )
+      end
 
       call("click", name: name, selector: selector, ref: ref,
                     capture_post_snapshot: Recording.active ? true : nil)
@@ -61,7 +67,13 @@ module Browserctl
     # @param ref [String, nil] snapshot ref
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def fill(name, selector = nil, value = nil, ref: nil)
-      raise ArgumentError, "fill: provide selector or ref:" unless selector || ref
+      unless selector || ref
+        raise Browserctl::Error.new(
+          "fill: provide selector or ref",
+          code: Browserctl::Error::Codes::INVALID_SELECTOR_REF,
+          context: { method: :fill, name: name }
+        )
+      end
 
       call("fill", name: name, selector: selector, ref: ref, value: value,
                    capture_post_snapshot: Recording.active ? true : nil)
@@ -243,7 +255,13 @@ module Browserctl
     # @param selector [String] CSS selector
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def hover(name, selector = nil, ref: nil)
-      raise ArgumentError, "hover: provide selector or ref:" unless selector || ref
+      unless selector || ref
+        raise Browserctl::Error.new(
+          "hover: provide selector or ref",
+          code: Browserctl::Error::Codes::INVALID_SELECTOR_REF,
+          context: { method: :hover, name: name }
+        )
+      end
 
       call("hover", name: name, selector: selector, ref: ref)
     end
@@ -255,7 +273,13 @@ module Browserctl
     # @param ref [String, nil] element ref from a prior snapshot
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def upload(name, selector = nil, path = nil, ref: nil)
-      raise ArgumentError, "upload: provide selector or ref:" unless selector || ref
+      unless selector || ref
+        raise Browserctl::Error.new(
+          "upload: provide selector or ref",
+          code: Browserctl::Error::Codes::INVALID_SELECTOR_REF,
+          context: { method: :upload, name: name }
+        )
+      end
 
       call("upload", name: name, selector: selector, ref: ref, path: path)
     end
@@ -267,7 +291,13 @@ module Browserctl
     # @param ref [String, nil] element ref from a prior snapshot
     # @return [Hash] `{ ok: true }` or `{ error: }`
     def select(name, selector = nil, value = nil, ref: nil)
-      raise ArgumentError, "select: provide selector or ref:" unless selector || ref
+      unless selector || ref
+        raise Browserctl::Error.new(
+          "select: provide selector or ref",
+          code: Browserctl::Error::Codes::INVALID_SELECTOR_REF,
+          context: { method: :select, name: name }
+        )
+      end
 
       call("select", name: name, selector: selector, ref: ref, value: value)
     end
