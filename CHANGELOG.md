@@ -10,6 +10,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1](https://github.com/patrick204nqh/browserctl/compare/v0.13.0...v0.13.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **daemon:** sweep orphaned Ferrum chromes on browserd startup ([#177](https://github.com/patrick204nqh/browserctl/issues/177)) ([0f6f9ab](https://github.com/patrick204nqh/browserctl/commit/0f6f9aba9165fc1c03c3ccb0e0e32e32b6a19efb)), closes [#176](https://github.com/patrick204nqh/browserctl/issues/176)
+* **test:** raise daemon start timeout to 30s for snap Chromium ([#172](https://github.com/patrick204nqh/browserctl/issues/172)) ([107fcdb](https://github.com/patrick204nqh/browserctl/commit/107fcdb67f4e34b18e228fb2d5ef7837ec509526))
+
 ## [0.13.0](https://github.com/patrick204nqh/browserctl/compare/v0.12.0...v0.13.0) (2026-05-10)
 
 
