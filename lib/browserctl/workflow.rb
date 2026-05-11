@@ -320,9 +320,12 @@ module Browserctl
     def compose(workflow_name)
       name = workflow_name.to_s
       if Browserctl.lookup_flow(name)
-        raise ArgumentError,
-              "workflow '#{@name}' cannot compose flow '#{name}': flows return state, " \
-              "workflows share state — composition across kinds is not supported"
+        raise Browserctl::Error.new(
+          "workflow '#{@name}' cannot compose flow '#{name}': flows return state, " \
+          "workflows share state — composition across kinds is not supported",
+          code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+          context: { workflow: @name, flow: name, kind: :cross_kind_compose }
+        )
       end
 
       source = Browserctl.lookup_workflow(name)

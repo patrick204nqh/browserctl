@@ -72,7 +72,10 @@ RSpec.describe Browserctl::FlowRegistry do
 
     it "rejects unsafe flow names" do
       expect { described_class.resolve("../etc/passwd") }
-        .to raise_error(ArgumentError, /invalid flow name/)
+        .to raise_error(Browserctl::Error) { |err|
+          expect(err.message).to match(/invalid flow name/)
+          expect(err.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+        }
     end
 
     it "prefers the project file when both project and stdlib define the same name" do

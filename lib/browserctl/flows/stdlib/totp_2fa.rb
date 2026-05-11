@@ -31,7 +31,11 @@ module Browserctl
 
       def char_to_bits(char)
         idx = BASE32_ALPHABET.index(char) or
-          raise ArgumentError, "invalid base32 char #{char.inspect}"
+          raise Browserctl::Error.new(
+            "invalid base32 char #{char.inspect}",
+            code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+            context: { char: char }
+          )
         idx.to_s(2).rjust(5, "0")
       end
     end
