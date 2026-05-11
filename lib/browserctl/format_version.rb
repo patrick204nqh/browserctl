@@ -29,7 +29,13 @@ module Browserctl
 
     # Returns the canonical header string for a given integer version.
     def stamp(version:)
-      raise ArgumentError, "version must be a non-negative Integer" unless version.is_a?(Integer) && version >= 0
+      unless version.is_a?(Integer) && version >= 0
+        raise Browserctl::Error.new(
+          "version must be a non-negative Integer",
+          code: Browserctl::Error::Codes::INVALID_FORMAT_VERSION,
+          context: { value: version }
+        )
+      end
 
       "version: #{version}\n"
     end

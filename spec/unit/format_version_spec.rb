@@ -13,12 +13,21 @@ RSpec.describe Browserctl::FormatVersion do
     end
 
     it "rejects non-integer versions" do
-      expect { described_class.stamp(version: "1") }.to raise_error(ArgumentError)
-      expect { described_class.stamp(version: 1.0) }.to raise_error(ArgumentError)
+      expect { described_class.stamp(version: "1") }
+        .to raise_error(Browserctl::Error) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_FORMAT_VERSION)
+        end
+      expect { described_class.stamp(version: 1.0) }
+        .to raise_error(Browserctl::Error) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_FORMAT_VERSION)
+        end
     end
 
     it "rejects negative versions" do
-      expect { described_class.stamp(version: -1) }.to raise_error(ArgumentError)
+      expect { described_class.stamp(version: -1) }
+        .to raise_error(Browserctl::Error) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_FORMAT_VERSION)
+        end
     end
   end
 

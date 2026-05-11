@@ -25,35 +25,36 @@ RSpec.describe Browserctl::Flow do
 
     it "rejects non-semver versions" do
       expect { Browserctl.flow("x") { version "1.2" } }
-        .to raise_error(ArgumentError, /MAJOR\.MINOR\.PATCH/)
+        .to raise_error(Browserctl::Error, /MAJOR\.MINOR\.PATCH/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+        end
     end
 
     it "rejects non-semver requires_browserctl" do
       expect { Browserctl.flow("x") { requires_browserctl "v1" } }
-        .to raise_error(ArgumentError, /MAJOR\.MINOR\.PATCH/)
+        .to raise_error(Browserctl::Error, /MAJOR\.MINOR\.PATCH/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+        end
     end
 
     it "requires a block at the top level" do
-      expect { Browserctl.flow("x") }.to raise_error(ArgumentError, /requires a block/)
+      expect { Browserctl.flow("x") }
+        .to raise_error(Browserctl::Error, /requires a block/) do |e|
+          expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+        end
     end
 
     it "requires blocks for step, precondition, postcondition, produces_state" do
-      expect { Browserctl.flow("x") { step("s") } }.to raise_error(ArgumentError, /step.*requires a block/)
-      expect do
-        Browserctl.flow("x") do
-          precondition("p")
-        end
-      end.to raise_error(ArgumentError, /precondition.*requires a block/)
-      expect do
-        Browserctl.flow("x") do
-          postcondition("p")
-        end
-      end.to raise_error(ArgumentError, /postcondition.*requires a block/)
-      expect do
-        Browserctl.flow("x") do
-          produces_state
-        end
-      end.to raise_error(ArgumentError, /produces_state.*requires a block/)
+      expect_dsl_block_required { Browserctl.flow("x") { step("s") } }
+      expect_dsl_block_required { Browserctl.flow("x") { precondition("p") } }
+      expect_dsl_block_required { Browserctl.flow("x") { postcondition("p") } }
+      expect_dsl_block_required { Browserctl.flow("x") { produces_state } }
+    end
+
+    def expect_dsl_block_required(&block)
+      expect(&block).to raise_error(Browserctl::Error, /requires a block/) do |e|
+        expect(e.code).to eq(Browserctl::Error::Codes::INVALID_DSL_USAGE)
+      end
     end
 
     it "coerces secret_ref params to secret: true" do

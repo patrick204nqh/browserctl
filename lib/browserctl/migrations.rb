@@ -42,7 +42,14 @@ module Browserctl
       # block receives the file path as a keyword argument and must rewrite
       # the file in place to the new version.
       def register(format:, from_version:, to_version:, &upgrade)
-        raise ArgumentError, "upgrade block required" unless upgrade
+        unless upgrade
+          raise Browserctl::Error.new(
+            "upgrade block required",
+            code: Browserctl::Error::Codes::INVALID_DSL_USAGE,
+            context: { dsl: :migrations, action: :register, format: format,
+                       from_version: from_version, to_version: to_version }
+          )
+        end
 
         @mutex.synchronize do
           @registry << Migration.new(format: format, from_version: from_version,
