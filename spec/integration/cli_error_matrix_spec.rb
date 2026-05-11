@@ -274,7 +274,7 @@ RSpec.describe "CLI error code matrix" do
     CliErrorMatrix::Cell.new(
       command: "state save / load / etc.", code: "INVALID_STATE_NAME",
       scenario: "name fails [A-Za-z0-9_-]{1,64}",
-      skip_reason: "wired by v0.14 WS-1 PR 3 (State name validation)",
+      skip_reason: "covered by unit spec — CLI state path connects to daemon before validation",
       runner: ->(_) { [+"", +"", 0] }
     ),
     CliErrorMatrix::Cell.new(
