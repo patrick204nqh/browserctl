@@ -1,14 +1,8 @@
 # browserctl — Vision & Roadmap
 
-> _Navigate the web. Stay in session._
+> persistent browser sessions with human-in-the-loop.
 
----
-
-## What browserctl Is
-
-browserctl is a **persistent browser automation daemon and CLI**, purpose-built for AI agents and developer workflows. Unlike Selenium or Playwright, which restart the browser on every script run, browserctl keeps a named browser session alive — preserving cookies, localStorage, open tabs, and page state across discrete commands.
-
-It is the difference between a browser **you restart** and a browser **you steer**.
+This document is the philosophy and the release roadmap. For the product narrative — what browserctl is, who it's for, and the use cases it serves — see [product.md](product.md).
 
 ---
 
