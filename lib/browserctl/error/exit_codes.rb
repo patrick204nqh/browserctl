@@ -50,7 +50,8 @@ module Browserctl
         Codes::INVALID_SELECTOR_REF => VALIDATION_FAILED,
         Codes::INVALID_STATE_NAME => VALIDATION_FAILED,
         Codes::INVALID_DSL_USAGE => VALIDATION_FAILED,
-        Codes::INVALID_FORMAT_VERSION => VALIDATION_FAILED
+        Codes::INVALID_FORMAT_VERSION => VALIDATION_FAILED,
+        Codes::INVALID_ARGUMENT => VALIDATION_FAILED
       }.freeze
 
       # @param code [String, nil] a canonical code from {Browserctl::Error::Codes}

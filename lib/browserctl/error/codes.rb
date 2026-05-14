@@ -29,6 +29,7 @@ module Browserctl
       INVALID_STATE_NAME       = "INVALID_STATE_NAME"
       INVALID_DSL_USAGE        = "INVALID_DSL_USAGE"
       INVALID_FORMAT_VERSION   = "INVALID_FORMAT_VERSION"
+      INVALID_ARGUMENT         = "INVALID_ARGUMENT"
 
       GENERIC                  = "GENERIC"
 
@@ -46,6 +47,7 @@ module Browserctl
         INVALID_STATE_NAME,
         INVALID_DSL_USAGE,
         INVALID_FORMAT_VERSION,
+        INVALID_ARGUMENT,
         GENERIC
       ].freeze
 

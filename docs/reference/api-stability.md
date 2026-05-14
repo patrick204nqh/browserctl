@@ -94,7 +94,20 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 | `pause` | `name` | `message` | `ok`, `paused: true`, `message` |
 | `resume` | `name` | — | `ok`, `paused: false` |
 
-### Cookies
+### Data (v0.15+, unified — Fixed)
+
+| Command | Required params | Optional params | Response fields |
+|---------|----------------|----------------|-----------------|
+| `data_get` | `name`, `key`, `scope` | — | `ok`, `scope`, `key`, `value` |
+| `data_set` | `name`, `key`, `value`, `scope` | `domain` (cookies only), `path` | `ok`, `scope`, `key` |
+| `data_delete` | `name`, `scope` | — | `ok`, `scope`, `deleted` |
+| `data_list` | `name`, `scope` | — | `ok`, `scope`, `entries`, `count` |
+
+`scope` must be one of `cookies`, `localStorage`, `sessionStorage`. Invalid
+scope returns a typed `INVALID_ARGUMENT` error. Introduced by ADR-0021 as
+the consolidation of the legacy `cookie *` and `storage *` families.
+
+### Cookies (deprecated v0.15, removed at 1.0)
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
@@ -105,7 +118,11 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 
 `export_cookies` has no wire command — it is implemented client-side by calling `cookies` then writing a file.
 
-### Storage
+These aliases delegate to the `data` verbs above; CLI use emits a one-line
+deprecation warning to stderr (suppressed under `--output json`). See the
+"Removed at 1.0" section below.
+
+### Storage (deprecated v0.15, removed at 1.0)
 
 | Command | Required params | Optional params | Response fields |
 |---------|----------------|----------------|-----------------|
@@ -114,6 +131,10 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 | `storage_export` | `name`, `path` | `stores` (`"local"`\|`"session"`\|`"all"`, default `"all"`) | `ok`, `path`, `key_count` |
 | `storage_import` | `name`, `path` | — | `ok`, `origins`, `key_count` |
 | `storage_delete` | `name` | `stores` (default `"all"`) | `ok` |
+
+These aliases delegate to the `data` verbs above; CLI use emits a one-line
+deprecation warning to stderr (suppressed under `--output json`). See the
+"Removed at 1.0" section below.
 
 ### DevTools
 
@@ -167,26 +188,65 @@ The interface is **not** a plugin point. Per the v0.15 plan, shipping a non-Ferr
 
 ---
 
-## Known overlapping surfaces — consolidation deferred to v2.0
+## Removed at 1.0
 
-The Fixed zone today contains two parallel APIs for browser-side persistence:
+The following Fixed-zone surfaces are deprecated in v0.15 and removed at the
+1.0 cut. They remain functional throughout the v0.15 soak; CLI invocations
+emit a one-line deprecation warning to stderr (suppressed under
+`--output json`). Migration target is the unified `data --scope ...` verb
+family — see ADR-0021 (`docs/architecture/decisions/0021-data-verb-consolidation.md`)
+for the design.
 
-- Cookies: `set_cookie`, `import_cookies`, `export_cookies` (client-side), `delete_cookies`
-- Web storage: `storage_get`, `storage_set`, `storage_export`, `storage_import`, `storage_delete`
+| Surface (deprecated) | Replacement | Notes |
+|---|---|---|
+| Wire: `cookies` | `data_list` with `scope: "cookies"` | Returns full cookie array; same per-cookie shape. |
+| Wire: `set_cookie` | `data_set` with `scope: "cookies"` | `domain:` still required. |
+| Wire: `delete_cookies` | `data_delete` with `scope: "cookies"` | Returns `deleted:` count. |
+| Wire: `import_cookies` | `data_set` per cookie with `scope: "cookies"` | Or land a `data_import` follow-up. |
+| Wire: `storage_get` | `data_get` with `scope: "localStorage"` / `"sessionStorage"` | Long scope names canonical. |
+| Wire: `storage_set` | `data_set` with `scope: "localStorage"` / `"sessionStorage"` | |
+| Wire: `storage_delete` | `data_delete` with `scope: "localStorage"` / `"sessionStorage"` | |
+| Wire: `storage_export` / `storage_import` | `data_list` + client-side file I/O | `data export` / `data import` may land pre-1.0. |
+| Client: `Client#cookies`, `#set_cookie`, `#delete_cookies`, `#import_cookies`, `#export_cookies` | `Client#data_get`, `#data_set`, `#data_delete`, `#data_list` | Same lifecycle as the wire verbs. |
+| Client: `Client#storage_get`, `#storage_set`, `#storage_export`, `#storage_import`, `#storage_delete` | same as above | |
+| CLI: `cookie <op>` | `data <op> --scope cookies` | Old form emits deprecation warning. |
+| CLI: `storage <op>` | `data <op> --scope localStorage\|sessionStorage` | Old form emits deprecation warning; `--store local\|session` short forms accepted on the wire as v0.15-only aliases. |
 
-The shapes mirror each other deliberately, but the split between cookies and `localStorage`/`sessionStorage` is a browser-platform distinction, not a browserctl one. A unified persistence surface (single `state_export` / `state_import` covering cookies + storage, with a typed payload) would be a cleaner public API.
+Deprecation window:
 
-That consolidation is **deferred to v2.0**. It is not pursued pre-1.0 because:
+| Milestone | State of the deprecated surfaces |
+|---|---|
+| v0.14 (current) | Sole API. |
+| v0.15 | Aliases that delegate to `data`, emit a deprecation warning, stay covered by integration tests. |
+| v0.15 soak (~two months) | Aliases still ship; no further changes. |
+| 1.0 cut | Aliases and warning lines removed. Only `data` remains. |
 
-- The cost of designing, migrating callers, and re-locking the Fixed zone is high relative to the user-visible benefit before 1.0.
-- Both APIs work today and have integration coverage; the duplication is real but not broken.
-- Locking the Fixed zone at 1.0 with both surfaces present is acceptable — neither will be removed in the 1.x line.
-
-When v2.0 is on the table, this section is the entry point for the consolidation design.
+The public-surface lock-file (`spec/fixtures/public_surface.yml`) carries
+the deprecated entries with `# deprecated, remove at 1.0 — see ADR-0021`
+comments so the timeline is visible to CI as well as to readers.
 
 ---
 
 ## Breaking changes log
+
+### v0.15 — Data verb consolidation
+
+v0.15 introduces a unified `data` verb family that subsumes the legacy
+`cookie *` and `storage *` commands. The old surfaces continue to ship in
+v0.15 as aliases with a one-line deprecation warning (suppressed under
+`--output json`); they are removed at the 1.0 cut. See the "Removed at 1.0"
+section above for the full migration table, and ADR-0021 for the design.
+
+| New verb | Replaces |
+|---|---|
+| `data_get` | `storage_get` |
+| `data_set` | `set_cookie`, `storage_set` |
+| `data_delete` | `delete_cookies`, `storage_delete` |
+| `data_list` | `cookies`, `storage_export` (in-memory) |
+
+The implementation commit carries `Release-As: 0.15.0` so release-please
+does not interpret the `BREAKING CHANGE:` footer as a 1.0 bump — the 1.0
+lock comes after the v0.15 soak.
 
 ### v0.13 — Session removal
 

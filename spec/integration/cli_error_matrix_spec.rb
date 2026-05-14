@@ -312,6 +312,13 @@ RSpec.describe "CLI error code matrix" do
                    "writer; no CLI surface accepts a user-supplied version int",
       runner: ->(_) { [+"", +"", 0] }
     ),
+    CliErrorMatrix::Cell.new(
+      command: "data <op> --scope <bad>", code: "INVALID_ARGUMENT",
+      scenario: "scope flag not in {cookies,localStorage,sessionStorage}",
+      skip_reason: "covered by spec/integration/data_command_spec.rb — CLI path " \
+                   "needs a live daemon, and the validation raises in the handler",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
 
     # ---------- GENERIC (exit 1) ----------
     # An unknown subcommand on a known top-level group is a typed-but-
