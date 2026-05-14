@@ -3,6 +3,7 @@
 require_relative "snapshot_builder"
 require_relative "page_session"
 require_relative "handlers/error_payload"
+require_relative "plugin_dispatcher"
 require_relative "handlers/page_lifecycle"
 require_relative "handlers/navigation"
 require_relative "handlers/observation"
@@ -87,12 +88,13 @@ module Browserctl
     SCREENSHOT_EXTS  = %w[.png .jpg .jpeg].freeze
 
     def initialize(pages, driver, snapshot_builder = SnapshotBuilder.new, global_mutex: Mutex.new)
-      @pages            = pages
-      @driver           = driver
-      @snapshot_builder = snapshot_builder
-      @global_mutex     = global_mutex
-      @kv_store         = {}
-      @kv_mutex         = Mutex.new
+      @pages             = pages
+      @driver            = driver
+      @snapshot_builder  = snapshot_builder
+      @global_mutex      = global_mutex
+      @kv_store          = {}
+      @kv_mutex          = Mutex.new
+      @plugin_dispatcher = PluginDispatcher.new(@pages, global_mutex: @global_mutex)
     end
 
     # Dispatches a parsed request to the appropriate handler.
@@ -125,13 +127,10 @@ module Browserctl
 
     # Routes the request to a registered plugin command if one matches.
     # Returns the plugin response, or `nil` if no plugin handles `req[:cmd]`.
+    # Plugin invocation, timeout, and rescue boundary all live in
+    # {PluginDispatcher} — see v0.15 WS-2 PR 5.
     def dispatch_plugin(req)
-      plugin = Browserctl.lookup_plugin_command(req[:cmd])
-      return nil unless plugin
-
-      Browserctl.logger.debug("plugin:#{req[:cmd]} #{req[:name]}")
-      session = req[:name] ? @global_mutex.synchronize { @pages[req[:name]] } : nil
-      plugin.call(session, req)
+      @plugin_dispatcher.dispatch(req)
     end
 
     def with_page(name)

@@ -36,6 +36,13 @@ module Browserctl
       # entry in this table — drift-related raises fall through to GENERIC
       # until that code is introduced.
       #
+      # The plugin family (PLUGIN_FAILED, PLUGIN_TIMED_OUT) intentionally has
+      # no dedicated entry — plugins are Extension-zone surface (see
+      # api-stability.md), so their failures collapse to GENERIC (1) like the
+      # other Extension-adjacent codes (DOMAIN_NOT_ALLOWED, KEY_NOT_FOUND,
+      # SECRET_RESOLUTION_FAILED). Agents must branch on the `code` field for
+      # plugin failures, not on `$?`.
+      #
       # The validation family (VALIDATION_FAILED parent plus INVALID_*
       # specialisations) all map to exit code 8 — agents and scripts can
       # branch on `$? == 8` for any caller-side validation failure without

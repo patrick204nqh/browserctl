@@ -31,6 +31,17 @@ module Browserctl
       INVALID_FORMAT_VERSION   = "INVALID_FORMAT_VERSION"
       INVALID_ARGUMENT         = "INVALID_ARGUMENT"
 
+      # Plugin family — introduced in v0.15 WS-2 PR 5 to isolate the daemon
+      # from misbehaving third-party commands registered via
+      # `Browserctl.register_command`. PLUGIN_FAILED is the catch-all when an
+      # uncaught exception escapes the plugin block; PLUGIN_TIMED_OUT is
+      # emitted when the per-plugin timeout (default 30s, configurable via
+      # `timeout:` on `register_command`, opt-out via `timeout: nil`) elapses
+      # before the block returns. Both codes carry the plugin name in the
+      # response payload's `context` so agents can branch on it.
+      PLUGIN_FAILED            = "PLUGIN_FAILED"
+      PLUGIN_TIMED_OUT         = "PLUGIN_TIMED_OUT"
+
       GENERIC                  = "GENERIC"
 
       ALL = [
@@ -48,6 +59,8 @@ module Browserctl
         INVALID_DSL_USAGE,
         INVALID_FORMAT_VERSION,
         INVALID_ARGUMENT,
+        PLUGIN_FAILED,
+        PLUGIN_TIMED_OUT,
         GENERIC
       ].freeze
 
