@@ -22,11 +22,11 @@ module Browserctl
     # absolute path of the file being migrated; it is responsible for
     # rewriting that file in place, advancing it from `from_version` to
     # `to_version`.
-    Migration = Struct.new(:format, :from_version, :to_version, :upgrade, keyword_init: true)
+    Migration = Data.define(:format, :from_version, :to_version, :upgrade)
 
     # Result of {.run}. `applied` is the ordered list of {Migration} steps
     # that ran. When the artifact was already at target, `applied` is empty.
-    Result = Struct.new(:format, :from, :to, :applied, keyword_init: true)
+    Result = Data.define(:format, :from, :to, :applied)
 
     FORMAT_EXTENSIONS = {
       ".bctl" => :bundle,

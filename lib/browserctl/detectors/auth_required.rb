@@ -21,7 +21,7 @@ module Browserctl
     # runs server-side (handlers/observation.rb) and client-side (workflow
     # `load_state` hook).
     module AuthRequired
-      Result = Struct.new(:triggered, :code, :reason, :suggested_flow, keyword_init: true) do
+      Result = Data.define(:triggered, :code, :reason, :suggested_flow) do
         def to_h
           { triggered: triggered, code: code, reason: reason, suggested_flow: suggested_flow }.compact
         end

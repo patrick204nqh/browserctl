@@ -20,8 +20,8 @@ module Browserctl
   # deliberately absent from `FlowContext` — flows return state, workflows
   # share state.
   class CallableDefinition
-    ParamDef = Struct.new(:name, :required, :secret, :default, :secret_ref, keyword_init: true)
-    StepDef  = Struct.new(:label, :block, :retry_count, :timeout, keyword_init: true)
+    ParamDef = Data.define(:name, :required, :secret, :default, :secret_ref)
+    StepDef  = Data.define(:label, :block, :retry_count, :timeout)
 
     attr_reader :name, :description, :param_defs, :steps
 

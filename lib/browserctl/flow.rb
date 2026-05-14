@@ -4,7 +4,7 @@ require_relative "callable_definition"
 require_relative "errors"
 
 module Browserctl
-  FlowConditionDef = Struct.new(:kind, :label, :block, keyword_init: true)
+  FlowConditionDef = Data.define(:kind, :label, :block)
 
   # Back-compat aliases — flow_wrapper specs reference these directly.
   FlowParamDef = CallableDefinition::ParamDef

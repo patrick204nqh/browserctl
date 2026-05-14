@@ -69,7 +69,7 @@ module Browserctl
   # workflow specs reference these directly).
   ParamDef = CallableDefinition::ParamDef
   StepDef  = CallableDefinition::StepDef
-  StepResult = Struct.new(:name, :ok, :error, keyword_init: true)
+  StepResult = Data.define(:name, :ok, :error)
 
   class WorkflowContext
     include ContextualPersistence
@@ -359,7 +359,7 @@ module Browserctl
       last_error = nil
       (defn.retry_count + 1).times do
         execute_step_block(ctx, defn)
-        return StepResult.new(name: defn.label, ok: true)
+        return StepResult.new(name: defn.label, ok: true, error: nil)
       rescue StandardError => e
         last_error = e
       end
