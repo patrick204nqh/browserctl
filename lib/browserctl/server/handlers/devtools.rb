@@ -12,7 +12,7 @@ module Browserctl
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 
-          info      = @driver.devtools_info(session.page)
+          info      = @driver.devtools_info(session.driver)
           port      = info[:port]
           target_id = info[:target_id]
           devtools_url = "http://127.0.0.1:#{port}/devtools/inspector.html" \

@@ -8,8 +8,8 @@ module Browserctl
 
         def cmd_press(req)
           with_page(req[:name]) do |session|
-            session.page.keyboard.down(req[:key])
-            session.page.keyboard.up(req[:key])
+            session.driver.keyboard_down(req[:key])
+            session.driver.keyboard_up(req[:key])
             { ok: true }
           end
         end
@@ -19,7 +19,7 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            coords = session.page.evaluate(
+            coords = session.driver.evaluate(
               "(function(sel) {   " \
               "var el = document.querySelector(sel);   " \
               "if (!el) return null;   " \
@@ -35,7 +35,7 @@ module Browserctl
               )
             end
 
-            session.page.mouse.move(x: coords["x"], y: coords["y"])
+            session.driver.mouse_move(x: coords["x"], y: coords["y"])
             { ok: true }
           end
         end
@@ -48,7 +48,7 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            el = session.page.at_css(sel)
+            el = session.driver.at_css(sel)
             unless el
               return error_payload(
                 code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
@@ -67,7 +67,7 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            el = session.page.at_css(sel)
+            el = session.driver.at_css(sel)
             unless el
               return error_payload(
                 code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
@@ -88,8 +88,8 @@ module Browserctl
           with_page(req[:name]) do |session|
             text = req[:text]
             id   = nil
-            id = session.page.on(:dialog) do |dialog|
-              session.page.off(:dialog, id)
+            id = session.driver.on(:dialog) do |dialog|
+              session.driver.off(:dialog, id)
               dialog.accept(text)
             end
             { ok: true }
@@ -99,8 +99,8 @@ module Browserctl
         def cmd_dialog_dismiss(req)
           with_page(req[:name]) do |session|
             id = nil
-            id = session.page.on(:dialog) do |dialog|
-              session.page.off(:dialog, id)
+            id = session.driver.on(:dialog) do |dialog|
+              session.driver.off(:dialog, id)
               dialog.dismiss
             end
             { ok: true }

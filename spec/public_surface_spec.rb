@@ -243,7 +243,8 @@ RSpec.describe "public surface lock-file" do
         ctx.pages["main"] = Browserctl::PageSession.new(page)
         allow(ctx.driver).to receive(:supports?).with(:devtools).and_return(true)
         info = { port: 9222, target_id: "ABC" }
-        allow(ctx.driver).to receive(:devtools_info).with(page).and_return(info)
+        allow(ctx.driver).to receive(:devtools_info)
+        .with(an_instance_of(Browserctl::Driver::FerrumPageDriver)).and_return(info)
         { cmd: "devtools", name: "main" }
       end,
       "ping" => lambda do |_ctx|

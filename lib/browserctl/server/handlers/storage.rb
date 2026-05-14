@@ -13,7 +13,7 @@ module Browserctl
             js    = storage_js_get(store, req[:key])
             return { error: "unknown store '#{store}' — use 'local' or 'session'" } unless js
 
-            value = session.page.evaluate(js)
+            value = session.driver.evaluate(js)
             { ok: true, value: value }
           end
         end
@@ -25,7 +25,7 @@ module Browserctl
             js    = storage_js_set(store, req[:key], req[:value])
             return { error: "unknown store '#{store}' — use 'local' or 'session'" } unless js
 
-            session.page.evaluate(js)
+            session.driver.evaluate(js)
             { ok: true }
           end
         end
@@ -37,16 +37,16 @@ module Browserctl
             stores  = req.fetch(:stores, "all")
             data    = {}
 
-            origin = session.page.evaluate("location.origin")
+            origin = session.driver.evaluate("location.origin")
             data[origin] = {}
 
             if %w[local all].include?(stores)
-              local = JSON.parse(session.page.evaluate("JSON.stringify({...localStorage})") || "{}")
+              local = JSON.parse(session.driver.evaluate("JSON.stringify({...localStorage})") || "{}")
               data[origin].merge!(local)
             end
 
             if %w[session all].include?(stores)
-              sess = JSON.parse(session.page.evaluate("JSON.stringify({...sessionStorage})") || "{}")
+              sess = JSON.parse(session.driver.evaluate("JSON.stringify({...sessionStorage})") || "{}")
               data[origin].merge!(sess)
             end
 
@@ -71,7 +71,7 @@ module Browserctl
             key_count = 0
             data.each_value do |keys|
               keys.each do |k, v|
-                session.page.evaluate("localStorage.setItem(#{k.to_json}, #{v.to_json})")
+                session.driver.evaluate("localStorage.setItem(#{k.to_json}, #{v.to_json})")
                 key_count += 1
               end
             end
@@ -84,8 +84,8 @@ module Browserctl
         def cmd_storage_delete(req)
           with_page(req[:name]) do |session|
             stores = req.fetch(:stores, "all")
-            session.page.evaluate("localStorage.clear()")   if %w[local all].include?(stores)
-            session.page.evaluate("sessionStorage.clear()") if %w[session all].include?(stores)
+            session.driver.evaluate("localStorage.clear()")   if %w[local all].include?(stores)
+            session.driver.evaluate("sessionStorage.clear()") if %w[session all].include?(stores)
             { ok: true }
           end
         end

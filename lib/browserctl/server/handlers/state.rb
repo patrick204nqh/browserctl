@@ -47,7 +47,7 @@ module Browserctl
 
           unless req[:skip_auth_check]
             auth = Browserctl::Detectors.auth_required(
-              target.page, cookies: cookies, suggested_flow: data[:manifest][:flow]
+              target.driver, cookies: cookies, suggested_flow: data[:manifest][:flow]
             )
             if auth.triggered
               return Browserctl::AuthRequiredError.new(
@@ -79,7 +79,7 @@ module Browserctl
         def restore_state_cookies(target, cookies)
           cookies.each do |raw|
             c = raw.transform_keys(&:to_sym)
-            target.page.cookies.set(**c.slice(:name, :value, :domain, :path))
+            target.driver.cookies_set(**c.slice(:name, :value, :domain, :path))
           end
         end
 
@@ -102,7 +102,7 @@ module Browserctl
 
         def capture_state_payload
           first = @global_mutex.synchronize { @pages.values.first }
-          cookies = first.page.cookies.all.values.map(&:to_h)
+          cookies = first.driver.cookies_all.values.map(&:to_h)
 
           local_storage   = {}
           session_storage = {}
@@ -110,9 +110,9 @@ module Browserctl
 
           @global_mutex.synchronize { @pages.dup }.each_value do |session|
             session.mutex.synchronize do
-              origin    = session.page.evaluate("location.origin")
-              ls_str    = session.page.evaluate("JSON.stringify({...localStorage})") || "{}"
-              ss_str    = session.page.evaluate("JSON.stringify({...sessionStorage})") || "{}"
+              origin    = session.driver.evaluate("location.origin")
+              ls_str    = session.driver.evaluate("JSON.stringify({...localStorage})") || "{}"
+              ss_str    = session.driver.evaluate("JSON.stringify({...sessionStorage})") || "{}"
               local_storage[origin]   = JSON.parse(ls_str)
               session_storage[origin] = JSON.parse(ss_str)
               captured_origins << origin

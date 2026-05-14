@@ -10,7 +10,7 @@ module Browserctl
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 
-          all = session.page.cookies.all
+          all = session.driver.cookies_all
           { ok: true, cookies: all.values.map(&:to_h) }
         end
 
@@ -18,7 +18,7 @@ module Browserctl
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 
-          session.page.cookies.set(
+          session.driver.cookies_set(
             name: req[:cookie_name],
             value: req[:value],
             domain: req[:domain],
@@ -31,14 +31,14 @@ module Browserctl
           session = @global_mutex.synchronize { @pages[req[:name]] }
           return { error: "no page named '#{req[:name]}'" } unless session
 
-          session.page.cookies.clear
+          session.driver.cookies_clear
           { ok: true }
         end
 
         def cmd_import_cookies(req)
           with_page(req[:name]) do |session|
             req[:cookies].each do |c|
-              session.page.cookies.set(
+              session.driver.cookies_set(
                 name: c[:name],
                 value: c[:value],
                 domain: c[:domain],
