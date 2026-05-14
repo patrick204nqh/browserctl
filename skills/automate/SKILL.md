@@ -71,8 +71,8 @@ browserctl click login --ref e2
 browserctl page snapshot login                   # interactable elements JSON (use this first for unknown layouts)
 browserctl page snapshot login --diff            # only elements changed since last snap
 browserctl page snapshot login --format html     # raw HTML
-browserctl page screenshot login                 # screenshot → /tmp/
-browserctl page screenshot login --out /tmp/my.png --full
+browserctl page screenshot login                 # screenshot → ~/.browserctl/screenshots/
+browserctl page screenshot login --out ~/.browserctl/screenshots/my.png --full
 browserctl evaluate  login "document.title" # evaluate a JS expression
 
 # Waiting
@@ -127,37 +127,24 @@ browserctl state list                                             # show all bun
 browserctl state info   github                                    # manifest: origins, flow, flow_version, expiry hint
 browserctl state rotate github                                    # invoke the bound flow + re-save (manual refresh)
 browserctl state delete github
-browserctl state export github /tmp/github.bctl                   # file path
+browserctl state export github ~/.browserctl/exports/github.bctl  # file path
 browserctl state export github s3://bucket/key.bctl               # via aws CLI
 browserctl state export github op://Vault/github-state            # via 1Password CLI
-browserctl state import /tmp/github.bctl
+browserctl state import ~/.browserctl/exports/github.bctl
 
-# Cookies (low-level escape hatch — prefer `state` for auth)
-browserctl cookie list   login                                                  # list all cookies as JSON
-browserctl cookie set    login cf_clearance "xyz..." --domain ".example.com"   # set a cookie
-browserctl cookie delete login                                                  # clear all cookies
-browserctl cookie export login .browserctl/sessions/app.json                   # export to file
-browserctl cookie import login .browserctl/sessions/app.json                   # import from file
+# Data (v0.15+) — unified verb for cookies / localStorage / sessionStorage.
+#   The `--scope` flag is required; `cookie *` and `storage *` aliases were removed in v0.16.
+#   Low-level escape hatch — prefer `state` for auth.
+browserctl data list   login --scope cookies                                                  # list all cookies as JSON
+browserctl data set    login cf_clearance "xyz..." --scope cookies --domain ".example.com"   # set a cookie (--domain required for cookies)
+browserctl data delete login --scope cookies                                                  # clear all cookies
 
-# Storage (localStorage / sessionStorage — low-level escape hatch; prefer `state` for auth)
-browserctl storage get    login cart_id                                         # read a key (default: localStorage)
-browserctl storage get    login cart_id --store session                         # read from sessionStorage
-browserctl storage set    login cart_id "abc123"                                # write a key
-browserctl storage export login .browserctl/storage.json                        # export all stores to file
-browserctl storage export login .browserctl/storage.json --store local          # export localStorage only
-browserctl storage import login .browserctl/storage.json                        # import storage from file
-browserctl storage delete login                                                  # clear all storage
-browserctl storage delete login --store session                                  # clear sessionStorage only
-
-# Session (legacy — kept for v0.8/v0.9 callers; new code should use `state`)
-browserctl session save   myapp                          # snapshot current state (plaintext, 0o600)
-browserctl session save   myapp --encrypt                # AES-256-GCM at rest, key in macOS Keychain
-browserctl session load   myapp                          # restore into running daemon
-browserctl session list                                  # list saved sessions
-browserctl session delete myapp                          # delete a saved session
-browserctl session export myapp /tmp/myapp.zip           # zip to portable archive
-browserctl session export myapp /tmp/myapp.zip --encrypt # passphrase-protected zip (PBKDF2+AES-256-GCM)
-browserctl session import /tmp/myapp.zip                 # unzip; detects and decrypts automatically
+browserctl data get    login cart_id --scope localStorage                                     # read a localStorage key
+browserctl data get    login cart_id --scope sessionStorage                                   # read a sessionStorage key
+browserctl data set    login cart_id "abc123" --scope localStorage                            # write a localStorage key
+browserctl data list   login --scope localStorage                                             # list all localStorage entries
+browserctl data delete login --scope localStorage                                             # clear localStorage
+browserctl data delete login --scope sessionStorage                                           # clear sessionStorage
 
 # Page management
 browserctl page list
@@ -246,7 +233,7 @@ browserctl url  main                          # confirm redirect
 Write a minimal `.rb` file anywhere and run it by path — no search-path setup needed:
 
 ```ruby
-# /tmp/probe_login.rb
+# ./probe_login.rb
 Browserctl.workflow "probe_login" do
   step "open" do
     open_page(:main, url: "https://app.example.com/login")
@@ -264,7 +251,7 @@ end
 ```
 
 ```sh
-browserctl workflow run /tmp/probe_login.rb
+browserctl workflow run ./probe_login.rb
 ```
 
 **Step 3 — Harden into a named workflow**
@@ -321,12 +308,12 @@ browserctl pause main
 browserctl resume main
 
 # 3. Capture cf_clearance for future sessions
-browserctl cookie list main | jq '.cookies[] | select(.name == "cf_clearance")'
+browserctl data list main --scope cookies | jq '.cookies[] | select(.name == "cf_clearance")'
 # → { "name": "cf_clearance", "value": "xyz...", "domain": ".example.com", "path": "/" }
 
 # 4. Restore in a new session (skips re-solving)
 browserctl page open main
-browserctl cookie set main cf_clearance "xyz..." --domain ".example.com"
+browserctl data set main cf_clearance "xyz..." --scope cookies --domain ".example.com"
 browserctl navigate main https://protected.example.com
 ```
 
@@ -423,13 +410,13 @@ Use when the default "invoke the bound flow" doesn't fit — the lambda runs in 
 - **Use `dialog accept/dismiss` before the triggering action** — the handler is one-shot and fires when the dialog appears. Register it first, then click the button that triggers it.
 - **Use `ask`** when automation needs a human-supplied value (2FA code, CAPTCHA answer, confirmation) but doesn't need to hand over full browser control. Cleaner than `pause` for value injection.
 - **Use `pause`/`resume`** when a human must act mid-automation (e.g. solving a CAPTCHA, MFA). Poll `snap` after resume to confirm the blocker is cleared.
-- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `cookie set` to avoid re-solving in future sessions.
+- **Capture `cf_clearance` after solving** a Cloudflare challenge — store and replay it with `data set ... --scope cookies` to avoid re-solving in future sessions.
 - **Use `flow run` over hand-coded login** (v0.10) — for any auth-gated task, prefer a registered flow (`browserctl flow list` to see what's available; `flow describe <name>` for params). Stdlib ships `totp_2fa`, `basic_auth`, `magic_link_email`, `oauth_google`, `oauth_github`, `cloudflare_solve`.
-- **Use `state save/load` to persist auth across runs** (v0.10) — `state save <name> --flow <flow>` snapshots cookies+storage and binds the producing flow into the manifest; `state load <name>` restores and auto-rotates via the bound flow when cookies expired. Replaces ad-hoc cookie/storage juggling for auth.
+- **Use `state save/load` to persist auth across runs** (v0.10) — `state save <name> --flow <flow>` snapshots cookies+storage to `~/.browserctl/state/<name>.bctl` and binds the producing flow into the manifest; `state load <name>` restores and auto-rotates via the bound flow when cookies expired. Replaces ad-hoc cookie/storage juggling for auth.
 - **Exit code 7 means re-auth** — any CLI command exiting 7 returned `AUTH_REQUIRED` with a `suggested_flow`. Run that flow, retry the command. From inside a workflow, `load_state` handles this loop transparently.
 - **Use `secret_ref:` for credentials** — `param :password, secret_ref: "op://vault/item/field"` resolves the value from your keychain or secret manager at runtime. Never pass credentials as CLI flags or hardcode them in workflow files. `secret_ref:` always implies `secret: true`.
-- **Use `session save/load`** for v0.8/v0.9 callers only — new code should use `state save/load`. The session zip format remains readable through v0.10 with a deprecation warning.
-- **`load_session(fallback:, expired_if:)` is deprecated** — the recovery loop now lives in `load_state`. Existing usages still work through v0.10 but emit a stderr DEPRECATION warning; migrate to `save_state(name, flow: :name)` + `load_state(name)`.
+- **The `session` verb was removed in v0.13** — use `state save`/`state load` exclusively. The CLI no longer recognises `session` as a subcommand.
+- **`load_session(fallback:, expired_if:)` is removed** — the recovery loop lives in `load_state`. Use `save_state(name, flow: :name)` + `load_state(name)`.
 - **Save stable sequences as workflows** — ask the user first, then write the `.rb` file. Use `browserctl recording` to capture a live session automatically.
 
 ## Recording and refs
@@ -573,10 +560,6 @@ end
 | `save_state(name, flow: :name, origins: nil, encrypt: false)` | (v0.10) Save cookies+storage as a `.bctl` bundle and bind the producing flow into the manifest so future `load_state` calls can auto-rotate. `origins:` overrides the auto-detected nav-chain origins. |
 | `load_state(name)` | (v0.10) Restore a `.bctl` bundle. If the daemon detects AUTH_REQUIRED, it invokes the manifest's bound flow, re-saves, and continues. Returns `{rotated: true}` when this happened. |
 | `load_state(name, on_auth_required: -> { ... })` | (v0.10) Same as above, but the lambda runs in place of the bound flow when AUTH_REQUIRED fires. Use for custom MFA prompts, branching SSO, or HITL pauses. |
-| `save_session(name, encrypt: false)` | (legacy, v0.8) Snapshot to the old session-zip format; prefer `save_state`. |
-| `load_session(name)` | (legacy, v0.8) Restore a session zip; prefer `load_state`. |
-| `load_session(name, fallback:, expired_if:)` | **Deprecated in v0.10** — use `load_state` with a flow-bound bundle. Removal in v0.12. Emits stderr deprecation warning when `fallback:` or `expired_if:` is passed. |
-| `list_sessions` | Return all saved session metadata |
 | `store :key, value` | Store a value for use in later steps (persists in daemon until it stops) |
 | `fetch :key` | Retrieve a value stored by an earlier step |
 | `ask "prompt"` | Print prompt to stderr, read a line from stdin, return it as a string |
