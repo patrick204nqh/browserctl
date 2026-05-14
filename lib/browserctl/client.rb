@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "fileutils"
 require "socket"
 require "json"
 require_relative "constants"
@@ -154,100 +153,11 @@ module Browserctl
     # @return [Hash] `{ ok: true, value: }` or `{ error:, code: "key_not_found" }`
     def fetch(key)                 = call("fetch", key: key)
 
-    # Returns all cookies for a named page.
-    # @param name [String] logical page name
-    # @return [Hash] `{ ok: true, cookies: [Hash] }` or `{ error: }`
-    def cookies(name)              = call("cookies", name: name)
-
-    # Sets a cookie on a named page.
-    # @param name [String] logical page name
-    # @param cookie_name [String] cookie name (e.g. "cf_clearance")
-    # @param value [String] cookie value
-    # @param domain [String] cookie domain (e.g. ".example.com")
-    # @param path [String] cookie path (default: "/")
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def set_cookie(name, cookie_name, value, domain, path: "/")
-      call("set_cookie", name: name, cookie_name: cookie_name,
-                         value: value, domain: domain, path: path)
-    end
-
-    # Deletes all cookies for a named page.
-    # @param name [String] logical page name
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def delete_cookies(name) = call("delete_cookies", name: name)
-
-    # Exports all cookies for a named page to a JSON file.
-    # File I/O is client-side; daemon provides the cookie data.
-    # @param name [String] logical page name
-    # @param path [String] file path to write cookies to
-    # @return [Hash] `{ ok: true, path:, count: }` or `{ error: }`
-    def export_cookies(name, path)
-      result = call("cookies", name: name)
-      return result unless result[:ok]
-
-      FileUtils.mkdir_p(File.dirname(path))
-      File.open(path, "w", 0o600) { |f| f.write(JSON.generate(result[:cookies])) }
-      { ok: true, path: path, count: result[:cookies].length }
-    end
-
-    # Imports cookies from a JSON file into a named page.
-    # @param name [String] logical page name
-    # @param path [String] file path to read cookies from
-    # @return [Hash] `{ ok: true, count: }` or `{ error: }`
-    def import_cookies(name, path)
-      raise Browserctl::Error, "cookie file not found: #{path}" unless File.exist?(path)
-
-      cookies = JSON.parse(File.read(path), symbolize_names: true)
-      call("import_cookies", name: name, cookies: cookies)
-    end
-
-    # Returns the value of a localStorage or sessionStorage key.
-    # @param name [String] logical page name
-    # @param key [String] storage key
-    # @param store [String] "local" or "session" (default: "local")
-    # @return [Hash] `{ ok: true, value: }` or `{ error: }`
-    def storage_get(name, key, store: "local")
-      call("storage_get", name: name, key: key, store: store)
-    end
-
-    # Sets a localStorage or sessionStorage key.
-    # @param name [String] logical page name
-    # @param key [String] storage key
-    # @param value [String] storage value
-    # @param store [String] "local" or "session" (default: "local")
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def storage_set(name, key, value, store: "local")
-      call("storage_set", name: name, key: key, value: value, store: store)
-    end
-
-    # Exports localStorage and/or sessionStorage to a JSON file.
-    # @param name [String] logical page name
-    # @param path [String] destination file path
-    # @param stores [String] "local", "session", or "all" (default: "all")
-    # @return [Hash] `{ ok: true, path:, key_count: }` or `{ error: }`
-    def storage_export(name, path, stores: "all")
-      call("storage_export", name: name, path: path, stores: stores)
-    end
-
-    # Imports storage keys from a JSON file into the page's localStorage.
-    # @param name [String] logical page name
-    # @param path [String] source file path
-    # @return [Hash] `{ ok: true, origins: N, key_count: M }` or `{ error: }`
-    def storage_import(name, path)
-      call("storage_import", name: name, path: path)
-    end
-
-    # Clears localStorage and/or sessionStorage for the page.
-    # @param name [String] logical page name
-    # @param stores [String] "local", "session", or "all" (default: "all")
-    # @return [Hash] `{ ok: true }` or `{ error: }`
-    def storage_delete(name, stores: "all")
-      call("storage_delete", name: name, stores: stores)
-    end
-
     # Reads a single key from the given browser-side scope.
     # Introduced in v0.15 as the unified replacement for `storage_get` /
-    # `cookies` (see ADR-0021).
+    # `cookies` (see ADR-0021). The legacy `cookies` / `set_cookie` /
+    # `delete_cookies` / `import_cookies` / `export_cookies` / `storage_*`
+    # methods shipped as v0.15 aliases and were removed in v0.16.
     # @param name [String] logical page name
     # @param key [String] storage key (n/a for `scope: "cookies"`; use {#data_list})
     # @param scope [String] one of "cookies", "localStorage", "sessionStorage"

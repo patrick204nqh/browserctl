@@ -182,62 +182,6 @@ RSpec.describe "public surface lock-file" do
         ctx.pages["main"] = session
         { cmd: "resume", name: "main" }
       end,
-      "cookies" => lambda do |ctx|
-        cookies = double("cookies", all: {})
-        page    = instance_double("Ferrum::Page", cookies: cookies)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "cookies", name: "main" }
-      end,
-      "set_cookie" => lambda do |ctx|
-        cookies = double("cookies")
-        allow(cookies).to receive(:set)
-        page = instance_double("Ferrum::Page", cookies: cookies)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "set_cookie", name: "main", cookie_name: "c", value: "v", domain: "example.com" }
-      end,
-      "delete_cookies" => lambda do |ctx|
-        cookies = double("cookies", clear: nil)
-        page    = instance_double("Ferrum::Page", cookies: cookies)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "delete_cookies", name: "main" }
-      end,
-      "import_cookies" => lambda do |ctx|
-        cookies = double("cookies")
-        allow(cookies).to receive(:set)
-        page = instance_double("Ferrum::Page", cookies: cookies)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "import_cookies", name: "main",
-          cookies: [{ name: "c", value: "v", domain: "example.com" }] }
-      end,
-      "storage_get" => lambda do |ctx|
-        page = instance_double("Ferrum::Page", evaluate: "stored")
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "storage_get", name: "main", key: "k" }
-      end,
-      "storage_set" => lambda do |ctx|
-        page = instance_double("Ferrum::Page", evaluate: nil)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "storage_set", name: "main", key: "k", value: "v" }
-      end,
-      "storage_export" => lambda do |ctx|
-        page = instance_double("Ferrum::Page")
-        allow(page).to receive(:evaluate).and_return("https://example.com", "{}", "{}")
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        path = File.join(Dir.mktmpdir("storage-export"), "out.json")
-        { cmd: "storage_export", name: "main", path: path }
-      end,
-      "storage_import" => lambda do |ctx|
-        page = instance_double("Ferrum::Page", evaluate: nil)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        path = File.join(Dir.mktmpdir("storage-import"), "in.json")
-        File.write(path, JSON.generate({ "https://example.com" => { "k" => "v" } }))
-        { cmd: "storage_import", name: "main", path: path }
-      end,
-      "storage_delete" => lambda do |ctx|
-        page = instance_double("Ferrum::Page", evaluate: nil)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
-        { cmd: "storage_delete", name: "main" }
-      end,
       "data_get" => lambda do |ctx|
         page = instance_double("Ferrum::Page", evaluate: "stored")
         ctx.pages["main"] = Browserctl::PageSession.new(page)

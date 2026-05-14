@@ -108,14 +108,14 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(ctx) { ctx.run_cli(%w[state load any]) }
     ),
     CliErrorMatrix::Cell.new(
-      command: "cookie list", code: "DAEMON_UNREACHABLE",
+      command: "data list", code: "DAEMON_UNREACHABLE",
       scenario: "no daemon socket",
-      runner: ->(ctx) { ctx.run_cli(%w[cookie list any]) }
+      runner: ->(ctx) { ctx.run_cli(%w[data list any --scope cookies]) }
     ),
     CliErrorMatrix::Cell.new(
-      command: "storage get", code: "DAEMON_UNREACHABLE",
+      command: "data get", code: "DAEMON_UNREACHABLE",
       scenario: "no daemon socket",
-      runner: ->(ctx) { ctx.run_cli(%w[storage get any k]) }
+      runner: ->(ctx) { ctx.run_cli(%w[data get any k --scope localStorage]) }
     ),
     CliErrorMatrix::Cell.new(
       command: "navigate", code: "DAEMON_UNREACHABLE",

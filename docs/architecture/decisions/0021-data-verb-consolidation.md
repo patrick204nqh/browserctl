@@ -1,7 +1,7 @@
 # ADR-0021: Consolidate cookie and storage verbs under a single `data` verb
 
 **Date**: 2026-05-14
-**Status**: Proposed
+**Status**: Accepted — implemented v0.15, aliases removed v0.16
 **Pairs with**: ADR-0004 (JSON-RPC wire format — the new verb rides the same envelope), ADR-0020 (error taxonomy — the new verb reuses the existing code set).
 **Deciders**: Patrick (pending sign-off on verb name)
 

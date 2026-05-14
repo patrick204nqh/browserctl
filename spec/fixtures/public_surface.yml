@@ -6,21 +6,17 @@ client:
   - auth_check
   - call
   - click
-  - cookies                # deprecated, remove at 1.0 — see ADR-0021
   - data_delete
   - data_get
   - data_list
   - data_set
-  - delete_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - devtools
   - dialog_accept
   - dialog_dismiss
   - evaluate
-  - export_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - fetch
   - fill
   - hover
-  - import_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - navigate
   - page_close
   - page_focus
@@ -32,7 +28,6 @@ client:
   - resume
   - screenshot
   - select
-  - set_cookie             # deprecated, remove at 1.0 — see ADR-0021
   - shutdown
   - snapshot
   - state_delete
@@ -40,18 +35,16 @@ client:
   - state_list
   - state_load
   - state_save
-  - storage_delete         # deprecated, remove at 1.0 — see ADR-0021
-  - storage_export         # deprecated, remove at 1.0 — see ADR-0021
-  - storage_get            # deprecated, remove at 1.0 — see ADR-0021
-  - storage_import         # deprecated, remove at 1.0 — see ADR-0021
-  - storage_set            # deprecated, remove at 1.0 — see ADR-0021
   - store
   - upload
   - url
   - wait
 page_proxy:
   - click
-  - delete_cookies
+  - data_delete
+  - data_get
+  - data_list
+  - data_set
   - devtools
   - dialog_accept
   - dialog_dismiss
@@ -65,8 +58,6 @@ page_proxy:
   - screenshot
   - select
   - snapshot
-  - storage_get
-  - storage_set
   - upload
   - url
   - wait
@@ -74,7 +65,6 @@ cli_commands:
   - ask
   - auth-check
   - click
-  - cookie                  # deprecated, remove at 1.0 — see ADR-0021
   - daemon
   - data
   - devtools
@@ -93,7 +83,6 @@ cli_commands:
   - resume
   - select
   - state
-  - storage                 # deprecated, remove at 1.0 — see ADR-0021
   - trace
   - upload
   - url
@@ -151,36 +140,9 @@ fixed_zone:
   resume:
     required: [ok, paused]
     optional: []
-  cookies:
-    required: [ok, cookies]
-    optional: []
-  set_cookie:
-    required: [ok]
-    optional: []
-  delete_cookies:
-    required: [ok]
-    optional: []
-  import_cookies:
-    required: [ok, count]
-    optional: []
-  storage_get:
-    required: [ok, value]
-    optional: []
-  storage_set:
-    required: [ok]
-    optional: []
-  storage_export:
-    required: [ok, path, key_count]
-    optional: []
-  storage_import:
-    required: [ok, origins, key_count]
-    optional: []
-  storage_delete:
-    required: [ok]
-    optional: []
-  # `data` family — v0.15+ unified verb (ADR-0021). Replaces cookie/storage
-  # aliases above at 1.0; lock-file entry is the Fixed-zone contract going
-  # forward.
+  # `data` family — unified verb introduced in v0.15 (ADR-0021). The
+  # cookie/storage aliases shipped alongside in v0.15 were removed in v0.16;
+  # `data` is the sole Fixed-zone contract for browser-side persistent data.
   data_get:
     required: [ok, scope, key, value]
     optional: []

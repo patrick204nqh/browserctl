@@ -5,8 +5,8 @@ require_relative "cli_output"
 module Browserctl
   module Commands
     # `browserctl data <op> --scope <scope>` — unified verb for browser-side
-    # persistent data. Introduced in v0.15 (ADR-0021) as the replacement for
-    # the duplicated `cookie *` and `storage *` families.
+    # persistent data. Introduced in v0.15 (ADR-0021); see that ADR for the
+    # design rationale.
     module Data
       extend CliOutput
 

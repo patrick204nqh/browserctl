@@ -23,8 +23,6 @@ require "browserctl/commands/recording"
 require "browserctl/commands/resume"
 require "browserctl/commands/init"
 require "browserctl/commands/page"
-require "browserctl/commands/cookie"
-require "browserctl/commands/storage"
 require "browserctl/commands/data"
 require "browserctl/commands/state"
 require "browserctl/commands/daemon"
@@ -94,25 +92,11 @@ def usage
       dialog accept  <page> [text]
       dialog dismiss <page>
 
-    Data (v0.15+, replaces 'cookie *' and 'storage *' — removed at 1.0):
+    Data (browser-side persistent data — cookies and web storage):
       data get    <page> <key> --scope {cookies|localStorage|sessionStorage}
       data set    <page> <key> <value> --scope SCOPE [--domain D] [--path /]
       data delete <page> --scope SCOPE
       data list   <page> --scope SCOPE
-
-    Cookie (deprecated, removed at 1.0 — use 'data --scope cookies'):
-      cookie list   <page>
-      cookie set    <page> <name> <value> --domain DOMAIN [--path /]
-      cookie delete <page>
-      cookie export <page> <path>
-      cookie import <page> <path>
-
-    Storage (deprecated, removed at 1.0 — use 'data --scope localStorage|sessionStorage'):
-      storage get    <page> <key> [--store local|session]
-      storage set    <page> <key> <value> [--store local|session]
-      storage export <page> <path> [--store local|session|all]
-      storage import <page> <path>
-      storage delete <page> [--store local|session|all]
 
     Auth detection:
       auth-check <page> [--cookies] [--state NAME] [--flow NAME]
@@ -219,8 +203,6 @@ begin
     case cmd
     when "flow"     then Browserctl::Commands::Flow.run(client, args)
     when "page"     then Browserctl::Commands::Page.run(client, args)
-    when "cookie"   then Browserctl::Commands::Cookie.run(client, args)
-    when "storage"  then Browserctl::Commands::Storage.run(client, args)
     when "data"     then Browserctl::Commands::Data.run(client, args)
     when "state"    then Browserctl::Commands::State.run(client, args)
     when "daemon"   then Browserctl::Commands::Daemon.run(client, args)

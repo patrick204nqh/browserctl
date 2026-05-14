@@ -435,7 +435,10 @@ RSpec.describe "PageProxy public surface" do
   it "matches the pre-macro snapshot exactly" do
     expected = %i[
       click
-      delete_cookies
+      data_delete
+      data_get
+      data_list
+      data_set
       devtools
       dialog_accept
       dialog_dismiss
@@ -449,8 +452,6 @@ RSpec.describe "PageProxy public surface" do
       screenshot
       select
       snapshot
-      storage_get
-      storage_set
       upload
       url
       wait
