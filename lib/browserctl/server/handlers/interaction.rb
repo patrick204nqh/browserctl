@@ -85,28 +85,26 @@ module Browserctl
         end
 
         def cmd_dialog_accept(req)
-          session = @global_mutex.synchronize { @pages[req[:name]] }
-          return { error: "no page named '#{req[:name]}'" } unless session
-
-          text = req[:text]
-          id   = nil
-          id = session.page.on(:dialog) do |dialog|
-            session.page.off(:dialog, id)
-            dialog.accept(text)
+          with_page(req[:name]) do |session|
+            text = req[:text]
+            id   = nil
+            id = session.page.on(:dialog) do |dialog|
+              session.page.off(:dialog, id)
+              dialog.accept(text)
+            end
+            { ok: true }
           end
-          { ok: true }
         end
 
         def cmd_dialog_dismiss(req)
-          session = @global_mutex.synchronize { @pages[req[:name]] }
-          return { error: "no page named '#{req[:name]}'" } unless session
-
-          id = nil
-          id = session.page.on(:dialog) do |dialog|
-            session.page.off(:dialog, id)
-            dialog.dismiss
+          with_page(req[:name]) do |session|
+            id = nil
+            id = session.page.on(:dialog) do |dialog|
+              session.page.off(:dialog, id)
+              dialog.dismiss
+            end
+            { ok: true }
           end
-          { ok: true }
         end
       end
     end
