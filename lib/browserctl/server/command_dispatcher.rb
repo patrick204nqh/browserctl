@@ -16,6 +16,7 @@ require_relative "handlers/interaction"
 require_relative "../detectors"
 require_relative "../policy"
 require_relative "../errors"
+require_relative "../tracing"
 require_relative "../replay/snapshot_diff"
 
 module Browserctl
@@ -93,13 +94,15 @@ module Browserctl
     # @param req [Hash{Symbol => Object}] parsed request; must include `:cmd`
     # @return [Hash{Symbol => Object}] response; always includes `:ok` or `:error`
     def dispatch(req)
-      builtin = dispatch_builtin(req)
-      return builtin if builtin
+      Tracing.in_span("command.#{req[:cmd]}", attributes: { command: req[:cmd], page: req[:name] }) do
+        builtin = dispatch_builtin(req)
+        next builtin if builtin
 
-      plugin = dispatch_plugin(req)
-      return plugin if plugin
+        plugin = dispatch_plugin(req)
+        next plugin if plugin
 
-      { error: "unknown command: #{req[:cmd]}" }
+        { error: "unknown command: #{req[:cmd]}" }
+      end
     end
 
     private

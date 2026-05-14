@@ -42,6 +42,7 @@ What is Extension:
 - `WorkflowContext` and `WorkflowDefinition` internals
 - `Browserctl::Runner` public methods
 - `Browserctl::Recording`
+- `Browserctl::Tracing` (pluggable tracing backend; default no-op — see `lib/browserctl/tracing.rb` for the `Backend` contract)
 - `Browserctl.socket_path`, `Browserctl.pid_path`, `Browserctl.log_path`
 - `store` / `fetch` daemon KV wire commands (see "Daemon KV (`store` / `fetch`)" below)
 
