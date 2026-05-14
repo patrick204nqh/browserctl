@@ -45,9 +45,9 @@ module Browserctl
         capability == :devtools
       end
 
-      def devtools_info(page)
+      def devtools_info(page_driver)
         port      = @ferrum.process.port
-        target_id = page.target_id
+        target_id = page_driver.target_id
         { port: port, target_id: target_id }
       end
 

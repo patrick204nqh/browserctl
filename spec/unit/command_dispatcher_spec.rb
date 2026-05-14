@@ -425,7 +425,8 @@ RSpec.describe Browserctl::CommandDispatcher do
 
     it "returns a devtools_url for a known page when driver supports devtools" do
       allow(driver).to receive(:supports?).with(:devtools).and_return(true)
-      allow(driver).to receive(:devtools_info).with(page).and_return({ port: 9222, target_id: "ABCD1234" })
+      allow(driver).to receive(:devtools_info).with(an_instance_of(Browserctl::Driver::FerrumPageDriver))
+                                              .and_return({ port: 9222, target_id: "ABCD1234" })
       res = dispatcher.dispatch({ cmd: "devtools", name: "main" })
       expect(res[:ok]).to be true
       expect(res[:devtools_url]).to include("9222")

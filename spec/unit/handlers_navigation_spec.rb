@@ -20,7 +20,7 @@ RSpec.describe Browserctl::CommandDispatcher::Handlers::Navigation do
     end
   end
 
-  let(:session) { instance_double("Browserctl::PageSession", page: :fake_page) }
+  let(:session) { instance_double("Browserctl::PageSession", driver: :fake_driver) }
 
   context "expected exceptions are swallowed and logged at debug" do
     [
@@ -29,7 +29,7 @@ RSpec.describe Browserctl::CommandDispatcher::Handlers::Navigation do
       Browserctl::Error.new("typed failure")
     ].each do |err|
       it "returns nil and logs at debug when snapshot raises #{err.class}" do
-        builder = ->(_page) { raise err }
+        builder = ->(_driver) { raise err }
         harness = harness_class.new(builder)
         debug_messages = []
         allow(Browserctl).to receive(:logger).and_return(
@@ -45,7 +45,7 @@ RSpec.describe Browserctl::CommandDispatcher::Handlers::Navigation do
   end
 
   it "propagates unexpected exceptions (rescue is no longer too wide)" do
-    builder = ->(_page) { raise "unexpected" }
+    builder = ->(_driver) { raise "unexpected" }
     harness = harness_class.new(builder)
 
     expect { harness.capture_post_snapshot_digest(session) }
@@ -53,7 +53,7 @@ RSpec.describe Browserctl::CommandDispatcher::Handlers::Navigation do
   end
 
   it "propagates ArgumentError (proves StandardError-wide rescue is gone)" do
-    builder = ->(_page) { raise ArgumentError, "bad arg" }
+    builder = ->(_driver) { raise ArgumentError, "bad arg" }
     harness = harness_class.new(builder)
 
     expect { harness.capture_post_snapshot_digest(session) }

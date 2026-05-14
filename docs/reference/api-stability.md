@@ -159,6 +159,12 @@ Known limits, intentional at this stage:
 
 These limits are why `store`/`fetch` are Extension. A future revision may add scoping, TTLs, or session-bound lifetime, and Extension status leaves room to do that without a major bump.
 
+### `Browserctl::Driver::PageDriver`
+
+The `PageDriver` interface (`lib/browserctl/driver/page_driver.rb`) and its only shipped implementation `FerrumPageDriver` are **Extension**. They exist so handlers can be unit-tested without spawning Chrome — see `spec/support/fake_page_driver.rb` and `spec/unit/handlers/` for the test double and unit specs.
+
+The interface is **not** a plugin point. Per the v0.15 plan, shipping a non-Ferrum backend is explicitly a non-goal of the 1.0 line; the seam exists for testability. Method signatures may change between minor releases with a changelog entry.
+
 ---
 
 ## Known overlapping surfaces — consolidation deferred to v2.0

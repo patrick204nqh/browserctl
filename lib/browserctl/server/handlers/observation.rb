@@ -19,9 +19,9 @@ module Browserctl
         # bundle in hand (see PR 18); without them, only the URL signal fires.
         def cmd_auth_check(req)
           with_page(req[:name]) do |session|
-            cookies = session.page.cookies.all.values.map(&:to_h) if req[:include_cookies]
+            cookies = session.driver.cookies_all.values.map(&:to_h) if req[:include_cookies]
             result = Browserctl::Detectors.auth_required(
-              session.page,
+              session.driver,
               cookies: cookies,
               suggested_flow: req[:suggested_flow]
             )
@@ -38,11 +38,11 @@ module Browserctl
 
         def take_snapshot(session, format, diff)
           nonce     = SecureRandom.hex(8)
-          challenge = Detectors.cloudflare?(session.page)
+          challenge = Detectors.cloudflare?(session.driver)
 
-          return { ok: true, html: session.page.body, challenge: challenge, nonce: nonce } unless format == "elements"
+          return { ok: true, html: session.driver.body, challenge: challenge, nonce: nonce } unless format == "elements"
 
-          snapshot = @snapshot_builder.call(session.page)
+          snapshot = @snapshot_builder.call(session.driver)
           registry = snapshot.to_h { |el| [el[:ref], el[:selector]] }
           fp_index = build_fingerprint_index(snapshot)
 
@@ -84,7 +84,7 @@ module Browserctl
             return path if path.is_a?(Hash)
 
             FileUtils.mkdir_p(File.dirname(path))
-            session.page.screenshot(path: path, full: req.fetch(:full, false))
+            session.driver.screenshot(path: path, full: req.fetch(:full, false))
             { ok: true, path: path }
           end
         end

@@ -19,20 +19,20 @@ module Browserctl
           end
 
           with_page(req[:name]) do |session|
-            session.page.go_to(req[:url])
-            { ok: true, url: session.page.current_url, challenge: Detectors.cloudflare?(session.page) }
+            session.driver.go_to(req[:url])
+            { ok: true, url: session.driver.current_url, challenge: Detectors.cloudflare?(session.driver) }
           end
         end
 
         def cmd_wait(req)
           with_page(req[:name]) do |session|
-            result = wait_for_selector(session.page, req[:selector], req.fetch(:timeout, 30).to_f)
+            result = wait_for_selector(session.driver, req[:selector], req.fetch(:timeout, 30).to_f)
             result[:error] ? result : { ok: true, selector: req[:selector] }
           end
         end
 
         def cmd_evaluate(req)
-          with_page(req[:name]) { |session| { ok: true, result: session.page.evaluate(req[:expression]) } }
+          with_page(req[:name]) { |session| { ok: true, result: session.driver.evaluate(req[:expression]) } }
         end
 
         def cmd_fill(req)
@@ -40,7 +40,7 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            result = type_into(session.page, sel, req[:value])
+            result = type_into(session.driver, sel, req[:value])
             enrich_with_recording_metadata(result, session, sel, req)
           end
         end
@@ -50,7 +50,7 @@ module Browserctl
             sel = resolve_selector_from(session, req)
             return sel if sel.is_a?(Hash)
 
-            result = click_element(session.page, sel)
+            result = click_element(session.driver, sel)
             enrich_with_recording_metadata(result, session, sel, req)
           end
         end
@@ -69,14 +69,14 @@ module Browserctl
             ref: ref,
             fingerprint: fp,
             snapshot_id: session.snapshot_id,
-            postcondition_hint: { url: session.page.current_url }
+            postcondition_hint: { url: session.driver.current_url }
           )
           enriched[:post_snapshot_digest] = capture_post_snapshot_digest(session) if req[:capture_post_snapshot]
           enriched.compact
         end
 
         def capture_post_snapshot_digest(session)
-          snapshot = @snapshot_builder.call(session.page)
+          snapshot = @snapshot_builder.call(session.driver)
           Browserctl::Replay::SnapshotDiff.digest(snapshot)
         rescue JSON::ParserError, Timeout::Error, Browserctl::Error => e
           Browserctl.logger.debug("post-snapshot digest skipped: #{e.class}: #{e.message}")
@@ -84,11 +84,11 @@ module Browserctl
         end
 
         def cmd_url(req)
-          with_page(req[:name]) { |session| { ok: true, url: session.page.current_url } }
+          with_page(req[:name]) { |session| { ok: true, url: session.driver.current_url } }
         end
 
-        def type_into(page, selector, value)
-          el = page.at_css(selector)
+        def type_into(driver, selector, value)
+          el = driver.at_css(selector)
           unless el
             return error_payload(
               code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
@@ -103,8 +103,8 @@ module Browserctl
           { ok: true }
         end
 
-        def click_element(page, selector)
-          el = page.at_css(selector)
+        def click_element(driver, selector)
+          el = driver.at_css(selector)
           unless el
             return error_payload(
               code: Browserctl::Error::Codes::SELECTOR_NOT_FOUND,
@@ -127,10 +127,10 @@ module Browserctl
           session.ref_registry[req[:ref]] || { error: "ref '#{req[:ref]}' not found — run snap first" }
         end
 
-        def wait_for_selector(page, selector, timeout)
+        def wait_for_selector(driver, selector, timeout)
           deadline = Time.now + timeout
           loop do
-            found = page.at_css(selector)
+            found = driver.at_css(selector)
             break { ok: true } if found
             break { error: "wait timeout: selector '#{selector}' not found after #{timeout}s" } if Time.now >= deadline
 

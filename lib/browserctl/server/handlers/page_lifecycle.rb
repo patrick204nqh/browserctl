@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../driver/ferrum_page_driver"
+
 module Browserctl
   class CommandDispatcher
     module Handlers
@@ -8,15 +10,15 @@ module Browserctl
 
         def cmd_page_open(req)
           session = @global_mutex.synchronize do
-            @pages[req[:name]] ||= PageSession.new(@driver.create_page)
+            @pages[req[:name]] ||= PageSession.new(Browserctl::Driver::FerrumPageDriver.new(@driver.create_page))
           end
-          session.page.go_to(req[:url]) if req[:url]
+          session.driver.go_to(req[:url]) if req[:url]
           { ok: true, name: req[:name] }
         end
 
         def cmd_page_close(req)
           session = @global_mutex.synchronize { @pages.delete(req[:name]) }
-          session&.page&.close
+          session&.driver&.close
           { ok: true }
         end
 
@@ -28,7 +30,7 @@ module Browserctl
           return { error: "page focus requires headed mode — start browserd with --headed" } unless @driver.headed?
 
           with_page(req[:name]) do |session|
-            session.page.activate
+            session.driver.activate
             { ok: true }
           end
         end
