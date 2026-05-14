@@ -51,6 +51,8 @@ What is Extension:
 
 Every command that flows over the wire. Name, required params, optional params, and response fields are all Fixed once v0.6 ships.
 
+The canonical machine-readable contract for Fixed-zone response shapes is `spec/fixtures/public_surface.yml` under the `fixed_zone:` key. `spec/public_surface_spec.rb` invokes every handler in `COMMAND_MAP` and fails CI if a response gains an undeclared field or loses a required one. The tables below stay human-readable; the lock-file is the source of truth.
+
 ### Page lifecycle
 
 | Command | Required params | Optional params | Response fields |

@@ -94,3 +94,109 @@ cli_commands:
   - url
   - wait
   - workflow
+# Fixed-zone wire-protocol response shapes. One entry per command in
+# COMMAND_MAP that api-stability.md documents under "Fixed zone — command
+# reference". `required` keys MUST appear in every successful response;
+# `optional` keys MAY appear. Any extra key returned by a handler — and any
+# missing required key — fails public_surface_spec.rb. Error responses
+# (`{ error:, code:? }`) are out of scope here.
+#
+# Extension-zone commands (store / fetch) and state_* (not yet promoted to
+# Fixed) are intentionally absent.
+fixed_zone:
+  page_open:
+    required: [ok, name]
+    optional: []
+  page_close:
+    required: [ok]
+    optional: []
+  page_list:
+    required: [pages]
+    optional: []
+  page_focus:
+    required: [ok]
+    optional: []
+  navigate:
+    required: [ok, url, challenge]
+    optional: []
+  fill:
+    required: [ok]
+    optional: [ref, fingerprint, snapshot_id, postcondition_hint, post_snapshot_digest]
+  click:
+    required: [ok]
+    optional: [ref, fingerprint, snapshot_id, postcondition_hint, post_snapshot_digest]
+  evaluate:
+    required: [ok, result]
+    optional: []
+  url:
+    required: [ok, url]
+    optional: []
+  wait:
+    required: [ok, selector]
+    optional: []
+  snapshot:
+    required: [ok, challenge, nonce]
+    optional: [snapshot, html]
+  screenshot:
+    required: [ok, path]
+    optional: []
+  pause:
+    required: [ok, paused]
+    optional: [message]
+  resume:
+    required: [ok, paused]
+    optional: []
+  cookies:
+    required: [ok, cookies]
+    optional: []
+  set_cookie:
+    required: [ok]
+    optional: []
+  delete_cookies:
+    required: [ok]
+    optional: []
+  import_cookies:
+    required: [ok, count]
+    optional: []
+  storage_get:
+    required: [ok, value]
+    optional: []
+  storage_set:
+    required: [ok]
+    optional: []
+  storage_export:
+    required: [ok, path, key_count]
+    optional: []
+  storage_import:
+    required: [ok, origins, key_count]
+    optional: []
+  storage_delete:
+    required: [ok]
+    optional: []
+  devtools:
+    required: [ok, devtools_url]
+    optional: []
+  ping:
+    required: [ok, pid, protocol_version]
+    optional: []
+  shutdown:
+    required: [ok]
+    optional: []
+  press:
+    required: [ok]
+    optional: []
+  hover:
+    required: [ok]
+    optional: []
+  upload:
+    required: [ok]
+    optional: []
+  select:
+    required: [ok]
+    optional: []
+  dialog_accept:
+    required: [ok]
+    optional: []
+  dialog_dismiss:
+    required: [ok]
+    optional: []
