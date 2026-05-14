@@ -5,6 +5,7 @@ This guide covers the workflow for contributing code, docs, and bug reports to b
 ## Table of Contents
 
 - [Development Setup](#development-setup)
+- [Before You Code](#before-you-code)
 - [Running Tests](#running-tests)
 - [Code Style](#code-style)
 - [Submitting Changes](#submitting-changes)
@@ -25,6 +26,15 @@ bin/setup
 ```
 
 `bin/setup` installs gem dependencies and checks for Chrome/Chromium. It also installs [lefthook](https://github.com/evilmartians/lefthook) Git hooks — pre-commit runs RuboCop, pre-push runs the test suite.
+
+---
+
+## Before You Code
+
+Two references worth skimming before non-trivial changes:
+
+- [docs/reference/api-stability.md](docs/reference/api-stability.md) — the public-surface contract. Fixed / Stable / Experimental zones tell you what is safe to change without a deprecation cycle.
+- [docs/architecture/decisions/](docs/architecture/decisions/) — the ADR log. Check here before reopening a settled design question (sockets, drivers, error model, etc.).
 
 ---
 
