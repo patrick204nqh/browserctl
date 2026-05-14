@@ -113,7 +113,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 ### v0.6 — CLI Redesign & Storage ✓ _(shipped)_
 **Goal:** A consistent noun-verb CLI surface with first-class web storage control.
 
-- [x] Noun-verb command structure — `browserctl page open`, `browserctl session save`, `browserctl workflow run`
+- [x] Noun-verb command structure — `browserctl page open`, `browserctl state save` (the `state` verb was named `session` until v0.13), `browserctl workflow run`
 - [x] `storage get/set/export/import/delete` — direct Web Storage access without custom scripts
 - [x] Daemon auto-index — second unnamed daemon auto-picks next available slot
 - [x] `page focus` command
@@ -136,7 +136,7 @@ It is the difference between a browser **you restart** and a browser **you steer
 - [x] Built-in resolvers: `env://`, `keychain://` (macOS), `op://` (1Password CLI)
 - [x] User-defined resolvers via `~/.browserctl/resolvers.rb`
 - [x] `load_session` with `fallback:` — automatic session expiry recovery
-- [x] Session encryption at rest — `browserctl session save --encrypt`
+- [x] Session encryption at rest — `browserctl state save --encrypt` (the `state` verb was named `session` until v0.13)
 - [x] Export encryption — `browserctl session export --encrypt` with passphrase
 
 ### v0.8.3 — Session Durability (patch)

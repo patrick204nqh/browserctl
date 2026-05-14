@@ -156,14 +156,14 @@ browserctl page snapshot main --diff
 If you want to pick up exactly where you left off next time — same tabs, same cookies, same auth — save your session before stopping:
 
 ```bash
-browserctl session save my-first-session
+browserctl state save my-first-session
 ```
 
 Restore it on a fresh daemon:
 
 ```bash
 browserd &
-browserctl session load my-first-session
+browserctl state load my-first-session
 # → pages re-opened, cookies restored, localStorage seeded
 ```
 
