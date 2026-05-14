@@ -7,32 +7,29 @@ module Browserctl
         private
 
         def cmd_cookies(req)
-          session = @global_mutex.synchronize { @pages[req[:name]] }
-          return { error: "no page named '#{req[:name]}'" } unless session
-
-          all = session.driver.cookies_all
-          { ok: true, cookies: all.values.map(&:to_h) }
+          with_page(req[:name]) do |session|
+            all = session.driver.cookies_all
+            { ok: true, cookies: all.values.map(&:to_h) }
+          end
         end
 
         def cmd_set_cookie(req)
-          session = @global_mutex.synchronize { @pages[req[:name]] }
-          return { error: "no page named '#{req[:name]}'" } unless session
-
-          session.driver.cookies_set(
-            name: req[:cookie_name],
-            value: req[:value],
-            domain: req[:domain],
-            path: req.fetch(:path, "/")
-          )
-          { ok: true }
+          with_page(req[:name]) do |session|
+            session.driver.cookies_set(
+              name: req[:cookie_name],
+              value: req[:value],
+              domain: req[:domain],
+              path: req.fetch(:path, "/")
+            )
+            { ok: true }
+          end
         end
 
         def cmd_delete_cookies(req)
-          session = @global_mutex.synchronize { @pages[req[:name]] }
-          return { error: "no page named '#{req[:name]}'" } unless session
-
-          session.driver.cookies_clear
-          { ok: true }
+          with_page(req[:name]) do |session|
+            session.driver.cookies_clear
+            { ok: true }
+          end
         end
 
         def cmd_import_cookies(req)
