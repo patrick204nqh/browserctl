@@ -26,17 +26,16 @@ RSpec.describe Browserctl::CommandDispatcher::Handlers::Data do
       expect(res[:code]).to eq("INVALID_ARGUMENT")
     end
 
-    it "accepts 'local' as a wire alias for 'localStorage'" do
-      fake_driver.stub_evaluate("localStorage.getItem(\"k\")", "v")
+    it "rejects the v0.15 short form 'local' with a hint pointing at 'localStorage'" do
       res = dispatcher.dispatch(cmd: "data_get", name: "main", key: "k", scope: "local")
-      expect(res[:ok]).to be true
-      expect(res[:scope]).to eq("localStorage")
+      expect(res[:code]).to eq("INVALID_ARGUMENT")
+      expect(res[:error]).to match(/localStorage/)
     end
 
-    it "accepts 'session' as a wire alias for 'sessionStorage'" do
-      fake_driver.stub_evaluate("sessionStorage.getItem(\"k\")", "v")
+    it "rejects the v0.15 short form 'session' with a hint pointing at 'sessionStorage'" do
       res = dispatcher.dispatch(cmd: "data_get", name: "main", key: "k", scope: "session")
-      expect(res[:scope]).to eq("sessionStorage")
+      expect(res[:code]).to eq("INVALID_ARGUMENT")
+      expect(res[:error]).to match(/sessionStorage/)
     end
   end
 

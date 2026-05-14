@@ -187,7 +187,7 @@ for the design.
 | Client: `Client#cookies`, `#set_cookie`, `#delete_cookies`, `#import_cookies`, `#export_cookies` | `Client#data_get`, `#data_set`, `#data_delete`, `#data_list` | Removed in v0.16. |
 | Client: `Client#storage_get`, `#storage_set`, `#storage_export`, `#storage_import`, `#storage_delete` | same as above | |
 | CLI: `cookie <op>` | `data <op> --scope cookies` | `cookie` CLI verb removed in v0.16. |
-| CLI: `storage <op>` | `data <op> --scope localStorage\|sessionStorage` | `storage` CLI verb removed in v0.16; `--store local\|session` short forms accepted on the wire as v0.15-only aliases. |
+| CLI: `storage <op>` | `data <op> --scope localStorage\|sessionStorage` | `storage` CLI verb removed in v0.16. The `--store local\|session` short forms were v0.15-only wire aliases and were removed in v0.16. |
 
 Removal timeline:
 

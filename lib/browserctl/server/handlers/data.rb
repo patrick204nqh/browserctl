@@ -15,6 +15,11 @@ module Browserctl
       module Data
         VALID_SCOPES = %w[cookies localStorage sessionStorage].freeze
 
+        # Short-form scope aliases. Were accepted as v0.15-only wire aliases
+        # per ADR-0021; removed in v0.16. Kept here only to produce a helpful
+        # hint in the INVALID_ARGUMENT envelope.
+        SHORT_FORM_HINTS = { "local" => "localStorage", "session" => "sessionStorage" }.freeze
+
         private
 
         # @return [Hash] unified response with `ok`, `scope`, plus per-op fields
@@ -115,17 +120,17 @@ module Browserctl
           return invalid_scope_error(raw) if raw.nil?
 
           scope = raw.to_s
-          # Accept short forms as v0.15-only wire aliases (per ADR-0021).
-          scope = "localStorage"   if scope == "local"
-          scope = "sessionStorage" if scope == "session"
           return invalid_scope_error(raw) unless VALID_SCOPES.include?(scope)
 
           scope
         end
 
         def invalid_scope_error(raw)
+          hint = SHORT_FORM_HINTS[raw.to_s]
+          message = "invalid --scope '#{raw}' — expected one of: #{VALID_SCOPES.join(', ')}"
+          message += " (short form '#{raw}' was removed in v0.16 — use '#{hint}')" if hint
           {
-            error: "invalid --scope '#{raw}' — expected one of: #{VALID_SCOPES.join(', ')}",
+            error: message,
             code: Browserctl::Error::Codes::INVALID_ARGUMENT
           }
         end
