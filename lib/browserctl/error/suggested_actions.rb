@@ -42,6 +42,10 @@ module Browserctl
         Codes::INVALID_ARGUMENT =>
           "Check the argument value against the documented contract; " \
           "e.g. --scope must be one of cookies|localStorage|sessionStorage.",
+        Codes::PLUGIN_FAILED =>
+          "Check the plugin's logs; the daemon caught an uncaught exception from the plugin and is otherwise healthy.",
+        Codes::PLUGIN_TIMED_OUT =>
+          "Increase the plugin's `timeout:` on register_command, or pass `timeout: nil` to opt out (not recommended).",
         Codes::GENERIC => DEFAULT
       }.freeze
 

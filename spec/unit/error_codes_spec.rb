@@ -44,6 +44,8 @@ RSpec.describe Browserctl::Error::Codes do
         "INVALID_DSL_USAGE",
         "INVALID_FORMAT_VERSION",
         "INVALID_ARGUMENT",
+        "PLUGIN_FAILED",
+        "PLUGIN_TIMED_OUT",
         "GENERIC"
       )
       expect(described_class.all).to be_frozen

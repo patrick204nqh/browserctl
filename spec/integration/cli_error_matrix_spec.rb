@@ -320,6 +320,26 @@ RSpec.describe "CLI error code matrix" do
       runner: ->(_) { [+"", +"", 0] }
     ),
 
+    # ---------- PLUGIN_FAILED / PLUGIN_TIMED_OUT (exit 1, falls through to GENERIC) ----------
+    # Plugin commands are invoked through the daemon wire protocol, not the
+    # top-level CLI. Their typed-error paths are covered end-to-end by
+    # spec/integration/plugin_isolation_spec.rb; we register them here as
+    # skip-cells so the matrix-coverage spec still sees the canonical codes.
+    CliErrorMatrix::Cell.new(
+      command: "(daemon) plugin", code: "PLUGIN_FAILED",
+      scenario: "plugin block raises an uncaught exception",
+      skip_reason: "covered by spec/integration/plugin_isolation_spec.rb — " \
+                   "plugins are not invoked through the top-level CLI",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+    CliErrorMatrix::Cell.new(
+      command: "(daemon) plugin", code: "PLUGIN_TIMED_OUT",
+      scenario: "plugin block exceeds its per-invocation timeout",
+      skip_reason: "covered by spec/integration/plugin_isolation_spec.rb — " \
+                   "plugins are not invoked through the top-level CLI",
+      runner: ->(_) { [+"", +"", 0] }
+    ),
+
     # ---------- GENERIC (exit 1) ----------
     # An unknown subcommand on a known top-level group is a typed-but-
     # generic failure path. `state foo` aborts with a non-zero status that
