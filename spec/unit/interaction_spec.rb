@@ -4,6 +4,7 @@ require "spec_helper"
 require "browserctl/server/command_dispatcher"
 require "browserctl/server/snapshot_builder"
 require "browserctl/server/page_session"
+require "browserctl/driver/ferrum_page_driver"
 
 RSpec.describe "interaction handlers" do
   let(:browser)    { double("browser") }
@@ -11,7 +12,7 @@ RSpec.describe "interaction handlers" do
   subject(:dispatcher) { Browserctl::CommandDispatcher.new(pages, browser, Browserctl::SnapshotBuilder.new) }
 
   def make_page(page_double)
-    pages["p"] = Browserctl::PageSession.new(page_double)
+    pages["p"] = Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page_double))
   end
 
   describe "press" do
