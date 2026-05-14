@@ -12,6 +12,9 @@ module Browserctl
         private
 
         def cmd_state_save(req)
+          # registry-wide: state save snapshots across all open pages,
+          # not a single addressed page — picks an arbitrary first session
+          # for cookie capture (cookies are browser-global in CDP).
           first_session = @global_mutex.synchronize { @pages.values.first }
           return { error: "no open pages — open a page before saving state" } unless first_session
 
@@ -40,6 +43,8 @@ module Browserctl
 
         def cmd_state_load(req)
           data = Browserctl::State.load(req[:name], passphrase: req[:passphrase])
+          # registry-wide: state load applies to any open page (cookies are
+          # browser-global); first session is fine as the cookie sink.
           target = @global_mutex.synchronize { @pages.values.first }
           return { error: "no open pages — open a page before loading state" } unless target
 
@@ -101,6 +106,8 @@ module Browserctl
         end
 
         def capture_state_payload
+          # registry-wide: cookies are browser-global, so any session works
+          # as the cookie source.
           first = @global_mutex.synchronize { @pages.values.first }
           cookies = first.driver.cookies_all.values.map(&:to_h)
 
@@ -108,6 +115,9 @@ module Browserctl
           session_storage = {}
           captured_origins = []
 
+          # registry-wide: iterate every page to capture per-origin storage;
+          # snapshot the registry under @global_mutex, then take each
+          # session's own mutex to read storage safely.
           @global_mutex.synchronize { @pages.dup }.each_value do |session|
             session.mutex.synchronize do
               origin    = session.driver.evaluate("location.origin")
