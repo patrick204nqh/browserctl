@@ -1,6 +1,6 @@
 # browserctl — Product Story
 
-> Navigate the web. Stay in session. Never start over.
+> persistent browser sessions with human-in-the-loop.
 
 ---
 
@@ -97,13 +97,9 @@ Workflows are plain Ruby. They compose, retry, timeout, and share steps. Params 
 
 ## Who It's For
 
-**Engineers debugging issues** — Record the reproduction steps. Capture screenshots at each stage. Share the workflow script instead of a 10-step Confluence doc.
+**AI agents — the primary user.** Give your agent a browser it can actually use on the real web — Cloudflare walls, consent modals, 2FA prompts and all. The agent handles the mechanical work; HITL handles the judgment calls. The session stays alive between commands, so the agent picks up where it left off without re-authenticating on every step.
 
-**AI/agent teams** — Give your agent a browser it can actually use on the real web — Cloudflare walls, consent modals, 2FA prompts and all. The agent handles the mechanical work; HITL handles the judgment calls.
-
-**QA and release teams** — Smoke test every environment with the same script. Record the passing run as evidence. Replay it before the next release.
-
-**Anyone with browser toil** — If you click through the same 12 pages every week, write the workflow once and delegate it.
+**Engineers and QA — secondary, by extension.** The same primitives that let an agent debug a flaky checkout let an engineer reproduce a bug once, then iterate on the fix without restarting from the home page. The same recordings an agent generates become smoke tests a QA team can replay every release. If you click through the same 12 pages every week, write the workflow once and delegate it.
 
 ---
 
@@ -121,4 +117,4 @@ browserctl occupies a specific space: **interactive, stateful, composable browse
 
 ## The One-Line Pitch
 
-> The browser you delegate to your agents — with a pause button for the parts that still need you.
+> persistent browser sessions with human-in-the-loop.

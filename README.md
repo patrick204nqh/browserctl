@@ -5,7 +5,11 @@
 <h1 align="center">browserctl</h1>
 
 <p align="center">
-  The browser you delegate to your agents — with a pause button for the parts that still need you.
+  persistent browser sessions with human-in-the-loop.
+</p>
+
+<p align="center">
+  <sub>Built for AI agents. Useful to the engineers and QA folks who work with them.</sub>
 </p>
 
 <p align="center">
