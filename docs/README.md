@@ -50,6 +50,7 @@ Look things up without reading linearly.
 |---|---|
 | [Commands](reference/commands.md) | Every CLI command, flag, snapshot format, and PageProxy method |
 | [API Stability](reference/api-stability.md) | Fixed / Stable / Extension zones, wire protocol contract |
+| [Breaking Changes](reference/api-stability.md#breaking-changes-log) | Upgrading? v0.12 → v0.13 removed `session` (use `state`); v0.14 → v0.15 consolidates cookie/storage under `data` |
 | [Style Guide](reference/style-guide.md) | Naming conventions per layer — wire, CLI, SDK |
 
 ---
