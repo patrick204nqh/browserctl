@@ -7,11 +7,9 @@ require_relative "plugin_dispatcher"
 require_relative "handlers/page_lifecycle"
 require_relative "handlers/navigation"
 require_relative "handlers/observation"
-require_relative "handlers/cookies"
 require_relative "handlers/hitl"
 require_relative "handlers/devtools"
 require_relative "handlers/daemon_control"
-require_relative "handlers/storage"
 require_relative "handlers/data"
 require_relative "handlers/state"
 require_relative "handlers/interaction"
@@ -27,11 +25,9 @@ module Browserctl
     include Handlers::PageLifecycle
     include Handlers::Navigation
     include Handlers::Observation
-    include Handlers::Cookies
     include Handlers::Hitl
     include Handlers::DevTools
     include Handlers::DaemonControl
-    include Handlers::Storage
     include Handlers::Data
     include Handlers::StateRpc
     include Handlers::Interaction
@@ -55,17 +51,8 @@ module Browserctl
       "pause" => :cmd_pause,
       "resume" => :cmd_resume,
       "devtools" => :cmd_devtools,
-      "cookies" => :cmd_cookies,
-      "set_cookie" => :cmd_set_cookie,
-      "delete_cookies" => :cmd_delete_cookies,
-      "import_cookies" => :cmd_import_cookies,
       "store" => :cmd_store,
       "fetch" => :cmd_fetch,
-      "storage_get" => :cmd_storage_get,
-      "storage_set" => :cmd_storage_set,
-      "storage_export" => :cmd_storage_export,
-      "storage_import" => :cmd_storage_import,
-      "storage_delete" => :cmd_storage_delete,
       "data_get" => :cmd_data_get,
       "data_set" => :cmd_data_set,
       "data_delete" => :cmd_data_delete,

@@ -155,40 +155,9 @@ op.
 
 Invalid `--scope` returns a typed `INVALID_ARGUMENT` error (exit code 8).
 
----
-
-## Cookie (deprecated, removed at 1.0)
-
-The `cookie *` family is deprecated in v0.15 in favour of `data --scope
-cookies`. Old commands still work and emit a one-line deprecation warning to
-stderr (suppressed under `--output json`). They are removed at 1.0.
-
-| Command | Replacement |
-|---|---|
-| `cookie list <page>` | `data list <page> --scope cookies` |
-| `cookie set <page> <name> <value> --domain DOMAIN [--path /]` | `data set <page> <name> <value> --scope cookies --domain DOMAIN` |
-| `cookie delete <page>` | `data delete <page> --scope cookies` |
-| `cookie export <page> <path>` | `data list <page> --scope cookies` + write client-side |
-| `cookie import <page> <path>` | `data set <page> --scope cookies` (per cookie) |
-
----
-
-## Storage (deprecated, removed at 1.0)
-
-The `storage *` family is deprecated in v0.15 in favour of `data --scope
-localStorage` / `data --scope sessionStorage`. Old commands still work and
-emit a one-line deprecation warning to stderr (suppressed under
-`--output json`). They are removed at 1.0.
-
-| Command | Replacement |
-|---|---|
-| `storage get <page> <key> [--store local\|session]` | `data get <page> <key> --scope localStorage\|sessionStorage` |
-| `storage set <page> <key> <value> [--store local\|session]` | `data set <page> <key> <value> --scope localStorage\|sessionStorage` |
-| `storage delete <page> [--store local\|session\|all]` | `data delete <page> --scope localStorage\|sessionStorage` |
-| `storage export <page> <path>` | `data list <page> --scope localStorage` + write client-side |
-| `storage import <page> <path>` | `data set <page> --scope localStorage` (per key) |
-
-`--store` defaults to `local`. The export format is `{ "https://origin": { key: value } }`.
+The `cookie *` and `storage *` CLI families that shipped as v0.15 aliases
+were removed in v0.16; `data --scope ...` is the only verb family for
+browser-side persistent data. See ADR-0021 for the rationale.
 
 ---
 

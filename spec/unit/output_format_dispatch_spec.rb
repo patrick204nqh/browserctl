@@ -5,13 +5,12 @@ require "stringio"
 require "spec_helper"
 require "browserctl/commands/output_format"
 require "browserctl/commands/page"
-require "browserctl/commands/cookie"
-require "browserctl/commands/storage"
+require "browserctl/commands/data"
 require "browserctl/commands/state"
 require "browserctl/commands/workflow"
 
 # Per-command verification that all three --output modes are honoured for
-# one command in each domain (page, cookie, storage, state, workflow).
+# one command in each domain (page, data, state, workflow).
 # Drives the command modules directly with a stubbed client/runner so we
 # don't need a live daemon.
 RSpec.describe "Browserctl::Commands::OutputFormat (per-domain dispatch)" do
@@ -70,24 +69,28 @@ RSpec.describe "Browserctl::Commands::OutputFormat (per-domain dispatch)" do
     include_examples "honours --output across modes"
   end
 
-  describe "cookie list" do
-    let(:payload) { { cookies: [{ name: "sid", value: "x" }] } }
-    let(:client) { instance_double(Browserctl::Client, cookies: payload) }
+  describe "data list" do
+    let(:payload) { { ok: true, scope: "cookies", entries: [{ name: "sid", value: "x" }], count: 1 } }
+    let(:client) do
+      instance_double(Browserctl::Client).tap do |c|
+        allow(c).to receive(:data_list).with("main", scope: "cookies").and_return(payload)
+      end
+    end
 
-    define_method(:invoke) { Browserctl::Commands::Cookie.run(client, %w[list main]) }
+    define_method(:invoke) { Browserctl::Commands::Data.run(client, %w[list main --scope cookies]) }
 
     include_examples "honours --output across modes"
   end
 
-  describe "storage get" do
-    let(:payload) { { value: "hello" } }
+  describe "data get" do
+    let(:payload) { { ok: true, scope: "localStorage", key: "k", value: "hello" } }
     let(:client) do
       instance_double(Browserctl::Client).tap do |c|
-        allow(c).to receive(:storage_get).with("main", "k", store: "local").and_return(payload)
+        allow(c).to receive(:data_get).with("main", "k", scope: "localStorage").and_return(payload)
       end
     end
 
-    define_method(:invoke) { Browserctl::Commands::Storage.run(client, %w[get main k]) }
+    define_method(:invoke) { Browserctl::Commands::Data.run(client, %w[get main k --scope localStorage]) }
 
     include_examples "honours --output across modes"
   end

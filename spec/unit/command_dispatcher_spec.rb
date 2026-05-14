@@ -446,79 +446,13 @@ RSpec.describe Browserctl::CommandDispatcher do
     end
   end
 
-  describe "#cmd_cookies / #cmd_set_cookie / #cmd_delete_cookies" do
+  describe "store / fetch commands" do
     let(:driver)  { double("driver") }
     let(:page)    { instance_double("Ferrum::Page") }
-    let(:cookies) { double("cookies") }
     let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
     subject(:dispatcher) { described_class.new(pages, driver) }
 
-    before { allow(page).to receive(:cookies).and_return(cookies) }
-
-    describe "#cmd_cookies" do
-      it "returns all cookies as an array of hashes" do
-        cookie = double("cookie", to_h: { "name" => "cf_clearance", "value" => "abc123",
-                                          "domain" => ".example.com", "path" => "/" })
-        allow(cookies).to receive(:all).and_return({ "cf_clearance" => cookie })
-        res = dispatcher.dispatch({ cmd: "cookies", name: "main" })
-        expect(res[:ok]).to be true
-        expect(res[:cookies]).to eq([{ "name" => "cf_clearance", "value" => "abc123",
-                                       "domain" => ".example.com", "path" => "/" }])
-      end
-
-      it "returns empty array when no cookies are set" do
-        allow(cookies).to receive(:all).and_return({})
-        res = dispatcher.dispatch({ cmd: "cookies", name: "main" })
-        expect(res[:ok]).to be true
-        expect(res[:cookies]).to eq([])
-      end
-
-      it "returns error for unknown page" do
-        res = dispatcher.dispatch({ cmd: "cookies", name: "ghost" })
-        expect(res[:error]).to match(/no page named 'ghost'/)
-      end
-    end
-
-    describe "#cmd_set_cookie" do
-      it "calls cookies.set with name, value, domain, path" do
-        expect(cookies).to receive(:set).with(
-          name: "cf_clearance", value: "abc123", domain: ".example.com", path: "/"
-        )
-        res = dispatcher.dispatch({ cmd: "set_cookie", name: "main",
-                                    cookie_name: "cf_clearance", value: "abc123",
-                                    domain: ".example.com", path: "/" })
-        expect(res[:ok]).to be true
-      end
-
-      it "defaults path to '/' when not provided" do
-        expect(cookies).to receive(:set).with(
-          name: "session", value: "xyz", domain: "example.com", path: "/"
-        )
-        dispatcher.dispatch({ cmd: "set_cookie", name: "main",
-                              cookie_name: "session", value: "xyz", domain: "example.com" })
-      end
-
-      it "returns error for unknown page" do
-        res = dispatcher.dispatch({ cmd: "set_cookie", name: "ghost",
-                                    cookie_name: "x", value: "y", domain: "z" })
-        expect(res[:error]).to match(/no page named 'ghost'/)
-      end
-    end
-
-    describe "#cmd_delete_cookies" do
-      it "calls cookies.clear and returns ok" do
-        expect(cookies).to receive(:clear)
-        res = dispatcher.dispatch({ cmd: "delete_cookies", name: "main" })
-        expect(res[:ok]).to be true
-      end
-
-      it "returns error for unknown page" do
-        res = dispatcher.dispatch({ cmd: "delete_cookies", name: "ghost" })
-        expect(res[:error]).to match(/no page named 'ghost'/)
-      end
-    end
-
-    describe "store / fetch commands" do
+    describe "behaviour" do
       it "stores and retrieves a value" do
         dispatcher.dispatch({ cmd: "store", key: "token", value: "abc123" })
         result = dispatcher.dispatch({ cmd: "fetch", key: "token" })

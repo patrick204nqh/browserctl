@@ -107,34 +107,13 @@ One of `selector` or `ref` is required for `fill` and `click`. Both cannot be om
 scope returns a typed `INVALID_ARGUMENT` error. Introduced by ADR-0021 as
 the consolidation of the legacy `cookie *` and `storage *` families.
 
-### Cookies (deprecated v0.15, removed at 1.0)
+### Cookies / Storage (removed in v0.16)
 
-| Command | Required params | Optional params | Response fields |
-|---------|----------------|----------------|-----------------|
-| `cookies` | `name` | — | `ok`, `cookies` (array) |
-| `set_cookie` | `name`, `cookie_name`, `value`, `domain` | `path` (default `/`) | `ok` |
-| `delete_cookies` | `name` | — | `ok` |
-| `import_cookies` | `name`, `cookies` (array) | — | `ok`, `count` |
-
-`export_cookies` has no wire command — it is implemented client-side by calling `cookies` then writing a file.
-
-These aliases delegate to the `data` verbs above; CLI use emits a one-line
-deprecation warning to stderr (suppressed under `--output json`). See the
-"Removed at 1.0" section below.
-
-### Storage (deprecated v0.15, removed at 1.0)
-
-| Command | Required params | Optional params | Response fields |
-|---------|----------------|----------------|-----------------|
-| `storage_get` | `name`, `key` | `store` (`"local"`\|`"session"`, default `"local"`) | `ok`, `value` |
-| `storage_set` | `name`, `key`, `value` | `store` (default `"local"`) | `ok` |
-| `storage_export` | `name`, `path` | `stores` (`"local"`\|`"session"`\|`"all"`, default `"all"`) | `ok`, `path`, `key_count` |
-| `storage_import` | `name`, `path` | — | `ok`, `origins`, `key_count` |
-| `storage_delete` | `name` | `stores` (default `"all"`) | `ok` |
-
-These aliases delegate to the `data` verbs above; CLI use emits a one-line
-deprecation warning to stderr (suppressed under `--output json`). See the
-"Removed at 1.0" section below.
+The `cookie *` / `storage *` wire commands, the matching CLI verbs, and the
+matching `Browserctl::Client` methods shipped in v0.15 as aliases over the
+`data` verb family. They were removed in v0.16 — see ADR-0021. Use
+`data_get` / `data_set` / `data_delete` / `data_list` with a `scope:` of
+`cookies`, `localStorage`, or `sessionStorage`.
 
 ### DevTools
 
@@ -188,16 +167,14 @@ The interface is **not** a plugin point. Per the v0.15 plan, shipping a non-Ferr
 
 ---
 
-## Removed at 1.0
+## Removed in v0.16
 
-The following Fixed-zone surfaces are deprecated in v0.15 and removed at the
-1.0 cut. They remain functional throughout the v0.15 soak; CLI invocations
-emit a one-line deprecation warning to stderr (suppressed under
-`--output json`). Migration target is the unified `data --scope ...` verb
-family — see ADR-0021 (`docs/architecture/decisions/0021-data-verb-consolidation.md`)
+The following Fixed-zone surfaces shipped in v0.15 as deprecation-window
+aliases over the unified `data` verb family and were removed in v0.16. See
+ADR-0021 (`docs/architecture/decisions/0021-data-verb-consolidation.md`)
 for the design.
 
-| Surface (deprecated) | Replacement | Notes |
+| Surface (removed) | Replacement | Notes |
 |---|---|---|
 | Wire: `cookies` | `data_list` with `scope: "cookies"` | Returns full cookie array; same per-cookie shape. |
 | Wire: `set_cookie` | `data_set` with `scope: "cookies"` | `domain:` still required. |
@@ -207,23 +184,18 @@ for the design.
 | Wire: `storage_set` | `data_set` with `scope: "localStorage"` / `"sessionStorage"` | |
 | Wire: `storage_delete` | `data_delete` with `scope: "localStorage"` / `"sessionStorage"` | |
 | Wire: `storage_export` / `storage_import` | `data_list` + client-side file I/O | `data export` / `data import` may land pre-1.0. |
-| Client: `Client#cookies`, `#set_cookie`, `#delete_cookies`, `#import_cookies`, `#export_cookies` | `Client#data_get`, `#data_set`, `#data_delete`, `#data_list` | Same lifecycle as the wire verbs. |
+| Client: `Client#cookies`, `#set_cookie`, `#delete_cookies`, `#import_cookies`, `#export_cookies` | `Client#data_get`, `#data_set`, `#data_delete`, `#data_list` | Removed in v0.16. |
 | Client: `Client#storage_get`, `#storage_set`, `#storage_export`, `#storage_import`, `#storage_delete` | same as above | |
-| CLI: `cookie <op>` | `data <op> --scope cookies` | Old form emits deprecation warning. |
-| CLI: `storage <op>` | `data <op> --scope localStorage\|sessionStorage` | Old form emits deprecation warning; `--store local\|session` short forms accepted on the wire as v0.15-only aliases. |
+| CLI: `cookie <op>` | `data <op> --scope cookies` | `cookie` CLI verb removed in v0.16. |
+| CLI: `storage <op>` | `data <op> --scope localStorage\|sessionStorage` | `storage` CLI verb removed in v0.16; `--store local\|session` short forms accepted on the wire as v0.15-only aliases. |
 
-Deprecation window:
+Removal timeline:
 
-| Milestone | State of the deprecated surfaces |
+| Milestone | State of the surfaces |
 |---|---|
-| v0.14 (current) | Sole API. |
-| v0.15 | Aliases that delegate to `data`, emit a deprecation warning, stay covered by integration tests. |
-| v0.15 soak (~two months) | Aliases still ship; no further changes. |
-| 1.0 cut | Aliases and warning lines removed. Only `data` remains. |
-
-The public-surface lock-file (`spec/fixtures/public_surface.yml`) carries
-the deprecated entries with `# deprecated, remove at 1.0 — see ADR-0021`
-comments so the timeline is visible to CI as well as to readers.
+| v0.14 | Sole API. |
+| v0.15 | Aliases that delegate to `data`, emit a one-line deprecation warning, stay covered by integration tests. |
+| v0.16 | Aliases and warning lines removed. Only `data` remains. |
 
 ---
 
@@ -234,7 +206,7 @@ comments so the timeline is visible to CI as well as to readers.
 v0.15 introduces a unified `data` verb family that subsumes the legacy
 `cookie *` and `storage *` commands. The old surfaces continue to ship in
 v0.15 as aliases with a one-line deprecation warning (suppressed under
-`--output json`); they are removed at the 1.0 cut. See the "Removed at 1.0"
+`--output json`); they were removed in v0.16. See the "Removed in v0.16"
 section above for the full migration table, and ADR-0021 for the design.
 
 | New verb | Replaces |

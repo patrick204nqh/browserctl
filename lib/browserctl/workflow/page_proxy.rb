@@ -40,16 +40,17 @@ module Browserctl
     delegate_unwrap :snapshot
     delegate_unwrap :screenshot
     delegate_unwrap :wait
-    delegate_unwrap :delete_cookies
+    delegate_unwrap :data_delete
+    delegate_unwrap :data_set
+    delegate_unwrap :data_list
     delegate_unwrap :press
-    delegate_unwrap :storage_set
     delegate_unwrap :dialog_accept
     delegate_unwrap :dialog_dismiss
 
-    delegate_unwrap :devtools,    extract: :devtools_url
-    delegate_unwrap :url,         extract: :url
-    delegate_unwrap :evaluate,    extract: :result
-    delegate_unwrap :storage_get, extract: :value
+    delegate_unwrap :devtools, extract: :devtools_url
+    delegate_unwrap :url,      extract: :url
+    delegate_unwrap :evaluate, extract: :result
+    delegate_unwrap :data_get, extract: :value
 
     def fill(selector = nil, value = nil, ref: nil)
       with_selector_fallback(:fill, selector, ref) do |sel, r|
