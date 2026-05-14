@@ -36,6 +36,8 @@ Every `data` operation requires `--scope {cookies|localStorage|sessionStorage}`.
 
 The scope names match the browser-platform names (`localStorage`, `sessionStorage`) rather than the current short forms (`local`, `session`) because the long forms are unambiguous to first-touch users and to AI agents that have read MDN. The short forms are accepted as aliases on the wire for v0.15 only, deprecated alongside the old verbs.
 
+> **Update (v0.16):** the short-form scope aliases (`local`, `session`) were v0.15-only as stated above and have been removed in v0.16. The long-form `localStorage` / `sessionStorage` are the only accepted scope values; passing `local` or `session` now returns `INVALID_ARGUMENT` with a hint pointing at the long form.
+
 ### Deprecation path
 
 `cookie *` and `storage *` ship in v0.15 as alias dispatchers that:
