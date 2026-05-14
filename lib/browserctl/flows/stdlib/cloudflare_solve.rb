@@ -13,7 +13,7 @@ require_relative "../../flow"
 # the duck-typed (current_url, body) interface the detector expects.
 module Browserctl
   module Flows
-    PageDetectorAdapter = Struct.new(:current_url, :body)
+    PageDetectorAdapter = Data.define(:current_url, :body)
 
     module CloudflareSolve
       module_function

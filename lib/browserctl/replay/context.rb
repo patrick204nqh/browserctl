@@ -16,7 +16,7 @@ module Browserctl
     # context so the surrounding workflow runner can render them into a
     # drift report at end-of-run.
     class Context
-      DriftEvent = Struct.new(:command, :selector, :matched_ref, :score, :reason, keyword_init: true)
+      DriftEvent = Data.define(:command, :selector, :matched_ref, :score, :reason)
 
       attr_reader :drift_events
 

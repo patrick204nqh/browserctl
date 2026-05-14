@@ -16,7 +16,7 @@ module Browserctl
     # caller (CLI or Workflow) can decide how to render them. The CLI maps
     # to a non-zero exit; a Workflow caller may catch and continue.
     class Mutator
-      Result = Struct.new(:save_result, :flow_name, :flow_version, keyword_init: true) do
+      Result = Data.define(:save_result, :flow_name, :flow_version) do
         def to_h
           (save_result || {}).merge(rotated_flow: flow_name)
         end

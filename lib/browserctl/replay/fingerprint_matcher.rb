@@ -21,7 +21,7 @@ module Browserctl
       DEFAULT_THRESHOLD = 0.6
       WEIGHTS = { text: 0.40, role: 0.20, neighbors: 0.25, position: 0.15 }.freeze
 
-      Match = Struct.new(:candidate, :score, keyword_init: true)
+      Match = Data.define(:candidate, :score)
 
       def initialize(threshold: DEFAULT_THRESHOLD, weights: WEIGHTS)
         @threshold = threshold
