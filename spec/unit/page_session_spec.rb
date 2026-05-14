@@ -2,13 +2,14 @@
 
 require "spec_helper"
 require "browserctl/server/page_session"
+require "support/fake_page_driver"
 
 RSpec.describe Browserctl::PageSession do
-  let(:page) { double("Ferrum::Page") }
-  subject(:session) { described_class.new(page) }
+  let(:driver) { Browserctl::Testing::FakePageDriver.new }
+  subject(:session) { described_class.new(driver) }
 
-  it "holds the page" do
-    expect(session.page).to eq(page)
+  it "holds the driver" do
+    expect(session.driver).to eq(driver)
   end
 
   it "starts with an empty ref_registry" do
@@ -35,7 +36,7 @@ RSpec.describe Browserctl::PageSession do
   end
 
   it "has a separate mutex per instance" do
-    other = described_class.new(double("page2"))
+    other = described_class.new(Browserctl::Testing::FakePageDriver.new)
     expect(session.mutex).not_to equal(other.mutex)
   end
 
@@ -60,7 +61,7 @@ RSpec.describe Browserctl::PageSession do
     end
 
     it "has a separate pause_cv per instance" do
-      other = described_class.new(double("page2"))
+      other = described_class.new(Browserctl::Testing::FakePageDriver.new)
       expect(session.pause_cv).not_to equal(other.pause_cv)
     end
   end

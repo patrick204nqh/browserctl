@@ -205,7 +205,7 @@ RSpec.describe "public surface lock-file" do
       end,
       "devtools" => lambda do |ctx|
         page = instance_double("Ferrum::Page")
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        ctx.pages["main"] = Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page))
         allow(ctx.driver).to receive(:supports?).with(:devtools).and_return(true)
         info = { port: 9222, target_id: "ABC" }
         allow(ctx.driver).to receive(:devtools_info)
@@ -222,7 +222,7 @@ RSpec.describe "public surface lock-file" do
       "press" => lambda do |ctx|
         keyboard = double("keyboard", down: nil, up: nil)
         page = instance_double("Ferrum::Page", keyboard: keyboard)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        ctx.pages["main"] = Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page))
         { cmd: "press", name: "main", key: "Enter" }
       end,
       "hover" => lambda do |ctx|
@@ -230,7 +230,7 @@ RSpec.describe "public surface lock-file" do
         page  = instance_double("Ferrum::Page",
                                 evaluate: { "x" => 1.0, "y" => 1.0 },
                                 mouse: mouse)
-        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        ctx.pages["main"] = Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page))
         { cmd: "hover", name: "main", selector: "button" }
       end,
       "upload" => lambda do |ctx|

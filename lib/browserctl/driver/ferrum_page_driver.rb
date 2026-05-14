@@ -12,11 +12,6 @@ module Browserctl
     class FerrumPageDriver
       include PageDriver
 
-      # @return [Object] the underlying Ferrum/CDP page. Exposed for callers
-      #   that still bridge through Ferrum-typed APIs (currently only the CDP
-      #   driver's `devtools_info`). New handler code must not use this.
-      attr_reader :raw_page
-
       def initialize(page)
         @raw_page = page
       end

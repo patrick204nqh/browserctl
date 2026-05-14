@@ -4,6 +4,7 @@ require "spec_helper"
 require "browserctl/server/command_dispatcher"
 require "browserctl/server/snapshot_builder"
 require "browserctl/server/page_session"
+require "browserctl/driver/ferrum_page_driver"
 
 RSpec.describe Browserctl::CommandDispatcher do
   let(:driver)     { double("driver") }
@@ -38,7 +39,7 @@ RSpec.describe Browserctl::CommandDispatcher do
       result = dispatcher.dispatch({ cmd: "page_open", name: "home" })
       expect(result).to eq({ ok: true, name: "home" })
       expect(pages["home"]).to be_a(Browserctl::PageSession)
-      expect(pages["home"].page).to eq(page)
+      expect(pages["home"].driver).to be_a(Browserctl::Driver::FerrumPageDriver)
     end
 
     it "page_open navigates to url when given" do
@@ -420,7 +421,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "#cmd_devtools" do
     let(:driver) { double("driver") }
     let(:page)   { instance_double("Ferrum::Page") }
-    let(:pages)  { { "main" => Browserctl::PageSession.new(page) } }
+    let(:pages)  { { "main" => Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page)) } }
     subject(:dispatcher) { described_class.new(pages, driver) }
 
     it "returns a devtools_url for a known page when driver supports devtools" do
@@ -449,7 +450,7 @@ RSpec.describe Browserctl::CommandDispatcher do
   describe "store / fetch commands" do
     let(:driver)  { double("driver") }
     let(:page)    { instance_double("Ferrum::Page") }
-    let(:pages)   { { "main" => Browserctl::PageSession.new(page) } }
+    let(:pages)   { { "main" => Browserctl::PageSession.new(Browserctl::Driver::FerrumPageDriver.new(page)) } }
     subject(:dispatcher) { described_class.new(pages, driver) }
 
     describe "behaviour" do
