@@ -10,6 +10,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0](https://github.com/patrick204nqh/browserctl/compare/v0.14.0...v0.15.0) (2026-05-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* Cookie and storage wire / CLI / client surfaces are deprecated in favour of the unified `data --scope ...` verb. Old paths still work in v0.15 but emit a one-line deprecation warning to stderr (suppressed under `--output json`) and are removed at 1.0. See docs/architecture/decisions/0021-data-verb-consolidation.md.
+
+### Features
+
+* data verb consolidates cookie and storage commands (v0.15 WS-1 PR 2) ([#207](https://github.com/patrick204nqh/browserctl/issues/207)) ([4b0beca](https://github.com/patrick204nqh/browserctl/commit/4b0becaf014fe27f92dfdc48f03bd1d75e06896d))
+* pluggable tracing hook (v0.15 WS-4 PR 7) ([#203](https://github.com/patrick204nqh/browserctl/issues/203)) ([f8f725e](https://github.com/patrick204nqh/browserctl/commit/f8f725e4022defa2c56e1c3dfda831f348bf2fc4))
+* plugin command timeout and error isolation (v0.15 WS-2 PR 5) ([#202](https://github.com/patrick204nqh/browserctl/issues/202)) ([5bc1e36](https://github.com/patrick204nqh/browserctl/commit/5bc1e3609a1d0739369cdad7e5c5cd27f6116ec7))
+
+
+### Bug Fixes
+
+* dialog handlers use with_page mutex pattern (v0.15 WS-2 PR 4) ([#193](https://github.com/patrick204nqh/browserctl/issues/193)) ([f35f513](https://github.com/patrick204nqh/browserctl/commit/f35f5137011db40b52a77008bba62e19e73ccb0d))
+* sweep remaining [@pages](https://github.com/pages) raw access in handlers (v0.15 WS-2 PR 4b) ([#208](https://github.com/patrick204nqh/browserctl/issues/208)) ([9d57a6d](https://github.com/patrick204nqh/browserctl/commit/9d57a6d2bb0a20a06c3a04024517448cd37c290a))
+
 ## [0.14.0](https://github.com/patrick204nqh/browserctl/compare/v0.13.1...v0.14.0) (2026-05-11)
 
 
