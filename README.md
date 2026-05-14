@@ -55,8 +55,8 @@ browserctl url main
 browserctl page snapshot main --diff       # only what changed
 
 # Session persistence: save now, pick up later
-browserctl session save my-session
-# On a fresh daemon tomorrow: `browserctl session load my-session`
+browserctl state save my-session
+# On a fresh daemon tomorrow: `browserctl state load my-session`
 # → tabs restored, cookies intact, no re-login needed
 
 # 7. Done

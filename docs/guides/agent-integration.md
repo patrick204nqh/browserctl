@@ -136,12 +136,12 @@ Save state at the end of a run so the next run picks up authenticated:
 
 ```bash
 # End of run 1
-browserctl session save my-agent-session
+browserctl state save my-agent-session
 browserctl daemon stop
 
 # Start of run 2 — no re-login needed
 browserd &
-browserctl session load my-agent-session
+browserctl state load my-agent-session
 # → cookies restored, localStorage seeded, pages reopened
 ```
 
