@@ -151,7 +151,7 @@ module Browserctl
       def secret_header(secrets)
         return "" if secrets.empty?
 
-        lines = ["# TODO: review the following secret-shaped fields detected during recording.",
+        lines = ["# REVIEW: the following secret-shaped fields were detected during recording.",
                  "# Configure a secret_ref: source for each before running:"]
         secrets.each { |f| lines << "#   - secret_#{f}" }
         "\n#{lines.join("\n")}\n"
@@ -163,7 +163,7 @@ module Browserctl
         if body.nil?
           page_sym = cmd[:name].to_s.gsub(/[^a-zA-Z0-9_]/, "_")
           action   = cmd[:action].to_s.gsub(/[^a-z_]/, "")
-          return "# TODO: ref-based #{action} on #{cmd[:name].inspect} (ref: #{cmd[:ref].inspect}) — " \
+          return "# REVIEW: ref-based #{action} on #{cmd[:name].inspect} (ref: #{cmd[:ref].inspect}) — " \
                  "replace with a stable CSS selector\n" \
                  "# step #{label.inspect} do\n" \
                  "#   page(:#{page_sym}).#{action}(\"YOUR_SELECTOR_HERE\")\n" \
@@ -194,7 +194,7 @@ module Browserctl
       end
 
       def ref_interaction_parts(cmd)
-        ["TODO: ref-based #{cmd[:action]} on #{cmd[:name]} (ref: #{cmd[:ref]})", nil]
+        ["REVIEW: ref-based #{cmd[:action]} on #{cmd[:name]} (ref: #{cmd[:ref]})", nil]
       end
 
       def selector_parts(cmd)

@@ -80,7 +80,7 @@ module Browserctl
       return unless ref_count.positive?
 
       warn "Warning: #{ref_count} ref-based interaction(s) were captured but cannot be replayed by ref."
-      warn "Search the generated workflow for 'TODO: ref-based' and replace with stable CSS selectors."
+      warn "Search the generated workflow for 'REVIEW: ref-based' and replace with stable CSS selectors."
     end
 
     class << self

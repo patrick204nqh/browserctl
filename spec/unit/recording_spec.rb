@@ -161,11 +161,11 @@ RSpec.describe Browserctl::Recording do
       expect(entry).not_to have_key("secret_hint")
     end
 
-    it "emits secret_ref params and TODO header in the generated workflow" do
+    it "emits secret_ref params and REVIEW header in the generated workflow" do
       described_class.append("fill", name: "login", selector: 'input[name="api_key"]', value: "k")
       described_class.append("fill", name: "login", selector: 'input[type="password"]', value: "p")
       ruby = described_class.generate_workflow("gen", keep_log: true)
-      expect(ruby).to include("# TODO: review the following secret-shaped fields")
+      expect(ruby).to include("# REVIEW: the following secret-shaped fields")
       expect(ruby).to include("#   - secret_api_key")
       expect(ruby).to include("#   - secret_password")
       expect(ruby).to include("param :secret_api_key, secret: true")

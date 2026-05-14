@@ -28,10 +28,10 @@ RSpec.describe Browserctl::Recording::WorkflowRenderer do
       expect(ruby).to include("page(:login).fill(\"input[name=password]\", params[:secret_password])")
     end
 
-    it "emits a TODO when a ref-interaction is present (no replayable selector)" do
+    it "emits a REVIEW marker when a ref-interaction is present (no replayable selector)" do
       cmds = [{ cmd: "_ref_interaction", name: "p", action: "click", ref: "abc123" }]
       ruby = described_class.render("ex", cmds)
-      expect(ruby).to include("TODO: ref-based click")
+      expect(ruby).to include("REVIEW: ref-based click")
     end
   end
 

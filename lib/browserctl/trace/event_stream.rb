@@ -58,7 +58,9 @@ module Browserctl
       # Session resolution. When session_id is stamped on records (future PR),
       # filter/select by it. Otherwise, treat the entire merged stream as one
       # session — caller can scope by tailing/rotating logs.
-      # TODO: stamp session_id on every log line so this scopes correctly.
+      # See: https://github.com/patrick204nqh/browserctl/issues/212 — until
+      # session_id is stamped on every log line by the writer, this is the
+      # best-effort heuristic.
       def filter_session(rows)
         if @session_filter
           rows.select { |r| r["session_id"].to_s == @session_filter }
