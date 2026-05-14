@@ -238,6 +238,27 @@ RSpec.describe "public surface lock-file" do
         ctx.pages["main"] = Browserctl::PageSession.new(page)
         { cmd: "storage_delete", name: "main" }
       end,
+      "data_get" => lambda do |ctx|
+        page = instance_double("Ferrum::Page", evaluate: "stored")
+        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        { cmd: "data_get", name: "main", key: "k", scope: "localStorage" }
+      end,
+      "data_set" => lambda do |ctx|
+        page = instance_double("Ferrum::Page", evaluate: nil)
+        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        { cmd: "data_set", name: "main", key: "k", value: "v", scope: "localStorage" }
+      end,
+      "data_delete" => lambda do |ctx|
+        page = instance_double("Ferrum::Page")
+        allow(page).to receive(:evaluate).and_return("{}", nil)
+        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        { cmd: "data_delete", name: "main", scope: "localStorage" }
+      end,
+      "data_list" => lambda do |ctx|
+        page = instance_double("Ferrum::Page", evaluate: "{}")
+        ctx.pages["main"] = Browserctl::PageSession.new(page)
+        { cmd: "data_list", name: "main", scope: "localStorage" }
+      end,
       "devtools" => lambda do |ctx|
         page = instance_double("Ferrum::Page")
         ctx.pages["main"] = Browserctl::PageSession.new(page)

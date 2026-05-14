@@ -39,6 +39,9 @@ module Browserctl
           "required blocks or arguments are missing.",
         Codes::INVALID_FORMAT_VERSION =>
           "Use a non-negative Integer for the format version header; see docs/reference/format-versions.md.",
+        Codes::INVALID_ARGUMENT =>
+          "Check the argument value against the documented contract; " \
+          "e.g. --scope must be one of cookies|localStorage|sessionStorage.",
         Codes::GENERIC => DEFAULT
       }.freeze
 

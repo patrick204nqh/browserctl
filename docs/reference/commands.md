@@ -135,27 +135,58 @@ browserctl ask "Enter 2FA code:"
 
 ---
 
-## Cookie
+## Data (Fixed, v0.15+)
+
+`data` is the unified verb for browser-side persistent data — cookies,
+`localStorage`, and `sessionStorage` — introduced in v0.15 by ADR-0021. The
+required `--scope` flag picks the bucket; the operation set is the same
+across scopes so callers don't have to special-case the cookie/storage split.
 
 | Command | Description |
 |---|---|
-| `cookie list <page>` | List all cookies as JSON |
-| `cookie set <page> <name> <value> --domain DOMAIN [--path /]` | Set a cookie |
-| `cookie delete <page>` | Delete all cookies for a page |
-| `cookie export <page> <path>` | Export all cookies to a JSON file |
-| `cookie import <page> <path>` | Import cookies from a JSON file |
+| `data get <page> <key> --scope {cookies\|localStorage\|sessionStorage}` | Read a single key (not supported for `--scope cookies` — use `data list`). |
+| `data set <page> <key> <value> --scope SCOPE [--domain D] [--path /]` | Write a single key/value. `--domain` is required when `--scope cookies`. |
+| `data delete <page> --scope SCOPE` | Clear every entry in the scope. |
+| `data list <page> --scope SCOPE` | Return every entry in the scope. |
+
+Response envelope: `{ ok: true, scope, ... }`. See
+[api-stability.md](api-stability.md) for the Fixed-zone lock-file shape per
+op.
+
+Invalid `--scope` returns a typed `INVALID_ARGUMENT` error (exit code 8).
 
 ---
 
-## Storage
+## Cookie (deprecated, removed at 1.0)
 
-| Command | Description |
+The `cookie *` family is deprecated in v0.15 in favour of `data --scope
+cookies`. Old commands still work and emit a one-line deprecation warning to
+stderr (suppressed under `--output json`). They are removed at 1.0.
+
+| Command | Replacement |
 |---|---|
-| `storage get <page> <key> [--store local\|session]` | Read a localStorage or sessionStorage key |
-| `storage set <page> <key> <value> [--store local\|session]` | Write a localStorage or sessionStorage key |
-| `storage export <page> <path> [--store local\|session\|all]` | Export storage to a JSON file |
-| `storage import <page> <path>` | Import storage keys from a JSON file |
-| `storage delete <page> [--store local\|session\|all]` | Clear localStorage and/or sessionStorage |
+| `cookie list <page>` | `data list <page> --scope cookies` |
+| `cookie set <page> <name> <value> --domain DOMAIN [--path /]` | `data set <page> <name> <value> --scope cookies --domain DOMAIN` |
+| `cookie delete <page>` | `data delete <page> --scope cookies` |
+| `cookie export <page> <path>` | `data list <page> --scope cookies` + write client-side |
+| `cookie import <page> <path>` | `data set <page> --scope cookies` (per cookie) |
+
+---
+
+## Storage (deprecated, removed at 1.0)
+
+The `storage *` family is deprecated in v0.15 in favour of `data --scope
+localStorage` / `data --scope sessionStorage`. Old commands still work and
+emit a one-line deprecation warning to stderr (suppressed under
+`--output json`). They are removed at 1.0.
+
+| Command | Replacement |
+|---|---|
+| `storage get <page> <key> [--store local\|session]` | `data get <page> <key> --scope localStorage\|sessionStorage` |
+| `storage set <page> <key> <value> [--store local\|session]` | `data set <page> <key> <value> --scope localStorage\|sessionStorage` |
+| `storage delete <page> [--store local\|session\|all]` | `data delete <page> --scope localStorage\|sessionStorage` |
+| `storage export <page> <path>` | `data list <page> --scope localStorage` + write client-side |
+| `storage import <page> <path>` | `data set <page> --scope localStorage` (per key) |
 
 `--store` defaults to `local`. The export format is `{ "https://origin": { key: value } }`.
 

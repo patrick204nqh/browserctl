@@ -245,6 +245,47 @@ module Browserctl
       call("storage_delete", name: name, stores: stores)
     end
 
+    # Reads a single key from the given browser-side scope.
+    # Introduced in v0.15 as the unified replacement for `storage_get` /
+    # `cookies` (see ADR-0021).
+    # @param name [String] logical page name
+    # @param key [String] storage key (n/a for `scope: "cookies"`; use {#data_list})
+    # @param scope [String] one of "cookies", "localStorage", "sessionStorage"
+    # @return [Hash] `{ ok: true, scope:, key:, value: }` or `{ error:, code: }`
+    def data_get(name, key, scope:)
+      call("data_get", name: name, key: key, scope: scope)
+    end
+
+    # Writes a single key/value into the given browser-side scope.
+    # For `scope: "cookies"`, `domain:` is required and `path:` defaults to "/".
+    # @param name [String] logical page name
+    # @param key [String] storage key (cookie name when scope is cookies)
+    # @param value [String] value to store
+    # @param scope [String] one of "cookies", "localStorage", "sessionStorage"
+    # @param domain [String, nil] cookie domain (required when scope is cookies)
+    # @param path [String] cookie path (default: "/")
+    # @return [Hash] `{ ok: true, scope:, key: }` or `{ error:, code: }`
+    def data_set(name, key, value, scope:, domain: nil, path: "/") # rubocop:disable Metrics/ParameterLists
+      call("data_set", name: name, key: key, value: value,
+                       scope: scope, domain: domain, path: path)
+    end
+
+    # Clears every entry in the given browser-side scope.
+    # @param name [String] logical page name
+    # @param scope [String] one of "cookies", "localStorage", "sessionStorage"
+    # @return [Hash] `{ ok: true, scope:, deleted: N }` or `{ error:, code: }`
+    def data_delete(name, scope:)
+      call("data_delete", name: name, scope: scope)
+    end
+
+    # Lists every entry in the given browser-side scope.
+    # @param name [String] logical page name
+    # @param scope [String] one of "cookies", "localStorage", "sessionStorage"
+    # @return [Hash] `{ ok: true, scope:, entries: [...], count: N }` or `{ error:, code: }`
+    def data_list(name, scope:)
+      call("data_list", name: name, scope: scope)
+    end
+
     # Fires a keydown + keyup event for the given key name on a page.
     # @param name [String] logical page name
     # @param key [String] key name e.g. "Enter", "Tab", "Escape", "ArrowDown"

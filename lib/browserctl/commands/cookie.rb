@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "cli_output"
+require_relative "deprecation_notice"
 
 module Browserctl
   module Commands
@@ -11,6 +12,11 @@ module Browserctl
 
       def self.run(client, args)
         sub = args.shift or abort USAGE
+        # Deprecated in v0.15 — see ADR-0021. Removed at 1.0.
+        DeprecationNotice.emit(
+          "cookie #{sub}",
+          deprecation_replacement(sub)
+        )
         case sub
         when "list"   then run_list(client, args)
         when "set"    then run_set(client, args)
@@ -18,6 +24,17 @@ module Browserctl
         when "export" then run_export(client, args)
         when "import" then run_import(client, args)
         else abort "unknown cookie subcommand '#{sub}'\n#{USAGE}"
+        end
+      end
+
+      def self.deprecation_replacement(sub)
+        case sub
+        when "list"   then "data list <page> --scope cookies"
+        when "set"    then "data set <page> <name> <value> --scope cookies --domain DOMAIN"
+        when "delete" then "data delete <page> --scope cookies"
+        when "export" then "data list <page> --scope cookies  # write to file client-side"
+        when "import" then "data set <page> --scope cookies"
+        else "data <op> --scope cookies"
         end
       end
 

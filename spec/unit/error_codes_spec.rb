@@ -17,7 +17,8 @@ RSpec.describe Browserctl::Error::Codes do
         INVALID_SELECTOR_REF: "INVALID_SELECTOR_REF",
         INVALID_STATE_NAME: "INVALID_STATE_NAME",
         INVALID_DSL_USAGE: "INVALID_DSL_USAGE",
-        INVALID_FORMAT_VERSION: "INVALID_FORMAT_VERSION"
+        INVALID_FORMAT_VERSION: "INVALID_FORMAT_VERSION",
+        INVALID_ARGUMENT: "INVALID_ARGUMENT"
       }.each do |const, value|
         actual = described_class.const_get(const)
         expect(actual).to eq(value)
@@ -42,6 +43,7 @@ RSpec.describe Browserctl::Error::Codes do
         "INVALID_STATE_NAME",
         "INVALID_DSL_USAGE",
         "INVALID_FORMAT_VERSION",
+        "INVALID_ARGUMENT",
         "GENERIC"
       )
       expect(described_class.all).to be_frozen

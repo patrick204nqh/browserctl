@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "cli_output"
+require_relative "deprecation_notice"
 
 module Browserctl
   module Commands
@@ -11,6 +12,11 @@ module Browserctl
 
       def self.run(client, args)
         sub = args.shift or abort USAGE
+        # Deprecated in v0.15 — see ADR-0021. Removed at 1.0.
+        DeprecationNotice.emit(
+          "storage #{sub}",
+          deprecation_replacement(sub)
+        )
         case sub
         when "get"    then run_get(client, args)
         when "set"    then run_set(client, args)
@@ -18,6 +24,17 @@ module Browserctl
         when "import" then run_import(client, args)
         when "delete" then run_delete(client, args)
         else abort "unknown storage subcommand '#{sub}'\n#{USAGE}"
+        end
+      end
+
+      def self.deprecation_replacement(sub)
+        case sub
+        when "get"    then "data get <page> <key> --scope localStorage"
+        when "set"    then "data set <page> <key> <value> --scope localStorage"
+        when "delete" then "data delete <page> --scope localStorage"
+        when "export" then "data list <page> --scope localStorage  # write to file client-side"
+        when "import" then "data set <page> --scope localStorage"
+        else "data <op> --scope localStorage"
         end
       end
 

@@ -11,6 +11,7 @@ require_relative "handlers/hitl"
 require_relative "handlers/devtools"
 require_relative "handlers/daemon_control"
 require_relative "handlers/storage"
+require_relative "handlers/data"
 require_relative "handlers/state"
 require_relative "handlers/interaction"
 require_relative "../detectors"
@@ -30,6 +31,7 @@ module Browserctl
     include Handlers::DevTools
     include Handlers::DaemonControl
     include Handlers::Storage
+    include Handlers::Data
     include Handlers::StateRpc
     include Handlers::Interaction
 
@@ -63,6 +65,10 @@ module Browserctl
       "storage_export" => :cmd_storage_export,
       "storage_import" => :cmd_storage_import,
       "storage_delete" => :cmd_storage_delete,
+      "data_get" => :cmd_data_get,
+      "data_set" => :cmd_data_set,
+      "data_delete" => :cmd_data_delete,
+      "data_list" => :cmd_data_list,
       "press" => :cmd_press,
       "hover" => :cmd_hover,
       "upload" => :cmd_upload,

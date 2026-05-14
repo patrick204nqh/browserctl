@@ -6,17 +6,21 @@ client:
   - auth_check
   - call
   - click
-  - cookies
-  - delete_cookies
+  - cookies                # deprecated, remove at 1.0 — see ADR-0021
+  - data_delete
+  - data_get
+  - data_list
+  - data_set
+  - delete_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - devtools
   - dialog_accept
   - dialog_dismiss
   - evaluate
-  - export_cookies
+  - export_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - fetch
   - fill
   - hover
-  - import_cookies
+  - import_cookies         # deprecated, remove at 1.0 — see ADR-0021
   - navigate
   - page_close
   - page_focus
@@ -28,7 +32,7 @@ client:
   - resume
   - screenshot
   - select
-  - set_cookie
+  - set_cookie             # deprecated, remove at 1.0 — see ADR-0021
   - shutdown
   - snapshot
   - state_delete
@@ -36,11 +40,11 @@ client:
   - state_list
   - state_load
   - state_save
-  - storage_delete
-  - storage_export
-  - storage_get
-  - storage_import
-  - storage_set
+  - storage_delete         # deprecated, remove at 1.0 — see ADR-0021
+  - storage_export         # deprecated, remove at 1.0 — see ADR-0021
+  - storage_get            # deprecated, remove at 1.0 — see ADR-0021
+  - storage_import         # deprecated, remove at 1.0 — see ADR-0021
+  - storage_set            # deprecated, remove at 1.0 — see ADR-0021
   - store
   - upload
   - url
@@ -70,8 +74,9 @@ cli_commands:
   - ask
   - auth-check
   - click
-  - cookie
+  - cookie                  # deprecated, remove at 1.0 — see ADR-0021
   - daemon
+  - data
   - devtools
   - dialog
   - evaluate
@@ -88,7 +93,7 @@ cli_commands:
   - resume
   - select
   - state
-  - storage
+  - storage                 # deprecated, remove at 1.0 — see ADR-0021
   - trace
   - upload
   - url
@@ -172,6 +177,21 @@ fixed_zone:
     optional: []
   storage_delete:
     required: [ok]
+    optional: []
+  # `data` family — v0.15+ unified verb (ADR-0021). Replaces cookie/storage
+  # aliases above at 1.0; lock-file entry is the Fixed-zone contract going
+  # forward.
+  data_get:
+    required: [ok, scope, key, value]
+    optional: []
+  data_set:
+    required: [ok, scope, key]
+    optional: []
+  data_delete:
+    required: [ok, scope, deleted]
+    optional: []
+  data_list:
+    required: [ok, scope, entries, count]
     optional: []
   devtools:
     required: [ok, devtools_url]
