@@ -62,7 +62,7 @@ RSpec.describe "plugin command isolation", :integration do
     pages   = @client.page_list
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-    expect(pages[:pages]).to include(hash_including(name: "p"))
+    expect(pages[:pages]).to include("p")
     expect(elapsed).to be < 1.0
   end
 
