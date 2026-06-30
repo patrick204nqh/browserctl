@@ -10,6 +10,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0](https://github.com/patrick204nqh/browserctl/compare/v0.15.0...v0.16.0) (2026-06-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* deprecated cookie/storage CLI verbs, wire methods, and client surface removed; use `data --scope cookies|localStorage|sessionStorage`. The aliases shipped in v0.15 with a deprecation warning and were always slated for removal — see ADR-0021.
+
+### Miscellaneous Chores
+
+* remove deprecated cookie and storage verbs (v0.16 WS-1 PR 1) ([#209](https://github.com/patrick204nqh/browserctl/issues/209)) ([2d5bf60](https://github.com/patrick204nqh/browserctl/commit/2d5bf605d2aaaf0b5f0ae70d114576502ec5df20))
+
 ## [0.15.0](https://github.com/patrick204nqh/browserctl/compare/v0.14.0...v0.15.0) (2026-05-14)
 
 
